@@ -82,7 +82,7 @@ WCAG issues.
 
 ## Stack
 
-React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS v4 · shadcn/ui on Radix ·
+React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS v4 · shadcn/ui on Base UI ·
 React Router 8 (library mode) · TanStack Query · React Hook Form + Zod ·
 Lucide · Vitest · Playwright · axe-core
 
