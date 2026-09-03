@@ -30,7 +30,19 @@ test.describe('accessibility', () => {
 
   test('home screen passes in dark mode too', async ({ page }) => {
     await page.goto('/')
-    await page.evaluate(() => document.documentElement.classList.add('dark'))
+    await page.evaluate(async () => {
+      document.documentElement.classList.add('dark')
+
+      /* Buttons carry `transition-all`, so flipping the theme starts a colour
+       * animation. Scanning straight away samples a half-blended frame — a
+       * mid-transition mix of the light and dark values that belongs to
+       * neither theme — and axe reports contrast failures for colours the app
+       * never actually rests on. Wait for the transitions to finish so we
+       * assert against the settled dark theme, which is the thing we mean. */
+      await Promise.all(
+        document.getAnimations().map((animation) => animation.finished),
+      )
+    })
 
     const results = await new AxeBuilder({ page })
       .withTags(WCAG22AA)
