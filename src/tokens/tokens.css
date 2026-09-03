@@ -1,0 +1,82 @@
+/* -----------------------------------------------------------------------------
+ * GENERATED FILE — DO NOT EDIT BY HAND
+ * -----------------------------------------------------------------------------
+ * Source:      design/tokens.figma.json  (DTCG format, exported from Figma)
+ * Transform:   one-way, Figma -> CSS, never back
+ * Status:      PLACEHOLDER VALUES. The transform is not built yet and there is
+ *              no Figma export yet — see src/tokens/README.md. The values below
+ *              are stand-ins chosen to pass WCAG AA so the app is usable now;
+ *              the first real export replaces this file wholesale.
+ *
+ * Any edit you make here is destroyed the next time the transform runs.
+ * To change a value, change it in Figma and re-export.
+ *
+ * These are PRIMITIVES ONLY — raw scale values with no meaning attached.
+ * "Which grey is a disabled label?" is a semantic question, and semantic
+ * decisions live in src/styles/theme.css, not here.
+ * -------------------------------------------------------------------------- */
+
+@theme {
+  /* --- Colour: ink (neutral ramp) ---------------------------------------- */
+  --color-ink-0: #ffffff;
+  --color-ink-50: #f6f7f9;
+  --color-ink-100: #eceef1;
+  --color-ink-200: #dde1e6;
+  --color-ink-300: #c3cad3;
+  --color-ink-400: #97a1ad;
+  --color-ink-500: #68727f;
+  --color-ink-600: #545d69;
+  --color-ink-700: #3e454f;
+  --color-ink-800: #272c33;
+  --color-ink-900: #15181d;
+  --color-ink-950: #0b0d10;
+
+  /* --- Colour: brand ------------------------------------------------------ */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #2f80ed;
+  --color-brand-600: #1266d6;
+  --color-brand-700: #0f52ab;
+  --color-brand-800: #10457f;
+  --color-brand-900: #123a66;
+
+  /* --- Colour: status ----------------------------------------------------- */
+  --color-success-400: #34b47f;
+  --color-success-500: #12855b;
+  --color-success-600: #0d6b49;
+  --color-warning-400: #e0a800;
+  --color-warning-500: #96590a;
+  --color-warning-600: #7a4708;
+  --color-danger-400: #f97066;
+  --color-danger-500: #d92d20;
+  --color-danger-600: #b42318;
+
+  /* --- Spacing ------------------------------------------------------------
+   * Tailwind derives its whole spacing scale from this one step, so `p-4`
+   * resolves to calc(0.25rem * 4) = 1rem. Change the step, move everything. */
+  --spacing: 0.25rem;
+
+  /* --- Typography --------------------------------------------------------- */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* --- Accessibility: WCAG 2.2 AA ----------------------------------------
+   * These are not decoration. They are the enforcement points.
+   *
+   * 2.5.8 Target Size (Minimum) requires interactive targets of at least
+   * 24x24 CSS px. This app is mobile-first, so the comfortable token is the
+   * default and the 24px floor exists only for genuinely dense contexts.
+   *
+   * 2.4.11/2.4.13 Focus Appearance requires a focus indicator that is at
+   * least 2px thick and hits 3:1 against adjacent colours. */
+  --size-target-min: 24px;
+  --size-target-comfortable: 44px;
+  --size-focus-ring: 3px;
+  --size-focus-offset: 2px;
+}

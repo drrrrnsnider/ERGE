@@ -1,0 +1,128 @@
+/* -----------------------------------------------------------------------------
+ * THEME BRIDGE — hand-written, safe to edit
+ * -----------------------------------------------------------------------------
+ * This is the only file that decides what a token MEANS.
+ *
+ *   src/tokens/tokens.css   generated primitives   "brand-600 is #1266d6"
+ *   src/styles/theme.css    this file             "primary IS brand-600"
+ *   src/components/ui/*     shadcn, unmodified    "the button uses primary"
+ *
+ * Keeping this layer separate is what lets us re-run `npx shadcn@latest add`
+ * without ever hitting a merge conflict: shadcn components only ever refer to
+ * role names (primary, muted-foreground, ring), and every role name is
+ * assigned a value here. Retokenising the design system means editing this
+ * file, not editing components.
+ * -------------------------------------------------------------------------- */
+
+/* Dark mode is driven by a `dark` class on <html>, not by the OS setting
+ * alone, so an in-app theme switch can override the system preference. */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+
+  --background: var(--color-ink-0);
+  --foreground: var(--color-ink-900);
+
+  --card: var(--color-ink-0);
+  --card-foreground: var(--color-ink-900);
+  --popover: var(--color-ink-0);
+  --popover-foreground: var(--color-ink-900);
+
+  --primary: var(--color-brand-600);
+  --primary-foreground: var(--color-ink-0);
+  --secondary: var(--color-ink-100);
+  --secondary-foreground: var(--color-ink-800);
+  --muted: var(--color-ink-100);
+  /* ink-600, not ink-500: secondary text has to clear 4.5:1 against the muted
+   * surface it sits on, not just against the page background. ink-500 passes
+   * on white (4.88) and fails on --muted (4.20). */
+  --muted-foreground: var(--color-ink-600);
+  --accent: var(--color-ink-100);
+  --accent-foreground: var(--color-ink-800);
+  --destructive: var(--color-danger-600);
+  --destructive-foreground: var(--color-ink-0);
+
+  /* --border is decorative separation; --input is a control boundary and so
+   * has to clear 3:1 on its own (WCAG 1.4.11). They are deliberately
+   * different values — do not collapse them into one. */
+  --border: var(--color-ink-200);
+  --input: var(--color-ink-500);
+  --ring: var(--color-brand-600);
+}
+
+.dark {
+  --background: var(--color-ink-950);
+  --foreground: var(--color-ink-50);
+
+  --card: var(--color-ink-900);
+  --card-foreground: var(--color-ink-50);
+  --popover: var(--color-ink-900);
+  --popover-foreground: var(--color-ink-50);
+
+  --primary: var(--color-brand-400);
+  --primary-foreground: var(--color-ink-950);
+  --secondary: var(--color-ink-800);
+  --secondary-foreground: var(--color-ink-50);
+  --muted: var(--color-ink-800);
+  --muted-foreground: var(--color-ink-400);
+  --accent: var(--color-ink-800);
+  --accent-foreground: var(--color-ink-50);
+  --destructive: var(--color-danger-400);
+  --destructive-foreground: var(--color-ink-950);
+
+  --border: var(--color-ink-800);
+  --input: var(--color-ink-400);
+  --ring: var(--color-brand-400);
+}
+
+/* Expose the roles above to Tailwind as utilities: `bg-primary`,
+ * `text-muted-foreground`, `border-border`, and so on.
+ *
+ * `inline` is load-bearing. It tells Tailwind to inline the var() reference
+ * rather than resolve it once at build time, which is what allows the .dark
+ * block to actually take effect. Without it, dark mode silently does nothing. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* WCAG 2.2 2.4.11/2.4.13 — a focus ring that is always thick enough and
+   * never sits flush against the element it is marking. */
+  :focus-visible {
+    outline: var(--size-focus-ring) solid var(--ring);
+    outline-offset: var(--size-focus-offset);
+  }
+}
