@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 /**
  * Automated accessibility scan of every screen, in a real browser.
@@ -68,29 +68,81 @@ test.describe('accessibility', () => {
   })
 
   /**
-   * WCAG 2.2 2.5.8 Target Size (Minimum) — every interactive target is at
-   * least 24x24 CSS px.
+   * Every interactive target on the page, with its rendered size and whether
+   * it has opted out of the coarse-pointer floor.
    *
    * `sr-only` elements are excluded: the skip link measures 1x1 while hidden
-   * and only becomes a target once focused, which the test below covers.
+   * and only becomes a target once focused, which its own test covers.
    */
-  test('interactive targets meet the 24px minimum', async ({ page }) => {
-    await page.goto('/')
-
-    const undersized = await page.evaluate(() => {
+  async function measureTargets(page: Page) {
+    return page.evaluate(() => {
       const selector =
         'a, button, input, select, textarea, [role="button"], [role="link"]'
       return [...document.querySelectorAll(selector)]
         .filter((el) => !el.classList.contains('sr-only'))
         .map((el) => {
           const { width, height } = el.getBoundingClientRect()
-          const label = (el.textContent ?? '').trim().slice(0, 30)
-          return { label, width, height }
+          return {
+            label: (el.textContent ?? '').trim().slice(0, 30),
+            width: Math.round(width),
+            height: Math.round(height),
+            compact: el.getAttribute('data-target') === 'compact',
+          }
         })
-        .filter(({ width, height }) => width < 24 || height < 24)
     })
+  }
 
-    expect(undersized).toEqual([])
+  const tooSmall = (min: number) =>
+    ({ width, height }: { width: number; height: number }) =>
+      width < min || height < min
+
+  /**
+   * WCAG 2.2 2.5.8 Target Size (Minimum) — the legal floor, 24x24, everywhere.
+   * This holds on desktop and mobile, opted out or not.
+   */
+  test('every interactive target meets the 24px minimum', async ({ page }) => {
+    await page.goto('/')
+    expect((await measureTargets(page)).filter(tooSmall(24))).toEqual([])
+  })
+
+  /**
+   * On a phone a thumb needs 44x44, so theme.css raises controls to that under
+   * `pointer: coarse`. This asserts it actually happened.
+   *
+   * Mobile projects only — not a tolerated failure elsewhere, but a rule that
+   * deliberately does not apply on desktop, where the same controls are meant
+   * to stay dense and `pointer: coarse` does not match.
+   */
+  test('non-compact targets meet 44px on coarse pointers', async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      !testInfo.project.name.startsWith('mobile'),
+      'coarse-pointer sizing deliberately does not apply on desktop',
+    )
+    await page.goto('/')
+    const targets = await measureTargets(page)
+    expect(targets.filter((t) => !t.compact).filter(tooSmall(44))).toEqual([])
+  })
+
+  /**
+   * The escape hatch keeps a floor of its own. `data-target="compact"` costs
+   * 12px — it does not drop a control to the 24px legal minimum. Anything
+   * smaller than 32px is a misuse of the attribute, not a smaller chip.
+   *
+   * Vacuous on a screen with no compact controls, which is the correct
+   * behaviour: the invariant is conditional on opting out.
+   */
+  test('compact targets still meet 32px on coarse pointers', async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      !testInfo.project.name.startsWith('mobile'),
+      'coarse-pointer sizing deliberately does not apply on desktop',
+    )
+    await page.goto('/')
+    const targets = await measureTargets(page)
+    expect(targets.filter((t) => t.compact).filter(tooSmall(32))).toEqual([])
   })
 
   test('the first Tab reaches the skip link', async ({ page }) => {

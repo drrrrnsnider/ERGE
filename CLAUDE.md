@@ -178,12 +178,33 @@ tests — it is a continuous practice, not a pre-launch audit.
   still show base-nova's own ring; links, including the skip link, show
   nothing. Fix is in Figma: move `Size` to a top-level group, re-export,
   `npm run tokens`. No code change needed.
-- Touch targets: 24×24 CSS px minimum (2.5.8), asserted in the Playwright
-  suite rather than tokenised — 24 and 44 are external constants, not design
-  decisions. `sr-only` elements are excluded: the skip link is 1×1 until
-  focused and only becomes a target then.
-  **The shadcn button does not meet 44px on its own** — the base-nova default
-  is 32px tall and `xs` / `icon-xs` are exactly 24px, the bare floor.
+- Touch targets: 24×24 CSS px minimum (2.5.8) everywhere, and **44×44 on
+  coarse pointers**. `theme.css` raises controls to 44px under
+  `@media (pointer: coarse)`, so phones get thumb-sized targets while desktop
+  keeps its density — the same button is 44px on a phone and 32px under a
+  mouse. Asserted in Playwright rather than tokenised: 24 and 44 are external
+  constants, not design decisions. `sr-only` elements are excluded, since the
+  skip link is 1×1 until focused.
+
+### `data-target="compact"`
+
+A control opts out of the 44px floor by carrying `data-target="compact"`,
+which keeps it at 32px. Three rules:
+
+- **It must be typed into the markup on purpose.** It is never a default and
+  is never inferred from a variant name — `size="sm"` opts out of nothing. If
+  you cannot see the attribute in the JSX, the control is full size.
+- **Secondary, non-critical controls only** — filter chips, segmented
+  controls, tag dismiss buttons and similar. **Never** primary actions, form
+  fields, or navigation. If the thing is how someone gets somewhere or commits
+  to something, it gets the full 44px.
+- **More than a handful on one screen is a signal, not a licence.** It means
+  the layout is too dense for a phone and wants rethinking, not more opt-outs.
+
+Opting out costs 12px, not a drop to the legal minimum. Playwright asserts
+≥44px for everything without the attribute and ≥32px for everything with it,
+both as hard tests on the mobile projects, so a compact control that shrinks
+below 32px fails the build.
 - Interactive components need keyboard operation and correct focus management,
   not just correct visuals.
 

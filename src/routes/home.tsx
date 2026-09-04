@@ -27,6 +27,22 @@ export function HomeRoute() {
         <Button variant="outline">Outline</Button>
       </div>
 
+      {/* The escape hatch, shown next to the full-size buttons above so the
+        * 12px difference is judgeable. On a phone the three buttons above are
+        * 44px tall; this one opts out and stays 32px.
+        *
+        * A filter chip is the archetypal case: secondary, non-critical, and
+        * usually one of many. `data-target="compact"` has to be typed on
+        * purpose — see CLAUDE.md for when it is and is not allowed. */}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" data-target="compact">
+          Flights
+        </Button>
+        <Button variant="outline" data-target="compact">
+          Hotels
+        </Button>
+      </div>
+
       <p className="text-sm text-muted-foreground">
         Tab to the buttons to check the focus ring. The app is dark-only — the{' '}
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">

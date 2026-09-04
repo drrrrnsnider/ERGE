@@ -138,6 +138,50 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* WCAG 2.2 2.5.8 Target Size (Minimum) is 24x24, which base-nova already
+   * clears at 32px. 44x44 is what a thumb actually needs — and it only earns
+   * its space where the pointer IS a thumb, so this is scoped to coarse
+   * pointers. Enlarging controls for a mouse would cost density and buy
+   * nothing.
+   *
+   * `pointer: coarse` is the primary input device: phones and tablets match,
+   * desktop does not. Verified in all three Playwright projects.
+   *
+   * min-height beats the component's own `h-8` and min-width catches the
+   * icon-only sizes, which are square and would otherwise stay 32 or 24 wide.
+   * Both are applied from here rather than in the component, so
+   * src/components/ui/ stays unmodified.
+   *
+   * `a` is deliberately absent. An inline link in a sentence is exempt from
+   * 2.5.8, and forcing 44px on one would wreck the line box. A link that is
+   * really a target should carry role="button" or data-slot="button".
+   *
+   * OPTING OUT
+   * ----------
+   * A control declines the 44px floor by carrying data-target="compact",
+   * which keeps it at its natural 32px. That has to be typed into the markup
+   * on purpose — it is never a default and is never inferred from a variant
+   * name, so `size="sm"` does not opt anything out. Opting out costs 12px,
+   * not a drop to the 24px legal minimum: Playwright asserts >=44px for
+   * everything without the attribute and >=32px for everything with it.
+   *
+   * It is for secondary, non-critical controls — filter chips, segmented
+   * controls, tag dismiss buttons. Never primary actions, form fields or
+   * navigation. See CLAUDE.md. */
+  @media (pointer: coarse) {
+    :is(
+      [data-slot='button'],
+      button,
+      select,
+      textarea,
+      input:not([type='hidden']),
+      [role='button']
+    ):not([data-target='compact']) {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
   /* WCAG 2.2 2.4.11/2.4.13 — a focus ring that is always thick enough and
    * never sits flush against the element it is marking.
    *
