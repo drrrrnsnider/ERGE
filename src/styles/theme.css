@@ -183,14 +183,15 @@
   }
 
   /* WCAG 2.2 2.4.11/2.4.13 — a focus ring that is always thick enough and
-   * never sits flush against the element it is marking.
+   * never sits flush against the element it is marking. Both sizes come from
+   * Figma's Size collection, so the ring is a design decision like any other.
    *
-   * NOTE: --size-focus-ring and --size-focus-offset are not in the Figma
-   * export yet. Until Size/Focus Ring and Size/Focus Offset land in the
-   * Primitives collection and are re-exported, this shorthand is invalid and
-   * the global outline does not paint. Buttons still show a focus indicator
-   * (base-nova draws its own ring), but links — including the skip link — do
-   * not. Left as-is deliberately, pending that re-export. */
+   * This is the baseline for everything that does not override it. The
+   * vendored base-nova components DO override it: they carry an `outline-none`
+   * utility and draw their own `focus-visible:ring-*` instead. Utilities
+   * outrank `@layer base`, so on a button you see their ring, and on a link
+   * you see this outline. Both are visible indicators; they are just drawn by
+   * different layers, and `ui/` stays unmodified. */
   :focus-visible {
     outline: var(--size-focus-ring) solid var(--ring);
     outline-offset: var(--size-focus-offset);

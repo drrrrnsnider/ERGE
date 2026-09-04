@@ -176,13 +176,12 @@ tests — it is a continuous practice, not a pre-launch audit.
   that reason — without it the hash changes and the page scrolls but focus
   stays on `<body>`, so the next Tab restarts from the top of the chrome. Any
   future layout archetype needs the same on its main region.
-- **Known gap: the global focus outline does not currently paint.** It reads
-  `--size-focus-ring` / `--size-focus-offset`, and the Figma export nests those
-  under `Color/Size`, so they generate as `--color-size-focus-ring` instead.
-  The shorthand is invalid and `outline-style` computes to `none`. Buttons
-  still show base-nova's own ring; links, including the skip link, show
-  nothing. Fix is in Figma: move `Size` to a top-level group, re-export,
-  `npm run tokens`. No code change needed.
+- Two focus indicators coexist, by design. `theme.css` sets a global 3px
+  outline at 2px offset, sized from Figma's `Size/Focus Ring` and
+  `Size/Focus Offset`. The vendored base-nova components override it — they
+  carry `outline-none` and draw their own `focus-visible:ring-*` — and
+  utilities outrank `@layer base`, so a button shows their ring and a link
+  shows our outline. Don't try to unify them: that would mean editing `ui/`.
 - Touch targets: 24×24 CSS px minimum (2.5.8) everywhere, and **44×44 on
   coarse pointers**. `theme.css` raises controls to 44px under
   `@media (pointer: coarse)`, so phones get thumb-sized targets while desktop
