@@ -5,7 +5,13 @@
  * Reads the raw Figma variable exports and writes src/tokens/tokens.css.
  * This file is GENERATED. Never hand-edit the output; re-run this instead.
  *
- *   npm run tokens
+ *   npm run tokens          regenerate src/tokens/tokens.css
+ *   npm run tokens:check    verify the committed file matches the export
+ *
+ * `--check` regenerates to a temp file and compares, writing nothing. It is
+ * wired into `npm run verify`, so two failure modes that are otherwise silent
+ * become build failures: someone hand-edits the generated CSS, or someone
+ * changes tokens/figma/*.json and forgets to regenerate.
  *
  * Input   tokens/figma/Primitives.tokens.json    the primitive ramps and scales
  *         tokens/figma/Dark.tokens.json          the semantic layer, dark mode
@@ -24,8 +30,17 @@
  *   Copper/400 in Figma updates every token that points at it.
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+} from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { tmpdir } from "node:os";
+
+const CHECK = process.argv.includes("--check");
 
 const ROOT = resolve(process.cwd());
 const IN_PRIMITIVES = resolve(ROOT, "tokens/figma/Primitives.tokens.json");
@@ -218,18 +233,99 @@ for (const [path, token] of semantic) {
 push("}");
 push();
 
-mkdirSync(dirname(OUT), { recursive: true });
-writeFileSync(OUT, lines.join("\n"), "utf8");
+const output = lines.join("\n");
 
 /* ----------------------------------------------------------------- report */
 
-console.log(`\n  tokens.css written`);
-console.log(`    primitives  ${primitives.length}`);
-for (const [group, count] of groupsSeen) {
-  console.log(`      ${group.padEnd(14)}${count}`);
+function summarise(headline) {
+  console.log(`\n  ${headline}`);
+  console.log(`    primitives  ${primitives.length}`);
+  for (const [group, count] of groupsSeen) {
+    console.log(`      ${group.padEnd(14)}${count}`);
+  }
+  console.log(`    semantic    ${semantic.length}`);
+  console.log(
+    `    mode        ${semanticDoc.$extensions?.["com.figma.modeName"]}`,
+  );
 }
-console.log(`    semantic    ${semantic.length}`);
-console.log(`    mode        ${semanticDoc.$extensions?.["com.figma.modeName"]}`);
+
+/** Where two texts first diverge, and how many lines differ in total. */
+function compare(committed, generated) {
+  const a = committed.split("\n");
+  const b = generated.split("\n");
+  let at = -1;
+  let differing = 0;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if (a[i] !== b[i]) {
+      if (at === -1) at = i;
+      differing++;
+    }
+  }
+  return { at, differing, a, b };
+}
+
+/* ------------------------------------------------------------ check / write */
+
+if (CHECK) {
+  /* Generate to a temp directory: a check that writes to the tracked file is
+   * not a check, it is a silent fix. */
+  const dir = mkdtempSync(join(tmpdir(), "erge-tokens-"));
+  const temp = join(dir, "tokens.css");
+
+  let committed = null;
+  let generated = "";
+  try {
+    writeFileSync(temp, output, "utf8");
+    generated = readFileSync(temp, "utf8");
+    try {
+      committed = readFileSync(OUT, "utf8");
+    } catch {
+      committed = null;
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+
+  if (committed === null) {
+    console.error(`\n  src/tokens/tokens.css is missing.\n`);
+    console.error(`  Run \`npm run tokens\` to generate it, then commit it.\n`);
+    process.exit(1);
+  }
+
+  if (committed !== generated) {
+    const { at, differing, a, b } = compare(committed, generated);
+    console.error(`\n  src/tokens/tokens.css does not match the Figma export.`);
+    console.error(
+      `\n  ${differing} line(s) differ. First difference at line ${at + 1}:\n`,
+    );
+    for (let i = Math.max(0, at - 2); i <= at; i++) {
+      const committedLine = a[i] ?? "(end of file)";
+      const generatedLine = b[i] ?? "(end of file)";
+      if (i === at) {
+        console.error(`    committed  ${committedLine}`);
+        console.error(`    generated  ${generatedLine}`);
+      } else {
+        console.error(`               ${committedLine}`);
+      }
+    }
+    console.error(
+      `\n  This file is GENERATED. Do not edit it by hand — any change here is` +
+        `\n  destroyed the next time the export runs.`,
+    );
+    console.error(
+      `\n  Run \`npm run tokens\` to regenerate it, then commit the result.` +
+        `\n  To change a VALUE, change it in Figma and re-export.` +
+        `\n  To change what a value MEANS, edit src/styles/theme.css instead.\n`,
+    );
+    process.exit(1);
+  }
+
+  summarise("tokens.css matches the Figma export");
+} else {
+  mkdirSync(dirname(OUT), { recursive: true });
+  writeFileSync(OUT, output, "utf8");
+  summarise("tokens.css written");
+}
 
 if (problems.length) {
   console.log(`\n  ${problems.length} problem(s):`);

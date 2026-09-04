@@ -13,8 +13,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "tokens": "node scripts/build-tokens.mjs",
+    "tokens:check": "node scripts/build-tokens.mjs --check",
     "check": "npm run lint && npm run typecheck && npm run test",
-    "verify": "npm run check && npm run test:e2e"
+    "verify": "npm run tokens:check && npm run check && npm run test:e2e"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
