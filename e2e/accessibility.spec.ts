@@ -145,12 +145,68 @@ test.describe('accessibility', () => {
     expect(targets.filter((t) => t.compact).filter(tooSmall(32))).toEqual([])
   })
 
-  test('the first Tab reaches the skip link', async ({ page }) => {
+  /**
+   * The skip link, asserted differently per engine — deliberately, and not as
+   * a workaround for a bug in our markup.
+   *
+   * WebKit leaves links out of the Tab sequence unless macOS's "Use keyboard
+   * navigation to move focus between controls" is switched on, and it is off
+   * by default. That is Safari deferring to a system setting. The link itself
+   * is a plain `<a href>` with no tabindex games, and Chromium tabs to it
+   * exactly as it should, so there is nothing here to fix.
+   *
+   * Chromium therefore asserts what a keyboard user actually does — press Tab
+   * once — and WebKit asserts everything about the link that does not depend
+   * on the Tab sequence: focusing it reveals it, it paints above the content
+   * it covers, and activating it moves focus to #main.
+   *
+   * DO NOT collapse these into one branch.
+   *   - Deleting the Chromium branch loses the only check that the link is
+   *     FIRST in the tab order, which is the entire point of a skip link.
+   *   - Deleting the WebKit branch stops testing WebKit at all.
+   * Neither is skipped: every project runs a hard assertion.
+   */
+  test('the skip link is reachable and moves focus past the chrome', async ({
+    page,
+    browserName,
+  }) => {
     await page.goto('/')
-    await page.keyboard.press('Tab')
+    const skipLink = page.getByRole('link', { name: 'Skip to main content' })
 
-    await expect(
-      page.getByRole('link', { name: 'Skip to main content' }),
-    ).toBeFocused()
+    if (browserName === 'chromium') {
+      await page.keyboard.press('Tab')
+      await expect(skipLink).toBeFocused()
+    } else {
+      await skipLink.focus()
+      await expect(skipLink).toBeFocused()
+
+      // It must stop being visually hidden. `sr-only` clips it to 1x1; the
+      // `focus:not-sr-only` variant is what undoes that.
+      await expect(skipLink).toBeVisible()
+      const revealed = await skipLink.evaluate((el) => {
+        const rect = el.getBoundingClientRect()
+        const topmost = document.elementFromPoint(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2,
+        )
+        return {
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+          clip: getComputedStyle(el).clip,
+          // Whatever it overlaps, it has to be the thing you actually hit.
+          onTop: el === topmost || el.contains(topmost),
+        }
+      })
+      expect(revealed.width).toBeGreaterThan(1)
+      expect(revealed.height).toBeGreaterThan(1)
+      expect(revealed.clip).toBe('auto')
+      expect(revealed.onTop).toBe(true)
+    }
+
+    // Both engines. Without tabIndex={-1} on <main> this silently does
+    // nothing: the hash changes, the page scrolls, and focus stays on <body>,
+    // so the next Tab restarts from the top of the chrome.
+    await skipLink.press('Enter')
+    await expect(page.locator('#main')).toBeFocused()
   })
 })

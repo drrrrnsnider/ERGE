@@ -171,6 +171,11 @@ tests — it is a continuous practice, not a pre-launch audit.
   The vendored shadcn primitives *do* ship their own `focus-visible:` ring on
   top of it. That's upstream's, it layers with the outline rather than
   replacing it, and it stays, because `ui/` stays unmodified.
+- The skip link is verified end to end: focusing it reveals it, and
+  activating it moves focus to `#main`. `<main>` carries `tabIndex={-1}` for
+  that reason — without it the hash changes and the page scrolls but focus
+  stays on `<body>`, so the next Tab restarts from the top of the chrome. Any
+  future layout archetype needs the same on its main region.
 - **Known gap: the global focus outline does not currently paint.** It reads
   `--size-focus-ring` / `--size-focus-offset`, and the Figma export nests those
   under `Color/Size`, so they generate as `--color-size-focus-ring` instead.
@@ -256,12 +261,18 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **18 unit tests**, all passing. `test:e2e` is **14 of 15**.
-`[mobile-safari] the first Tab reaches the skip link` fails because WebKit
-doesn't Tab to links unless Full Keyboard Access is switched on — a known,
-pre-existing environment gap, not a regression, reproduced against an earlier
-commit in a clean worktree. If that is the only red test, you didn't break
-anything. Anything else red, you did.
+Current state: **18 unit tests** and **19 e2e** passing, 2 e2e skipped by
+design (the coarse-pointer size assertions do not apply to `desktop-chrome`).
+`npm run verify` exits 0. There are no known-failing tests — if something is
+red, you broke it.
+
+The skip-link test asserts different things per engine on purpose. WebKit
+leaves links out of the Tab sequence unless macOS keyboard navigation is
+switched on, so Chromium asserts that the first Tab reaches the link while
+WebKit asserts that focusing it reveals it, that it paints on top, and that
+activating it moves focus to `#main`. Both are hard assertions. Don't collapse
+them into one — the comment in the spec explains what each branch is the only
+thing testing.
 
 ## Working practice
 

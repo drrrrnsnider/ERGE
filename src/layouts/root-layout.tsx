@@ -21,7 +21,13 @@ export function RootLayout() {
         Skip to main content
       </a>
 
-      <main id="main" className="flex-1">
+      {/* tabIndex={-1} makes this focusable programmatically but keeps it out
+        * of the tab order. Without it the skip link does not actually skip:
+        * the hash changes and the page scrolls, but focus stays on <body>, so
+        * the next Tab starts from the top of the chrome again — measured as
+        * failing in Chromium and WebKit alike before this was added. A
+        * keyboard user would land back where they started. */}
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">
         <Outlet />
       </main>
     </div>
