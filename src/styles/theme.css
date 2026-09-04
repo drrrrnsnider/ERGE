@@ -1,0 +1,199 @@
+/* -----------------------------------------------------------------------------
+ * THEME BRIDGE — hand-written, safe to edit
+ * -----------------------------------------------------------------------------
+ * This file translates between two vocabularies:
+ *
+ *   src/tokens/tokens.css   GENERATED from Figma   "Surface/Base is obsidian-950"
+ *   src/styles/theme.css    this file              "background IS Surface/Base"
+ *   src/components/ui/*     shadcn, unmodified     "the card uses background"
+ *
+ * Note what changed: this file no longer *decides* colour. The Figma semantic
+ * layer (Surface/*, Text/*, Border/*, Action/*, Feedback/*) already holds the
+ * decisions. All this file does is map shadcn's role names onto them, which is
+ * what keeps src/components/ui/ byte-identical to upstream and lets
+ * `npx shadcn@latest add` run without merge conflicts.
+ *
+ * To change how something looks, change the variable in Figma and re-run
+ * `npm run tokens`. Change this file only to re-point a role at a different
+ * token.
+ *
+ * DARK ONLY
+ * ---------
+ * There is one theme. The tokens are exported from Figma's Dark mode, and
+ * <html class="dark"> is hardcoded in index.html. There is deliberately no
+ * light `:root` / `.dark` pair any more — the tokens *are* the theme.
+ * -------------------------------------------------------------------------- */
+
+/* Kept, despite being a single-theme app, because the vendored base-nova
+ * components ship nine `dark:` utilities of their own (dark:bg-input/30,
+ * dark:hover:bg-muted/50, dark:bg-destructive/20 and friends) that describe
+ * their dark appearance. Those have to resolve.
+ *
+ * Deleting this line would NOT delete those utilities — it would hand them
+ * back to Tailwind's built-in `dark:`, which keys off the OS `prefers-color-
+ * scheme` setting. A visitor whose system is in light mode would then get the
+ * light-mode half of every vendored component painted onto our dark surfaces.
+ * Binding the variant to the class instead, and hardcoding that class, makes
+ * them unconditional. */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* == shadcn roles -> Figma semantic tokens =============================
+   * Left side is upstream shadcn's vocabulary; right side is ours. Several
+   * roles collapse onto Surface/Elevated — shadcn distinguishes popover,
+   * secondary, muted and accent, our system does not, and pretending
+   * otherwise would mean inventing tokens Figma has not defined. */
+
+  --background: var(--color-surface-base);
+  --foreground: var(--color-text-primary);
+
+  --card: var(--color-surface-card);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-surface-elevated);
+  --popover-foreground: var(--color-text-primary);
+
+  --primary: var(--color-action-primary);
+  /* Text/Inverse, NOT Action/Inverse. Action/Inverse (copper-100) on
+   * Action/Primary (copper-400) is 2.27:1 and fails AA outright; Text/Inverse
+   * (obsidian-950) on the same fill is 7.13:1. The names suggest otherwise,
+   * so this pairing is deliberate and asserted in tokens.test.ts. */
+  --primary-foreground: var(--color-text-inverse);
+
+  --secondary: var(--color-surface-elevated);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-surface-elevated);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-surface-elevated);
+  --accent-foreground: var(--color-text-primary);
+
+  --destructive: var(--color-feedback-error);
+  --destructive-foreground: var(--color-text-inverse);
+
+  /* --border is decorative separation; --input is a control boundary and so
+   * has to clear 3:1 on its own (WCAG 1.4.11). They are deliberately
+   * different tokens — do not collapse them into one. */
+  --border: var(--color-border-default);
+  --input: var(--color-border-input);
+  --ring: var(--color-border-focus);
+
+  /* == Radius ============================================================
+   * Figma exports Radius/none|sm|md|lg|full as --radius-* directly into
+   * :root. Those names are exactly the ones Tailwind's rounded-* utilities
+   * read, and tokens.css is unlayered while Tailwind's defaults sit in
+   * `@layer theme`, so the Figma values win the cascade automatically. That
+   * is why there is no radius block re-stating them here.
+   *
+   * The one gap: base-nova's card uses `rounded-xl`, and Figma's scale stops
+   * at lg. Pointed at lg rather than left on Tailwind's 0.75rem default, so
+   * every radius in the UI traces back to a Figma token. */
+  --radius-xl: var(--radius-lg);
+
+  /* == Typography ========================================================
+   * Figma gives the family name only. The fallback stack is ours: Outfit is
+   * not currently loaded anywhere (no @font-face, no stylesheet link), so
+   * today every glyph comes from the system font and this quietly degrades
+   * rather than breaking. */
+  --font-sans:
+    var(--font-family-sans), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Expose the roles above to Tailwind as utilities: `bg-primary`,
+ * `text-muted-foreground`, `border-border`, and so on.
+ *
+ * `inline` tells Tailwind to inline the var() reference rather than resolve it
+ * to a literal at build time. With a single theme nothing depends on that
+ * today, but it keeps the chain token -> role -> utility live, so a Figma
+ * change flows through on the next `npm run tokens` without a rebuild of
+ * anything else. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* WCAG 2.2 2.5.8 Target Size (Minimum) is 24x24, which base-nova already
+   * clears at 32px. 44x44 is what a thumb actually needs — and it only earns
+   * its space where the pointer IS a thumb, so this is scoped to coarse
+   * pointers. Enlarging controls for a mouse would cost density and buy
+   * nothing.
+   *
+   * `pointer: coarse` is the primary input device: phones and tablets match,
+   * desktop does not. Verified in all three Playwright projects.
+   *
+   * min-height beats the component's own `h-8` and min-width catches the
+   * icon-only sizes, which are square and would otherwise stay 32 or 24 wide.
+   * Both are applied from here rather than in the component, so
+   * src/components/ui/ stays unmodified.
+   *
+   * `a` is deliberately absent. An inline link in a sentence is exempt from
+   * 2.5.8, and forcing 44px on one would wreck the line box. A link that is
+   * really a target should carry role="button" or data-slot="button".
+   *
+   * OPTING OUT
+   * ----------
+   * A control declines the 44px floor by carrying data-target="compact",
+   * which keeps it at its natural 32px. That has to be typed into the markup
+   * on purpose — it is never a default and is never inferred from a variant
+   * name, so `size="sm"` does not opt anything out. Opting out costs 12px,
+   * not a drop to the 24px legal minimum: Playwright asserts >=44px for
+   * everything without the attribute and >=32px for everything with it.
+   *
+   * It is for secondary, non-critical controls — filter chips, segmented
+   * controls, tag dismiss buttons. Never primary actions, form fields or
+   * navigation. See CLAUDE.md. */
+  @media (pointer: coarse) {
+    :is(
+      [data-slot='button'],
+      button,
+      select,
+      textarea,
+      input:not([type='hidden']),
+      [role='button']
+    ):not([data-target='compact']) {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* WCAG 2.2 2.4.11/2.4.13 — a focus ring that is always thick enough and
+   * never sits flush against the element it is marking. Both sizes come from
+   * Figma's Size collection, so the ring is a design decision like any other.
+   *
+   * This is the baseline for everything that does not override it. The
+   * vendored base-nova components DO override it: they carry an `outline-none`
+   * utility and draw their own `focus-visible:ring-*` instead. Utilities
+   * outrank `@layer base`, so on a button you see their ring, and on a link
+   * you see this outline. Both are visible indicators; they are just drawn by
+   * different layers, and `ui/` stays unmodified. */
+  :focus-visible {
+    outline: var(--size-focus-ring) solid var(--ring);
+    outline-offset: var(--size-focus-offset);
+  }
+}

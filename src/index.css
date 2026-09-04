@@ -1,0 +1,12 @@
+/* The single stylesheet the app loads. Order matters:
+ *
+ *   1. Tailwind itself
+ *   2. tw-animate-css   — animation utilities newer shadcn components expect
+ *   3. tokens.css       — GENERATED primitives from Figma (never hand-edited)
+ *   4. theme.css        — our bridge: what those primitives MEAN
+ *
+ * Tokens must load before the theme, because the theme refers to them. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./tokens/tokens.css";
+@import "./styles/theme.css";
