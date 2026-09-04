@@ -33,12 +33,24 @@ const TEXT_PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['secondary-foreground', 'secondary'],
   ['accent-foreground', 'accent'],
   ['destructive-foreground', 'destructive'],
+  ['confirmed-foreground', 'confirmed'],
+  ['pending-foreground', 'pending'],
+  ['cancelled-foreground', 'cancelled'],
+  ['in-progress-foreground', 'in-progress'],
 ]
 
 // Pairs that are never text, but do have to be perceivable as UI.
 const NON_TEXT_PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['input', 'background'],
   ['ring', 'background'],
+
+  /* A status chip has to be findable as an object, not just legible once
+   * you've found it. Its fill carries the meaning, so it needs 3:1 against
+   * the page the way any other non-text UI does. */
+  ['confirmed', 'background'],
+  ['pending', 'background'],
+  ['cancelled', 'background'],
+  ['in-progress', 'background'],
 ]
 
 describe.each([':root', '.dark'] as const)('%s theme', (scope) => {

@@ -43,6 +43,27 @@
   --destructive: var(--color-danger-600);
   --destructive-foreground: var(--color-ink-0);
 
+  /* Booking status. These are first-class roles, NOT aliases of success /
+   * warning / destructive, even though three of them borrow the same
+   * primitives today.
+   *
+   * A cancelled booking and a failed form field are different things that
+   * happen to both be red right now. Giving them one role would mean
+   * untangling them across every booking surface the day they diverge —
+   * which is a design decision waiting to happen, not a hypothetical.
+   * Separate roles cost one line each now and nothing later.
+   *
+   * Each is a solid chip surface with text on top, so both halves are in the
+   * contrast matrix. */
+  --confirmed: var(--color-success-600);
+  --confirmed-foreground: var(--color-ink-0);
+  --pending: var(--color-warning-600);
+  --pending-foreground: var(--color-ink-0);
+  --cancelled: var(--color-danger-600);
+  --cancelled-foreground: var(--color-ink-0);
+  --in-progress: var(--color-brand-600);
+  --in-progress-foreground: var(--color-ink-0);
+
   /* --border is decorative separation; --input is a control boundary and so
    * has to clear 3:1 on its own (WCAG 1.4.11). They are deliberately
    * different values — do not collapse them into one. */
@@ -70,6 +91,17 @@
   --accent-foreground: var(--color-ink-50);
   --destructive: var(--color-danger-400);
   --destructive-foreground: var(--color-ink-950);
+
+  /* Status chips flip to the 400 ramp for the same reason everything else
+   * does: a 600 that reads as saturated on white goes muddy on ink-950. */
+  --confirmed: var(--color-success-400);
+  --confirmed-foreground: var(--color-ink-950);
+  --pending: var(--color-warning-400);
+  --pending-foreground: var(--color-ink-950);
+  --cancelled: var(--color-danger-400);
+  --cancelled-foreground: var(--color-ink-950);
+  --in-progress: var(--color-brand-400);
+  --in-progress-foreground: var(--color-ink-950);
 
   --border: var(--color-ink-800);
   --input: var(--color-ink-400);
@@ -99,6 +131,14 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-confirmed: var(--confirmed);
+  --color-confirmed-foreground: var(--confirmed-foreground);
+  --color-pending: var(--pending);
+  --color-pending-foreground: var(--pending-foreground);
+  --color-cancelled: var(--cancelled);
+  --color-cancelled-foreground: var(--cancelled-foreground);
+  --color-in-progress: var(--in-progress);
+  --color-in-progress-foreground: var(--in-progress-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
