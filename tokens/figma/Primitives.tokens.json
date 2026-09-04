@@ -211,28 +211,6 @@
         }
       }
     },
-    "Size": {
-      "Focus Ring": {
-        "$type": "number",
-        "$value": 3,
-        "$extensions": {
-          "com.figma.variableId": "VariableID:2010:5342",
-          "com.figma.scopes": [
-            "ALL_SCOPES"
-          ]
-        }
-      },
-      "Focus Offset": {
-        "$type": "number",
-        "$value": 2,
-        "$extensions": {
-          "com.figma.variableId": "VariableID:2010:5343",
-          "com.figma.scopes": [
-            "ALL_SCOPES"
-          ]
-        }
-      }
-    },
     "Umber": {
       "50": {
         "$type": "color",
@@ -3557,6 +3535,28 @@
         "com.figma.variableId": "VariableID:160:5958",
         "com.figma.scopes": [
           "FONT_SIZE"
+        ]
+      }
+    }
+  },
+  "Size": {
+    "Focus Ring": {
+      "$type": "number",
+      "$value": 3,
+      "$extensions": {
+        "com.figma.variableId": "VariableID:2010:5342",
+        "com.figma.scopes": [
+          "ALL_SCOPES"
+        ]
+      }
+    },
+    "Focus Offset": {
+      "$type": "number",
+      "$value": 2,
+      "$extensions": {
+        "com.figma.variableId": "VariableID:2010:5343",
+        "com.figma.scopes": [
+          "ALL_SCOPES"
         ]
       }
     }

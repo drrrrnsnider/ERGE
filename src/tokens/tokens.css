@@ -29,10 +29,6 @@
   --color-obsidian-900: #181B1B;
   --color-obsidian-950: #0D1010;
 
-  /* Color/Size */
-  --color-size-focus-ring: 0.1875rem;
-  --color-size-focus-offset: 0.125rem;
-
   /* Color/Umber */
   --color-umber-50: #FAFAF9;
   --color-umber-100: #F5F5F4;
@@ -358,6 +354,12 @@
 
   /* Font Size/42 */
   --font-size-42: 2.625rem;
+
+  /* Size/Focus Ring */
+  --size-focus-ring: 0.1875rem;
+
+  /* Size/Focus Offset */
+  --size-focus-offset: 0.125rem;
 
   /* == SEMANTIC ============================================
    * Mode: Dark
