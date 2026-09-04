@@ -1,82 +1,392 @@
-/* -----------------------------------------------------------------------------
- * GENERATED FILE — DO NOT EDIT BY HAND
- * -----------------------------------------------------------------------------
- * Source:      design/tokens.figma.json  (DTCG format, exported from Figma)
- * Transform:   one-way, Figma -> CSS, never back
- * Status:      PLACEHOLDER VALUES. The transform is not built yet and there is
- *              no Figma export yet — see src/tokens/README.md. The values below
- *              are stand-ins chosen to pass WCAG AA so the app is usable now;
- *              the first real export replaces this file wholesale.
+/* ---------------------------------------------------------------
+ * GENERATED FILE — DO NOT EDIT
  *
- * Any edit you make here is destroyed the next time the transform runs.
- * To change a value, change it in Figma and re-export.
+ * Source: Figma variables, exported as DTCG JSON.
+ * Regenerate with `npm run tokens`.
  *
- * These are PRIMITIVES ONLY — raw scale values with no meaning attached.
- * "Which grey is a disabled label?" is a semantic question, and semantic
- * decisions live in src/styles/theme.css, not here.
- * -------------------------------------------------------------------------- */
+ * Any change made here is destroyed by the next export. To change a
+ * value, change it in Figma. To change what a value MEANS, edit
+ * src/styles/theme.css instead.
+ * ------------------------------------------------------------- */
 
-@theme {
-  /* --- Colour: ink (neutral ramp) ---------------------------------------- */
-  --color-ink-0: #ffffff;
-  --color-ink-50: #f6f7f9;
-  --color-ink-100: #eceef1;
-  --color-ink-200: #dde1e6;
-  --color-ink-300: #c3cad3;
-  --color-ink-400: #97a1ad;
-  --color-ink-500: #68727f;
-  --color-ink-600: #545d69;
-  --color-ink-700: #3e454f;
-  --color-ink-800: #272c33;
-  --color-ink-900: #15181d;
-  --color-ink-950: #0b0d10;
+:root {
+  /* == PRIMITIVES ==========================================
+   * Raw values. Deliberately outside @theme so Tailwind does
+   * not generate utilities for them — components must go
+   * through the semantic roles in theme.css, never straight
+   * to a primitive. */
 
-  /* --- Colour: brand ------------------------------------------------------ */
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #2f80ed;
-  --color-brand-600: #1266d6;
-  --color-brand-700: #0f52ab;
-  --color-brand-800: #10457f;
-  --color-brand-900: #123a66;
+  /* Color/Obsidian */
+  --color-obsidian-50: #FAFAFA;
+  --color-obsidian-100: #F4F5F5;
+  --color-obsidian-200: #E4E7E7;
+  --color-obsidian-300: #D4D8D8;
+  --color-obsidian-400: #A1AAAA;
+  --color-obsidian-500: #717A7A;
+  --color-obsidian-600: #525B5B;
+  --color-obsidian-700: #3F4646;
+  --color-obsidian-800: #272A2A;
+  --color-obsidian-900: #181B1B;
+  --color-obsidian-950: #0D1010;
 
-  /* --- Colour: status ----------------------------------------------------- */
-  --color-success-400: #34b47f;
-  --color-success-500: #12855b;
-  --color-success-600: #0d6b49;
-  --color-warning-400: #e0a800;
-  --color-warning-500: #96590a;
-  --color-warning-600: #7a4708;
-  --color-danger-400: #f97066;
-  --color-danger-500: #d92d20;
-  --color-danger-600: #b42318;
+  /* Color/Umber */
+  --color-umber-50: #FAFAF9;
+  --color-umber-100: #F5F5F4;
+  --color-umber-200: #E6E6E5;
+  --color-umber-300: #D5D4D2;
+  --color-umber-400: #A6A4A0;
+  --color-umber-450: #908D88;
+  --color-umber-500: #76736E;
+  --color-umber-600: #555450;
+  --color-umber-700: #42413E;
+  --color-umber-800: #282625;
+  --color-umber-900: #1A1917;
+  --color-umber-950: #0B0B0A;
 
-  /* --- Spacing ------------------------------------------------------------
-   * Tailwind derives its whole spacing scale from this one step, so `p-4`
-   * resolves to calc(0.25rem * 4) = 1rem. Change the step, move everything. */
-  --spacing: 0.25rem;
+  /* Color/Copper */
+  --color-copper-50: #FAF6F2;
+  --color-copper-100: #F4EBE0;
+  --color-copper-200: #E8D5C0;
+  --color-copper-300: #D9B898;
+  --color-copper-400: #C8936A;
+  --color-copper-500: #BE7C51;
+  --color-copper-600: #B06946;
+  --color-copper-700: #93533B;
+  --color-copper-800: #774535;
+  --color-copper-900: #603A2E;
+  --color-copper-950: #331D17;
 
-  /* --- Typography --------------------------------------------------------- */
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  /* Color/Champagne */
+  --color-champagne-50: #FCF7F0;
+  --color-champagne-100: #F8ECDC;
+  --color-champagne-200: #F1D7B7;
+  --color-champagne-300: #EBC49A;
+  --color-champagne-400: #DD965A;
+  --color-champagne-500: #D67B39;
+  --color-champagne-600: #C7642F;
+  --color-champagne-700: #A64E28;
+  --color-champagne-800: #853F27;
+  --color-champagne-900: #6C3522;
+  --color-champagne-950: #3A1910;
 
-  /* --- Accessibility: WCAG 2.2 AA ----------------------------------------
-   * These are not decoration. They are the enforcement points.
-   *
-   * 2.5.8 Target Size (Minimum) requires interactive targets of at least
-   * 24x24 CSS px. This app is mobile-first, so the comfortable token is the
-   * default and the 24px floor exists only for genuinely dense contexts.
-   *
-   * 2.4.11/2.4.13 Focus Appearance requires a focus indicator that is at
-   * least 2px thick and hits 3:1 against adjacent colours. */
-  --size-target-min: 24px;
-  --size-target-comfortable: 44px;
-  --size-focus-ring: 3px;
-  --size-focus-offset: 2px;
+  /* Color/Carnation */
+  --color-carnation-50: #FEF2F2;
+  --color-carnation-100: #FDE3E3;
+  --color-carnation-200: #FCCCCC;
+  --color-carnation-300: #F9A8A8;
+  --color-carnation-400: #F26B6B;
+  --color-carnation-500: #E94A4A;
+  --color-carnation-600: #D52D2D;
+  --color-carnation-700: #B32222;
+  --color-carnation-800: #942020;
+  --color-carnation-900: #7B2121;
+  --color-carnation-950: #430C0C;
+
+  /* Color/Rose */
+  --color-rose-50: #FEF3F2;
+  --color-rose-100: #FEE5E2;
+  --color-rose-200: #FED0CA;
+  --color-rose-300: #FCAFA5;
+  --color-rose-400: #F9988B;
+  --color-rose-500: #EF5844;
+  --color-rose-600: #DC3C26;
+  --color-rose-700: #B92F1C;
+  --color-rose-800: #992A1B;
+  --color-rose-900: #7F291D;
+  --color-rose-950: #45110A;
+
+  /* Color/Orchid */
+  --color-orchid-50: #FEF5FE;
+  --color-orchid-100: #FBEAFD;
+  --color-orchid-200: #F8D3FB;
+  --color-orchid-300: #F5B1F6;
+  --color-orchid-400: #EE70EE;
+  --color-orchid-500: #E352E3;
+  --color-orchid-600: #C732C4;
+  --color-orchid-700: #A5269F;
+  --color-orchid-800: #872181;
+  --color-orchid-900: #6F2069;
+  --color-orchid-950: #490944;
+
+  /* Color/Poppy */
+  --color-poppy-50: #FEF7EE;
+  --color-poppy-100: #FDECD7;
+  --color-poppy-200: #FAD5AE;
+  --color-poppy-300: #F7B77A;
+  --color-poppy-400: #F49A57;
+  --color-poppy-500: #EF7020;
+  --color-poppy-600: #E05616;
+  --color-poppy-700: #BA4014;
+  --color-poppy-800: #943418;
+  --color-poppy-900: #772D17;
+  --color-poppy-950: #40140A;
+
+  /* Color/Grass */
+  --color-grass-50: #F3FBF2;
+  --color-grass-100: #E3F6E2;
+  --color-grass-200: #C8ECC6;
+  --color-grass-300: #9CDC99;
+  --color-grass-400: #5CBE57;
+  --color-grass-500: #44A83F;
+  --color-grass-600: #338A2F;
+  --color-grass-700: #2B6D28;
+  --color-grass-800: #265724;
+  --color-grass-900: #20481F;
+  --color-grass-950: #0C270C;
+
+  /* Color/Lilac */
+  --color-lilac-50: #F9F6FE;
+  --color-lilac-100: #F2EBFC;
+  --color-lilac-200: #E7DBF9;
+  --color-lilac-300: #D4BEF4;
+  --color-lilac-400: #B994EC;
+  --color-lilac-500: #A474E3;
+  --color-lilac-600: #874CD1;
+  --color-lilac-700: #7239B7;
+  --color-lilac-800: #613396;
+  --color-lilac-900: #502A79;
+  --color-lilac-950: #341457;
+
+  /* Color/Glass */
+  --color-glass-50: #F2FBF9;
+  --color-glass-100: #D2F5EE;
+  --color-glass-200: #A4EBDE;
+  --color-glass-300: #6FD9C9;
+  --color-glass-400: #46C1B2;
+  --color-glass-500: #28A497;
+  --color-glass-600: #1E837A;
+  --color-glass-700: #1C6963;
+  --color-glass-800: #1A5551;
+  --color-glass-900: #1A4744;
+  --color-glass-950: #092A29;
+
+  /* Color/Indigo */
+  --color-indigo-50: #F0F6FD;
+  --color-indigo-100: #E3EEFC;
+  --color-indigo-200: #CDDFF8;
+  --color-indigo-300: #AEC8F3;
+  --color-indigo-400: #8DAAEC;
+  --color-indigo-500: #718BE3;
+  --color-indigo-600: #5A6DD6;
+  --color-indigo-700: #4757BB;
+  --color-indigo-800: #3C4A97;
+  --color-indigo-900: #364279;
+  --color-indigo-950: #202646;
+
+  /* Color/Iris */
+  --color-iris-50: #F2F9FD;
+  --color-iris-100: #E3F2FB;
+  --color-iris-200: #C1E4F6;
+  --color-iris-300: #8BCEEE;
+  --color-iris-400: #57BAE5;
+  --color-iris-500: #269DD1;
+  --color-iris-600: #177EB2;
+  --color-iris-700: #146590;
+  --color-iris-800: #155577;
+  --color-iris-900: #174763;
+  --color-iris-950: #0F2E42;
+
+  /* Color/Olive */
+  --color-olive-50: #F9FDE9;
+  --color-olive-100: #EFFCC8;
+  --color-olive-200: #E1F897;
+  --color-olive-300: #D0F35A;
+  --color-olive-400: #C5EC38;
+  --color-olive-500: #AED614;
+  --color-olive-600: #95B10E;
+  --color-olive-700: #7A8B0E;
+  --color-olive-800: #667013;
+  --color-olive-900: #596015;
+  --color-olive-950: #333707;
+
+  /* Spacing/0 */
+  --spacing-0: 0;
+
+  /* Spacing/1 */
+  --spacing-1: 0.25rem;
+
+  /* Spacing/2 */
+  --spacing-2: 0.5rem;
+
+  /* Spacing/3 */
+  --spacing-3: 0.75rem;
+
+  /* Spacing/4 */
+  --spacing-4: 1rem;
+
+  /* Spacing/5 */
+  --spacing-5: 1.25rem;
+
+  /* Spacing/6 */
+  --spacing-6: 1.5rem;
+
+  /* Spacing/7 */
+  --spacing-7: 1.75rem;
+
+  /* Spacing/8 */
+  --spacing-8: 2rem;
+
+  /* Spacing/9 */
+  --spacing-9: 2.25rem;
+
+  /* Spacing/10 */
+  --spacing-10: 2.5rem;
+
+  /* Spacing/11 */
+  --spacing-11: 2.75rem;
+
+  /* Spacing/12 */
+  --spacing-12: 3rem;
+
+  /* Spacing/14 */
+  --spacing-14: 3.5rem;
+
+  /* Spacing/16 */
+  --spacing-16: 4rem;
+
+  /* Spacing/20 */
+  --spacing-20: 5rem;
+
+  /* Spacing/24 */
+  --spacing-24: 6rem;
+
+  /* Spacing/28 */
+  --spacing-28: 7rem;
+
+  /* Spacing/32 */
+  --spacing-32: 8rem;
+
+  /* Spacing/36 */
+  --spacing-36: 9rem;
+
+  /* Spacing/40 */
+  --spacing-40: 10rem;
+
+  /* Spacing/44 */
+  --spacing-44: 11rem;
+
+  /* Spacing/48 */
+  --spacing-48: 12rem;
+
+  /* Spacing/52 */
+  --spacing-52: 13rem;
+
+  /* Spacing/56 */
+  --spacing-56: 14rem;
+
+  /* Spacing/60 */
+  --spacing-60: 15rem;
+
+  /* Spacing/64 */
+  --spacing-64: 16rem;
+
+  /* Spacing/72 */
+  --spacing-72: 18rem;
+
+  /* Spacing/80 */
+  --spacing-80: 20rem;
+
+  /* Spacing/96 */
+  --spacing-96: 24rem;
+
+  /* Spacing/px */
+  --spacing-px: 0.0625rem;
+
+  /* Spacing/0-5 */
+  --spacing-0-5: 0.125rem;
+
+  /* Spacing/1-5 */
+  --spacing-1-5: 0.375rem;
+
+  /* Spacing/2-5 */
+  --spacing-2-5: 0.625rem;
+
+  /* Spacing/3-5 */
+  --spacing-3-5: 0.875rem;
+
+  /* Radius/None */
+  --radius-none: 0;
+
+  /* Radius/Sm */
+  --radius-sm: 0.25rem;
+
+  /* Radius/Md */
+  --radius-md: 1rem;
+
+  /* Radius/Lg */
+  --radius-lg: 1.5rem;
+
+  /* Radius/Full */
+  --radius-full: 62.4375rem;
+
+  /* Font Family/Sans */
+  --font-family-sans: Outfit;
+
+  /* Font Family/Serif */
+  --font-family-serif: Ovo;
+
+  /* Font Size/11 */
+  --font-size-11: 0.6875rem;
+
+  /* Font Size/12 */
+  --font-size-12: 0.75rem;
+
+  /* Font Size/13 */
+  --font-size-13: 0.8125rem;
+
+  /* Font Size/14 */
+  --font-size-14: 0.875rem;
+
+  /* Font Size/16 */
+  --font-size-16: 1rem;
+
+  /* Font Size/18 */
+  --font-size-18: 1.125rem;
+
+  /* Font Size/21 */
+  --font-size-21: 1.3125rem;
+
+  /* Font Size/27 */
+  --font-size-27: 1.6875rem;
+
+  /* Font Size/32 */
+  --font-size-32: 2rem;
+
+  /* Font Size/42 */
+  --font-size-42: 2.625rem;
+
+  /* == SEMANTIC ============================================
+   * Mode: Dark
+   * Each of these points at a primitive, mirroring the alias
+   * structure in Figma. */
+
+  /* Color/Surface */
+  --color-surface-base: var(--color-obsidian-950);
+  --color-surface-card: var(--color-umber-900);
+  --color-surface-elevated: var(--color-umber-800);
+
+  /* Color/Text */
+  --color-text-primary: var(--color-copper-100);
+  --color-text-secondary: var(--color-champagne-300);
+  --color-text-muted: var(--color-umber-450);
+  --color-text-disabled: var(--color-umber-600);
+  --color-text-inverse: var(--color-obsidian-950);
+
+  /* Color/Border */
+  --color-border-default: var(--color-umber-800);
+  --color-border-brighter: var(--color-umber-700);
+  --color-border-input: var(--color-umber-500);
+  --color-border-subtle-focus: color-mix(in srgb, var(--color-copper-400) 25%, transparent);
+  --color-border-focus: var(--color-copper-400);
+  --color-border-transparent: color-mix(in srgb, var(--color-umber-800) 0%, transparent);
+
+  /* Color/Action */
+  --color-action-primary: var(--color-copper-400);
+  --color-action-inverse: var(--color-copper-100);
+
+  /* Color/Feedback */
+  --color-feedback-error: var(--color-carnation-400);
+  --color-feedback-success: var(--color-grass-400);
+  --color-feedback-warning: var(--color-poppy-400);
+  --color-feedback-info: var(--color-iris-400);
 }

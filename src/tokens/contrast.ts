@@ -13,7 +13,10 @@ import { resolve } from 'node:path'
 const TOKENS = resolve(process.cwd(), 'src/tokens/tokens.css')
 const THEME = resolve(process.cwd(), 'src/styles/theme.css')
 
-/** Every `--color-*: #rrggbb` declared in the generated primitives. */
+/**
+ * Every `--color-*: #rrggbb` declared in the generated primitives — the raw
+ * ramps (obsidian-950, copper-400) that everything else bottoms out at.
+ */
 export function readPrimitives(): Record<string, string> {
   const css = readFileSync(TOKENS, 'utf8')
   const out: Record<string, string> = {}
@@ -26,25 +29,53 @@ export function readPrimitives(): Record<string, string> {
 }
 
 /**
- * Role -> hex for one theme. `scope` is the CSS selector whose block we read,
- * so ':root' gives light mode and '.dark' gives dark mode.
+ * The Figma semantic layer: `--color-surface-base: var(--color-obsidian-950)`
+ * resolved down to `#0D1010`.
+ *
+ * This is the indirection that makes the two-layer contract real — a semantic
+ * token is never a literal, it always points at a primitive. Tokens declared
+ * as `color-mix(...)` (the translucent focus and transparent border) are
+ * skipped: they have no flat hex, so WCAG contrast against them is not
+ * meaningful without knowing what they sit on.
  */
-export function readRoles(scope: ':root' | '.dark'): Record<string, string> {
-  const css = readFileSync(THEME, 'utf8')
+export function readSemantic(): Record<string, string> {
+  const css = readFileSync(TOKENS, 'utf8')
   const primitives = readPrimitives()
+  const out: Record<string, string> = {}
+  for (const [, name, ref] of css.matchAll(
+    /(--color-[\w-]+)\s*:\s*var\((--color-[\w-]+)\)\s*;/g,
+  )) {
+    const hex = primitives[ref!]
+    if (!hex) throw new Error(`${name} points at ${ref}, which is not a token`)
+    out[name!] = hex
+  }
+  return out
+}
 
-  // Grab just this selector's block. The theme file has no nested braces
-  // inside :root/.dark, so matching to the first '}' is sufficient.
-  const block = new RegExp(`\\${scope}\\s*\\{([^}]*)\\}`).exec(css)?.[1]
-  if (!block) throw new Error(`No ${scope} block found in theme.css`)
+/**
+ * shadcn role -> hex, read out of theme.css's `:root` block.
+ *
+ * Dark only: there is one theme now, so there is one block. Each role points
+ * at a semantic token (`--primary: var(--color-action-primary)`), which in
+ * turn points at a primitive — so this resolves two hops, not one.
+ */
+export function readRoles(): Record<string, string> {
+  const css = readFileSync(THEME, 'utf8')
+  const semantic = readSemantic()
+
+  // Grab just the :root block. The theme file has no nested braces inside it,
+  // so matching to the first '}' is sufficient.
+  const block = /:root\s*\{([^}]*)\}/.exec(css)?.[1]
+  if (!block) throw new Error('No :root block found in theme.css')
 
   const out: Record<string, string> = {}
   for (const [, role, ref] of block.matchAll(
     /(--[\w-]+)\s*:\s*var\((--color-[\w-]+)\)\s*;/g,
   )) {
-    const hex = primitives[ref!]
-    if (!hex) throw new Error(`${role} points at ${ref}, which is not a token`)
-    out[role!.slice(2)] = hex
+    const hex = semantic[ref!]
+    // Roles may legitimately point at non-colour tokens (radius, font family).
+    // Only colour roles belong in the contrast matrix.
+    if (hex) out[role!.slice(2)] = hex
   }
   return out
 }

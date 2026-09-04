@@ -1,119 +1,111 @@
 /* -----------------------------------------------------------------------------
  * THEME BRIDGE — hand-written, safe to edit
  * -----------------------------------------------------------------------------
- * This is the only file that decides what a token MEANS.
+ * This file translates between two vocabularies:
  *
- *   src/tokens/tokens.css   generated primitives   "brand-600 is #1266d6"
- *   src/styles/theme.css    this file             "primary IS brand-600"
- *   src/components/ui/*     shadcn, unmodified    "the button uses primary"
+ *   src/tokens/tokens.css   GENERATED from Figma   "Surface/Base is obsidian-950"
+ *   src/styles/theme.css    this file              "background IS Surface/Base"
+ *   src/components/ui/*     shadcn, unmodified     "the card uses background"
  *
- * Keeping this layer separate is what lets us re-run `npx shadcn@latest add`
- * without ever hitting a merge conflict: shadcn components only ever refer to
- * role names (primary, muted-foreground, ring), and every role name is
- * assigned a value here. Retokenising the design system means editing this
- * file, not editing components.
+ * Note what changed: this file no longer *decides* colour. The Figma semantic
+ * layer (Surface/*, Text/*, Border/*, Action/*, Feedback/*) already holds the
+ * decisions. All this file does is map shadcn's role names onto them, which is
+ * what keeps src/components/ui/ byte-identical to upstream and lets
+ * `npx shadcn@latest add` run without merge conflicts.
+ *
+ * To change how something looks, change the variable in Figma and re-run
+ * `npm run tokens`. Change this file only to re-point a role at a different
+ * token.
+ *
+ * DARK ONLY
+ * ---------
+ * There is one theme. The tokens are exported from Figma's Dark mode, and
+ * <html class="dark"> is hardcoded in index.html. There is deliberately no
+ * light `:root` / `.dark` pair any more — the tokens *are* the theme.
  * -------------------------------------------------------------------------- */
 
-/* Dark mode is driven by a `dark` class on <html>, not by the OS setting
- * alone, so an in-app theme switch can override the system preference. */
+/* Kept, despite being a single-theme app, because the vendored base-nova
+ * components ship nine `dark:` utilities of their own (dark:bg-input/30,
+ * dark:hover:bg-muted/50, dark:bg-destructive/20 and friends) that describe
+ * their dark appearance. Those have to resolve.
+ *
+ * Deleting this line would NOT delete those utilities — it would hand them
+ * back to Tailwind's built-in `dark:`, which keys off the OS `prefers-color-
+ * scheme` setting. A visitor whose system is in light mode would then get the
+ * light-mode half of every vendored component painted onto our dark surfaces.
+ * Binding the variant to the class instead, and hardcoding that class, makes
+ * them unconditional. */
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
+  /* == shadcn roles -> Figma semantic tokens =============================
+   * Left side is upstream shadcn's vocabulary; right side is ours. Several
+   * roles collapse onto Surface/Elevated — shadcn distinguishes popover,
+   * secondary, muted and accent, our system does not, and pretending
+   * otherwise would mean inventing tokens Figma has not defined. */
 
-  --background: var(--color-ink-0);
-  --foreground: var(--color-ink-900);
+  --background: var(--color-surface-base);
+  --foreground: var(--color-text-primary);
 
-  --card: var(--color-ink-0);
-  --card-foreground: var(--color-ink-900);
-  --popover: var(--color-ink-0);
-  --popover-foreground: var(--color-ink-900);
+  --card: var(--color-surface-card);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-surface-elevated);
+  --popover-foreground: var(--color-text-primary);
 
-  --primary: var(--color-brand-600);
-  --primary-foreground: var(--color-ink-0);
-  --secondary: var(--color-ink-100);
-  --secondary-foreground: var(--color-ink-800);
-  --muted: var(--color-ink-100);
-  /* ink-600, not ink-500: secondary text has to clear 4.5:1 against the muted
-   * surface it sits on, not just against the page background. ink-500 passes
-   * on white (4.88) and fails on --muted (4.20). */
-  --muted-foreground: var(--color-ink-600);
-  --accent: var(--color-ink-100);
-  --accent-foreground: var(--color-ink-800);
-  --destructive: var(--color-danger-600);
-  --destructive-foreground: var(--color-ink-0);
+  --primary: var(--color-action-primary);
+  /* Text/Inverse, NOT Action/Inverse. Action/Inverse (copper-100) on
+   * Action/Primary (copper-400) is 2.27:1 and fails AA outright; Text/Inverse
+   * (obsidian-950) on the same fill is 7.13:1. The names suggest otherwise,
+   * so this pairing is deliberate and asserted in tokens.test.ts. */
+  --primary-foreground: var(--color-text-inverse);
 
-  /* Booking status. These are first-class roles, NOT aliases of success /
-   * warning / destructive, even though three of them borrow the same
-   * primitives today.
-   *
-   * A cancelled booking and a failed form field are different things that
-   * happen to both be red right now. Giving them one role would mean
-   * untangling them across every booking surface the day they diverge —
-   * which is a design decision waiting to happen, not a hypothetical.
-   * Separate roles cost one line each now and nothing later.
-   *
-   * Each is a solid chip surface with text on top, so both halves are in the
-   * contrast matrix. */
-  --confirmed: var(--color-success-600);
-  --confirmed-foreground: var(--color-ink-0);
-  --pending: var(--color-warning-600);
-  --pending-foreground: var(--color-ink-0);
-  --cancelled: var(--color-danger-600);
-  --cancelled-foreground: var(--color-ink-0);
-  --in-progress: var(--color-brand-600);
-  --in-progress-foreground: var(--color-ink-0);
+  --secondary: var(--color-surface-elevated);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-surface-elevated);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-surface-elevated);
+  --accent-foreground: var(--color-text-primary);
+
+  --destructive: var(--color-feedback-error);
+  --destructive-foreground: var(--color-text-inverse);
 
   /* --border is decorative separation; --input is a control boundary and so
    * has to clear 3:1 on its own (WCAG 1.4.11). They are deliberately
-   * different values — do not collapse them into one. */
-  --border: var(--color-ink-200);
-  --input: var(--color-ink-500);
-  --ring: var(--color-brand-600);
-}
+   * different tokens — do not collapse them into one. */
+  --border: var(--color-border-default);
+  --input: var(--color-border-input);
+  --ring: var(--color-border-focus);
 
-.dark {
-  --background: var(--color-ink-950);
-  --foreground: var(--color-ink-50);
+  /* == Radius ============================================================
+   * Figma exports Radius/none|sm|md|lg|full as --radius-* directly into
+   * :root. Those names are exactly the ones Tailwind's rounded-* utilities
+   * read, and tokens.css is unlayered while Tailwind's defaults sit in
+   * `@layer theme`, so the Figma values win the cascade automatically. That
+   * is why there is no radius block re-stating them here.
+   *
+   * The one gap: base-nova's card uses `rounded-xl`, and Figma's scale stops
+   * at lg. Pointed at lg rather than left on Tailwind's 0.75rem default, so
+   * every radius in the UI traces back to a Figma token. */
+  --radius-xl: var(--radius-lg);
 
-  --card: var(--color-ink-900);
-  --card-foreground: var(--color-ink-50);
-  --popover: var(--color-ink-900);
-  --popover-foreground: var(--color-ink-50);
-
-  --primary: var(--color-brand-400);
-  --primary-foreground: var(--color-ink-950);
-  --secondary: var(--color-ink-800);
-  --secondary-foreground: var(--color-ink-50);
-  --muted: var(--color-ink-800);
-  --muted-foreground: var(--color-ink-400);
-  --accent: var(--color-ink-800);
-  --accent-foreground: var(--color-ink-50);
-  --destructive: var(--color-danger-400);
-  --destructive-foreground: var(--color-ink-950);
-
-  /* Status chips flip to the 400 ramp for the same reason everything else
-   * does: a 600 that reads as saturated on white goes muddy on ink-950. */
-  --confirmed: var(--color-success-400);
-  --confirmed-foreground: var(--color-ink-950);
-  --pending: var(--color-warning-400);
-  --pending-foreground: var(--color-ink-950);
-  --cancelled: var(--color-danger-400);
-  --cancelled-foreground: var(--color-ink-950);
-  --in-progress: var(--color-brand-400);
-  --in-progress-foreground: var(--color-ink-950);
-
-  --border: var(--color-ink-800);
-  --input: var(--color-ink-400);
-  --ring: var(--color-brand-400);
+  /* == Typography ========================================================
+   * Figma gives the family name only. The fallback stack is ours: Outfit is
+   * not currently loaded anywhere (no @font-face, no stylesheet link), so
+   * today every glyph comes from the system font and this quietly degrades
+   * rather than breaking. */
+  --font-sans:
+    var(--font-family-sans), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Expose the roles above to Tailwind as utilities: `bg-primary`,
  * `text-muted-foreground`, `border-border`, and so on.
  *
- * `inline` is load-bearing. It tells Tailwind to inline the var() reference
- * rather than resolve it once at build time, which is what allows the .dark
- * block to actually take effect. Without it, dark mode silently does nothing. */
+ * `inline` tells Tailwind to inline the var() reference rather than resolve it
+ * to a literal at build time. With a single theme nothing depends on that
+ * today, but it keeps the chain token -> role -> utility live, so a Figma
+ * change flows through on the next `npm run tokens` without a rebuild of
+ * anything else. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -131,22 +123,9 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-confirmed: var(--confirmed);
-  --color-confirmed-foreground: var(--confirmed-foreground);
-  --color-pending: var(--pending);
-  --color-pending-foreground: var(--pending-foreground);
-  --color-cancelled: var(--cancelled);
-  --color-cancelled-foreground: var(--cancelled-foreground);
-  --color-in-progress: var(--in-progress);
-  --color-in-progress-foreground: var(--in-progress-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {
@@ -160,7 +139,14 @@
   }
 
   /* WCAG 2.2 2.4.11/2.4.13 — a focus ring that is always thick enough and
-   * never sits flush against the element it is marking. */
+   * never sits flush against the element it is marking.
+   *
+   * NOTE: --size-focus-ring and --size-focus-offset are not in the Figma
+   * export yet. Until Size/Focus Ring and Size/Focus Offset land in the
+   * Primitives collection and are re-exported, this shorthand is invalid and
+   * the global outline does not paint. Buttons still show a focus indicator
+   * (base-nova draws its own ring), but links — including the skip link — do
+   * not. Left as-is deliberately, pending that re-export. */
   :focus-visible {
     outline: var(--size-focus-ring) solid var(--ring);
     outline-offset: var(--size-focus-offset);

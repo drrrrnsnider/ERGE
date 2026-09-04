@@ -51,6 +51,48 @@ test.describe('accessibility', () => {
     expect(results.violations).toEqual([])
   })
 
+  /**
+   * The app is dark-only, and `<html class="dark">` is what makes that true.
+   * src/styles/theme.css binds Tailwind's `dark:` variant to that class, and
+   * the vendored base-nova components carry nine `dark:` utilities of their
+   * own. Drop the class and those stop matching — every surface, border and
+   * the outline button silently revert to light-mode styling on top of our
+   * dark tokens, with no light theme to fall back to.
+   *
+   * That failure is invisible to axe (it is a design regression, not a
+   * violation), so it gets its own assertion.
+   */
+  test('the dark class is present on <html>', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveClass(/\bdark\b/)
+  })
+
+  /**
+   * WCAG 2.2 2.5.8 Target Size (Minimum) — every interactive target is at
+   * least 24x24 CSS px.
+   *
+   * `sr-only` elements are excluded: the skip link measures 1x1 while hidden
+   * and only becomes a target once focused, which the test below covers.
+   */
+  test('interactive targets meet the 24px minimum', async ({ page }) => {
+    await page.goto('/')
+
+    const undersized = await page.evaluate(() => {
+      const selector =
+        'a, button, input, select, textarea, [role="button"], [role="link"]'
+      return [...document.querySelectorAll(selector)]
+        .filter((el) => !el.classList.contains('sr-only'))
+        .map((el) => {
+          const { width, height } = el.getBoundingClientRect()
+          const label = (el.textContent ?? '').trim().slice(0, 30)
+          return { label, width, height }
+        })
+        .filter(({ width, height }) => width < 24 || height < 24)
+    })
+
+    expect(undersized).toEqual([])
+  })
+
   test('the first Tab reaches the skip link', async ({ page }) => {
     await page.goto('/')
     await page.keyboard.press('Tab')

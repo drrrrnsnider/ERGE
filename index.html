@@ -1,5 +1,15 @@
 <!doctype html>
-<html lang="en">
+<!-- DARK ONLY. The `dark` class is load-bearing, not a preference.
+
+     The vendored base-nova components carry their own `dark:` utilities, and
+     src/styles/theme.css binds that variant to this class. Remove the class
+     and every one of those utilities stops matching: surfaces, borders and
+     the outline button all silently revert to their light-mode styling on top
+     of our dark tokens. There is no light theme to fall back to.
+
+     A Playwright test asserts this class is present, so deleting it fails the
+     suite instead of quietly changing every screen. -->
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -9,7 +19,9 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <meta name="color-scheme" content="light dark" />
+    <!-- Dark only, so the UA paints form controls, scrollbars and the
+         canvas dark too rather than flashing light on first paint. -->
+    <meta name="color-scheme" content="dark" />
     <meta
       name="description"
       content="Plan a trip as one itinerary: flights, hotels, restaurants, rideshare and events."
