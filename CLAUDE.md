@@ -60,16 +60,28 @@ There are three layers, and they have strict roles:
 | Bridge | `src/styles/theme.css` | `primary IS brand-600` | Yes — freely |
 | Components | `src/components/ui/*` | `the button uses primary` | Avoid — vendored |
 
-`tokens.css` is *meant* to be generated from Figma variables exported as DTCG
-JSON, one way: Figma → JSON → CSS.
+`tokens.css` is generated from Figma variables exported as DTCG JSON, one way:
+Figma → JSON → CSS. The pipeline is real and wired up:
 
-**That pipeline does not exist yet.** There is no `design/tokens.figma.json`
-(the path the file cites as its source), no transform script, and no Figma
-export. The values in there now are placeholders picked to pass WCAG AA so the
-app is usable — the file's own header says so.
+```bash
+npm run tokens         # tokens/figma/*.json  ->  src/tokens/tokens.css
+npm run tokens:check    # fails if the committed CSS is stale or hand-edited
+```
 
-Treat it as generated regardless. The first real export replaces the file
-wholesale, so anything hand-edited is destroyed the moment the pipeline lands.
+`tokens:check` runs first in `npm run verify`, so a hand-edit or a forgotten
+regeneration fails the build rather than surviving until someone notices. The
+error tells you to re-run `npm run tokens`, because editing the CSS is always
+the wrong fix — the next export destroys it.
+
+Inputs live in `tokens/figma/`: `Primitives.tokens.json` (the ramps and
+scales) and `Dark.tokens.json` (the semantic layer). Both are committed, so
+the CSS is reproducible from the repo alone.
+
+**The app is dark-only.** There is one theme — the Figma Dark mode export — and
+`<html class="dark">` is hardcoded in `index.html`. It is load-bearing, not a
+preference: the vendored base-nova components carry their own `dark:`
+utilities, and `theme.css` binds that variant to the class. A Playwright test
+fails if it is removed. There is no light theme to fall back to.
 
 ### Rules
 
@@ -95,14 +107,22 @@ A cancelled booking and a form validation error are different things that happen
 to both be red today. They will not stay the same colour, and collapsing them now
 means untangling them across every booking surface later.
 
-These exist in `theme.css` now, in both themes: each is a solid chip surface with
-a matching `-foreground`, so `bg-confirmed` / `text-confirmed-foreground`,
-`bg-in-progress`, and so on. All eight pairings are in the contrast matrix, plus
-each fill against the page background at 3:1 — a chip has to be findable as an
-object, not only legible once found.
+**They do not exist yet.** They were removed from `theme.css` and the contrast
+matrix during the move to the Figma export, because the export has no booking
+status semantics — its `Feedback` group is `success` / `warning` / `error` /
+`info`, which is a different vocabulary about system state, not about where a
+booking has got to.
 
-`cancelled` and `destructive` both point at `danger-600` today. That is the
-duplication working as designed, not a mistake to tidy up.
+Do not resurrect them by aliasing onto `Feedback/*`. That is the exact
+collapse this section exists to prevent: it would look right for as long as a
+cancelled booking and a validation error stay the same colour, and cost a
+migration across every booking surface on the day they diverge.
+
+The unblock is four `Status/*` variables in Figma pointing at whichever
+primitives are right, then `npm run tokens`. Each needs a fill and a matching
+`-foreground`, and both halves go in the contrast matrix, plus each fill
+against `Surface/Base` at 3:1 — a chip has to be findable as an object, not
+only legible once found.
 
 ## Component scope
 
@@ -133,23 +153,37 @@ looks like more work in the moment.
 Target: **WCAG 2.2 AA**. This is enforced at the token layer and verified by
 tests — it is a continuous practice, not a pre-launch audit.
 
-- Contrast is asserted in `src/tokens/tokens.test.ts`, in both light and dark.
+- Contrast is asserted in `src/tokens/tokens.test.ts` against the Figma
+  semantic tokens themselves, not shadcn's role names — the tokens are where
+  the decision lives. Dark only, since there is one theme.
 - Real-browser axe scans run in the Playwright suite.
 - **Any new colour role must be added to the contrast matrix.** A role that isn't
   tested isn't compliant.
 - Test each foreground against **the surface it actually sits on**, not just the
-  page background. This has already caught one real bug: `muted-foreground`
-  passed on white at 4.88:1 and failed on `--muted` at 4.20:1.
+  page background — Base, Card and Elevated. A pairing that clears AA on one
+  surface can fail on another. The tightest margin today is `Text/Muted` on
+  `Surface/Elevated` at **4.56:1**, six hundredths above the line: darkening
+  Elevated breaks it.
+- `Text/Disabled` is deliberately exempt. It measures 2.52 / 2.32 / 1.99 and
+  WCAG 1.4.3 exempts inactive controls. Do not "fix" it.
 - Focus indicators must be visible and offset (2.4.11, 2.4.13). The baseline is
-  global in `theme.css` — a 3px outline at 2px offset — so don't add a competing
-  one in our own components. The vendored shadcn primitives *do* ship their own
-  `focus-visible:` ring on top of it. That's upstream's, it layers with the
-  outline rather than replacing it, and it stays, because `ui/` stays unmodified.
-- Touch targets: 24×24 CSS px minimum (2.5.8), tokenised as `--size-target-min`;
-  prefer 44×44 (`--size-target-comfortable`) for anything used one-handed on a
-  phone. **The shadcn button does not meet that preference on its own** — the
-  base-nova default is 32px tall, and `xs` / `icon-xs` are exactly 24px, the bare
-  floor. Size anything thumb-operated explicitly instead of trusting the default.
+  global in `theme.css` — so don't add a competing one in our own components.
+  The vendored shadcn primitives *do* ship their own `focus-visible:` ring on
+  top of it. That's upstream's, it layers with the outline rather than
+  replacing it, and it stays, because `ui/` stays unmodified.
+- **Known gap: the global focus outline does not currently paint.** It reads
+  `--size-focus-ring` / `--size-focus-offset`, and the Figma export nests those
+  under `Color/Size`, so they generate as `--color-size-focus-ring` instead.
+  The shorthand is invalid and `outline-style` computes to `none`. Buttons
+  still show base-nova's own ring; links, including the skip link, show
+  nothing. Fix is in Figma: move `Size` to a top-level group, re-export,
+  `npm run tokens`. No code change needed.
+- Touch targets: 24×24 CSS px minimum (2.5.8), asserted in the Playwright
+  suite rather than tokenised — 24 and 44 are external constants, not design
+  decisions. `sr-only` elements are excluded: the skip link is 1×1 until
+  focused and only becomes a target then.
+  **The shadcn button does not meet 44px on its own** — the base-nova default
+  is 32px tall and `xs` / `icon-xs` are exactly 24px, the bare floor.
 - Interactive components need keyboard operation and correct focus management,
   not just correct visuals.
 
@@ -189,19 +223,24 @@ it continuously — reconstructing it at the end is far more work and less accur
 ## Commands
 
 ```bash
-npm run dev        # dev server
-npm run check      # lint + typecheck + unit tests
-npm run test:e2e   # Playwright + axe, real browser
-npm run build      # production build
+npm run dev          # dev server
+npm run tokens       # regenerate src/tokens/tokens.css from the Figma export
+npm run tokens:check # fail if that CSS is stale or hand-edited
+npm run check        # lint + typecheck + unit tests
+npm run test:e2e     # Playwright + axe, real browser
+npm run verify       # tokens:check + check + test:e2e — the whole green light
+npm run build        # production build
 ```
 
-Run `npm run check` before proposing any commit. Run `npm run test:e2e` before
-merging anything that changes markup, focus behaviour or colour.
+Run `npm run check` before proposing any commit, and `npm run verify` before
+merging anything that changes markup, focus behaviour, colour or tokens.
 
-`test:e2e` is currently **8 of 9**. `[mobile-safari] the first Tab reaches the
-skip link` fails because WebKit doesn't Tab to links unless Full Keyboard Access
-is switched on — a known, pre-existing environment gap, not a regression. If that
-is the only red test, you didn't break anything. Anything else red, you did.
+Current state: **18 unit tests**, all passing. `test:e2e` is **14 of 15**.
+`[mobile-safari] the first Tab reaches the skip link` fails because WebKit
+doesn't Tab to links unless Full Keyboard Access is switched on — a known,
+pre-existing environment gap, not a regression, reproduced against an earlier
+commit in a clean worktree. If that is the only red test, you didn't break
+anything. Anything else red, you did.
 
 ## Working practice
 

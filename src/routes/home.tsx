@@ -28,12 +28,13 @@ export function HomeRoute() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Tab to the buttons to check the focus ring, and toggle the{' '}
+        Tab to the buttons to check the focus ring. The app is dark-only — the{' '}
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
           dark
         </code>{' '}
-        class on <code className="font-mono text-xs">&lt;html&gt;</code> to
-        check the dark theme.
+        class on <code className="font-mono text-xs">&lt;html&gt;</code> is
+        load-bearing, not a toggle, and colours come from the Figma export via{' '}
+        <code className="font-mono text-xs">npm run tokens</code>.
       </p>
     </div>
   )
