@@ -89,6 +89,19 @@ fails if it is removed. There is no light theme to fall back to.
 - **Never** use a Tailwind default colour utility — no `bg-blue-500`, no
   `text-gray-600`. Those bypass the token system entirely and will not respond to
   theme changes.
+
+Both are enforced, not just asked for: `scripts/check-colours.mjs` runs as part
+of `npm run lint`, so a raw colour fails the build before typecheck or tests
+start. It exempts `src/tokens/tokens.css` (generated — `tokens:check` guards it
+instead) and `src/tokens/contrast.ts` (its job is parsing hex), each with the
+reason stated in the script. `color-mix(in oklch, var(--a), var(--b))` is
+deliberately allowed: there `oklch` names a colour space and the arguments are
+real tokens, which is the correct way to derive a colour.
+
+It is a script rather than an oxlint rule because oxlint does not implement
+`no-restricted-syntax` and rejects its whole config file on an unknown rule.
+If that changes, move the patterns into `.oxlintrc.json` and delete the
+script.
 - **Never** invent a spacing or radius value. Use the scale.
 - To change how something looks, edit `theme.css`. Not the component.
 - If a role you need doesn't exist in `theme.css` — stop and ask. Do not
@@ -249,6 +262,7 @@ it continuously — reconstructing it at the end is far more work and less accur
 
 ```bash
 npm run dev          # dev server
+npm run lint         # oxlint + the no-raw-colour check
 npm run tokens       # regenerate src/tokens/tokens.css from the Figma export
 npm run tokens:check # fail if that CSS is stale or hand-edited
 npm run check        # lint + typecheck + unit tests
