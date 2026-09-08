@@ -14,12 +14,34 @@ import { expect, test, type Page } from '@playwright/test'
 
 const WCAG22AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
+/**
+ * Wait until every section has resolved to content, an empty state or an
+ * error — nothing still loading.
+ *
+ * Explore loads per section, so scanning the moment the heading appears
+ * catches a different subset of the page each run: sometimes the promo card
+ * is there, sometimes it is not. That made a REAL violation
+ * (a colour-only link, `link-in-text-block`) show up in maybe one run in
+ * three, which is the worst possible way for an accessibility test to
+ * behave — people learn to re-run it. Settling first makes the scan
+ * deterministic and covers the error state as well.
+ *
+ * The timeout is generous because one section deliberately fails, and only
+ * after its retries are exhausted.
+ */
+async function settleSections(page: Page) {
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, {
+    timeout: 25_000,
+  })
+}
+
 test.describe('accessibility', () => {
   test('home screen has no detectable WCAG 2.2 AA violations', async ({
     page,
   }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { name: 'ERGE' })).toBeVisible()
+    await settleSections(page)
 
     const results = await new AxeBuilder({ page })
       .withTags(WCAG22AA)
@@ -30,6 +52,7 @@ test.describe('accessibility', () => {
 
   test('home screen passes in dark mode too', async ({ page }) => {
     await page.goto('/')
+    await settleSections(page)
     await page.evaluate(async () => {
       document.documentElement.classList.add('dark')
 
@@ -38,9 +61,17 @@ test.describe('accessibility', () => {
        * mid-transition mix of the light and dark values that belongs to
        * neither theme — and axe reports contrast failures for colours the app
        * never actually rests on. Wait for the transitions to finish so we
-       * assert against the settled dark theme, which is the thing we mean. */
+       * assert against the settled dark theme, which is the thing we mean.
+       *
+       * TRANSITIONS ONLY. Skeleton placeholders pulse on an infinite loop,
+       * and an infinite animation's `finished` promise never resolves — so
+       * awaiting every animation on the page hangs here forever whenever a
+       * section happens to still be loading. */
       await Promise.all(
-        document.getAnimations().map((animation) => animation.finished),
+        document
+          .getAnimations()
+          .filter((animation) => animation instanceof CSSTransition)
+          .map((animation) => animation.finished),
       )
     })
 
@@ -78,15 +109,28 @@ test.describe('accessibility', () => {
     return page.evaluate(() => {
       const selector =
         'a, button, input, select, textarea, [role="button"], [role="link"]'
+
+      /* The same selector theme.css raises to 44px under `pointer: coarse`,
+       * repeated here so the assertion cannot drift from the rule it checks.
+       * Links are deliberately absent from BOTH: an inline link in a sentence
+       * is exempt from 2.5.8, and forcing 44px on one would wreck the line
+       * box. A link that is genuinely a target carries role="button" or
+       * data-slot="button" and is caught by those. */
+      const CONTROL =
+        '[data-slot="button"], button, select, textarea,' +
+        ' input:not([type="hidden"]), [role="button"]'
+
       return [...document.querySelectorAll(selector)]
         .filter((el) => !el.classList.contains('sr-only'))
         .map((el) => {
           const { width, height } = el.getBoundingClientRect()
           return {
             label: (el.textContent ?? '').trim().slice(0, 30),
+            tag: el.tagName.toLowerCase(),
             width: Math.round(width),
             height: Math.round(height),
             compact: el.getAttribute('data-target') === 'compact',
+            control: el.matches(CONTROL),
           }
         })
     })
@@ -122,7 +166,9 @@ test.describe('accessibility', () => {
     )
     await page.goto('/')
     const targets = await measureTargets(page)
-    expect(targets.filter((t) => !t.compact).filter(tooSmall(44))).toEqual([])
+    expect(
+      targets.filter((t) => t.control && !t.compact).filter(tooSmall(44)),
+    ).toEqual([])
   })
 
   /**
