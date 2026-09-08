@@ -78,8 +78,65 @@ const ext = (token) => token.$extensions ?? {};
 const aliasOf = (token) => ext(token)["com.figma.aliasData"] ?? null;
 const composedOf = (token) => ext(token)["com.figma.composedColor"] ?? null;
 
+/* ---------------------------------------------------------------- units
+ *
+ * A `number` in the DTCG export carries NO unit. Figma just says 200. What
+ * that 200 means depends entirely on which group it came from, so the rule is
+ * written out here as a table rather than buried in a conditional — the next
+ * group to need its own unit should be a one-line addition below, made by
+ * someone who can see why the existing entries are what they are.
+ *
+ *   group        emits   because
+ *   ----------   -----   -------------------------------------------------
+ *   Motion       ms      A duration is time, not length. 200/16 = 12.5rem
+ *                        is meaningless, and would silently animate over a
+ *                        distance instead of a period.
+ *   (default)    rem     Spacing, Radius, Font Size and Size are lengths.
+ *                        rem keeps them proportional to the user's browser
+ *                        font-size setting, which px would ignore — a WCAG
+ *                        1.4.4 failure we would otherwise ship.
+ *
+ * Zero is handled per rule, not globally, because the right zero differs by
+ * unit. `transition-duration: 0` is invalid CSS — time values are the one
+ * place the spec requires a unit even at zero — while `padding: 0` is correct
+ * and `0rem` is just noise.
+ *
+ * String tokens (easings, font families) are not in this table at all: they
+ * pass through untouched at the bottom of literal(), because Figma already
+ * holds them in CSS syntax. Nothing here needs to know about them.
+ */
+const NUMBER_UNIT_BY_GROUP = {
+  Motion: {
+    format: (n) => `${n}ms`,
+    zero: "0ms",
+  },
+};
+
+const DEFAULT_NUMBER_UNIT = {
+  format: (n) => `${n / 16}rem`,
+  zero: "0",
+};
+
+/**
+ * The group a unit rule is matched on: the FIRST path segment, compared
+ * case-sensitively and exactly.
+ *
+ *   "Motion/Duration/Base"  -> "Motion"   (matches the Motion rule)
+ *   "Spacing/4"             -> "Spacing"  (no entry, so the default applies)
+ *
+ * So only the top-level group name is load-bearing. Renaming anything below
+ * it — the subgroup, the leaf — changes the variable name but not the unit.
+ * Renaming or re-nesting the top-level group detaches it from its rule, which
+ * is why an unmatched rule is reported as a warning rather than passing
+ * silently.
+ */
+const topLevelGroup = (path) => path.split("/")[0];
+
+const numberRuleFor = (path) =>
+  NUMBER_UNIT_BY_GROUP[topLevelGroup(path)] ?? DEFAULT_NUMBER_UNIT;
+
 /** Render a token's resolved literal value, for use as a fallback or comment. */
-function literal(token) {
+function literal(path, token) {
   const v = token.$value;
   if (token.$type === "color") {
     if (typeof v === "string") return v;
@@ -92,11 +149,10 @@ function literal(token) {
     return `rgb(${r} ${g} ${b} / ${+alpha.toFixed(4)})`;
   }
   if (token.$type === "number") {
-    // Spacing, radius and font size all come out of Figma as raw pixel
-    // numbers. Emit rem so the whole system respects the user's browser
-    // font-size setting — a WCAG 1.4.4 concern we would otherwise fail.
-    return v === 0 ? "0" : `${v / 16}rem`;
+    const rule = numberRuleFor(path);
+    return v === 0 ? rule.zero : rule.format(v);
   }
+  // Strings (easing curves, font families) are already CSS. Pass through.
   return String(v);
 }
 
@@ -146,7 +202,7 @@ function resolveSemantic(path, token) {
       problems.push(
         `${path} aliases "${alias.targetVariableName}", which is not in the primitives export`,
       );
-      return literal(token);
+      return literal(path, token);
     }
     return `var(${target})`;
   }
@@ -160,7 +216,7 @@ function resolveSemantic(path, token) {
       problems.push(
         `${path} composes "${name}", which is not in the primitives export`,
       );
-      return literal(token);
+      return literal(path, token);
     }
     return `color-mix(in srgb, var(${target}) ${pct}%, transparent)`;
   }
@@ -169,15 +225,33 @@ function resolveSemantic(path, token) {
     `${path} has no alias — it is a raw value in the semantic collection. ` +
       `Point it at a primitive in Figma.`,
   );
-  return literal(token);
+  return literal(path, token);
 }
 
 /* ------------------------------------------------------------------ build */
 
 const groupsSeen = new Map();
 for (const [path] of primitives) {
-  const group = path.split("/")[0];
+  const group = topLevelGroup(path);
   groupsSeen.set(group, (groupsSeen.get(group) ?? 0) + 1);
+}
+
+/* A unit rule names a top-level group. If that group is not in the export,
+ * the rule is dead and every number it was meant to cover is quietly getting
+ * the default rem treatment instead — which is exactly what a rename in Figma
+ * would cause, and exactly the kind of thing that is invisible in a diff.
+ *
+ * A warning rather than a hard failure, because a declared rule for a group
+ * that does not exist YET is a legitimate state. */
+const warnings = [];
+for (const group of Object.keys(NUMBER_UNIT_BY_GROUP)) {
+  if (!groupsSeen.has(group)) {
+    warnings.push(
+      `unit rule for "${group}" matched no group in the export — ` +
+        `numbers that should be ${NUMBER_UNIT_BY_GROUP[group].zero.replace(/^0/, "")} ` +
+        `are falling back to rem. Renamed or not added yet?`,
+    );
+  }
 }
 
 const lines = [];
@@ -209,7 +283,7 @@ for (const [path, token] of primitives) {
     push(`  /* ${group} */`);
     currentGroup = group;
   }
-  push(`  --${slug(path)}: ${literal(token)};`);
+  push(`  --${slug(path)}: ${literal(path, token)};`);
 }
 
 push();
@@ -325,6 +399,11 @@ if (CHECK) {
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, output, "utf8");
   summarise("tokens.css written");
+}
+
+if (warnings.length) {
+  console.log(`\n  ${warnings.length} warning(s):`);
+  for (const w of warnings) console.log(`    - ${w}`);
 }
 
 if (problems.length) {
