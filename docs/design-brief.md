@@ -29,9 +29,9 @@ This is the clearest differentiator from competitors skewing upmarket.
 
 **Secondary mode: browsing.** Users spend idle time exploring options. That
 browsing is not a side activity — it is how the app learns preferences well
-enough to make good suggestions later. `[ASSUMPTION]` A swipe-style yes/no
-interface for experiences, genres and cuisines is under consideration as the
-mechanism.
+enough to make good suggestions later. The learning is ambient — from saves,
+bookings and lists, all of which require an account — never from a prompt or
+a preference-gathering surface. See user-flows.md §5–6.
 
 ### Not the audience yet
 

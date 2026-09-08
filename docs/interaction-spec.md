@@ -57,8 +57,15 @@ An estimate that isn't marked and then grows at checkout undermines the whole
 budget-transparency position. This is a component variant plus copy, not a
 disclaimer in the footer.
 
-`[DECIDE]` Do estimated-price items participate in budget filtering at all, or
-are they shown outside the filter with a marker?
+**Decided: estimated-price items participate in budget filtering**, at their
+low bound, and appear in Search and Explore results with the estimate marker.
+They are not held outside the filter, and they are not hidden. The marker is
+what makes this honest — a "from $45" item in a $0–$100 result set is exactly
+what the user asked for, provided it says *from*. The consequence lands in the
+cart, not here: when the real price resolves above budget, the cart raises a
+*resolved above estimate* state so the user sees which item moved.
+
+(Mirrored in `api-contract.md` → `price`, which is the client contract.)
 
 ---
 
@@ -162,9 +169,9 @@ as assertions in the test suite.
   that are genuinely targets carry `data-slot="button"` or `role="button"`.
 
 **Every gesture needs a non-gesture equivalent.** Swipe-to-remove in the cart
-also needs a visible button. The swipe-style preference interface needs
-buttons alongside it — a swipe-only surface is unusable by keyboard and hard
-with assistive tech.
+also needs a visible button. A swipe-only surface is unusable by keyboard and
+hard with assistive tech. (There is no swipe-style preference interface — see
+user-flows.md §6.)
 
 ---
 

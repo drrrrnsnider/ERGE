@@ -162,13 +162,17 @@ mid-sequence.
 
 Deliberately late. Full discovery and checkout work signed out.
 
-**Two prompts, both contextual:**
+**Three prompts, all contextual — there is no other way in:**
 
 1. **After first checkout** — framed around the check-in, not around
    housekeeping. *"We'll text you after your night to help with what's next"*
    is a better reason than *"save your preferences."*
 2. **On any save attempt** — saving an experience, creating a wishlist or a
    trip requires an account.
+3. **Tapping the Profile tab while signed out.**
+
+Preferences are only ever saved against an account. Nothing is collected from
+a signed-out user, and nothing asks them for it.
 
 `[DECIDE]` Do guests get the check-in by SMS anyway, or is it account-only?
 Guests have no push token, so SMS is the only route — and the check-in is the
@@ -176,17 +180,26 @@ strongest reason to create an account.
 
 ---
 
-## 6. Browse to teach `[ASSUMPTION]`
+## 6. Browse to teach
 
-**Trigger:** idle browsing, or an explicit "help us learn what you like."
+**Trigger:** ordinary use — saving, booking, organising.
 **Success:** better suggestions on Explore.
 
-1. Swipe-style yes/no on experiences, cuisines, genres. `[DECIDE]` Separate
-   onboarding surface, recurring prompt, or ambient signal from saves?
-2. Saving an experience → Library (requires an account).
+There is no preference-gathering surface and no prompt. Signal is **ambient**:
+it comes from what the user saves, books and puts in lists, and all of those
+require an account (§5). Nothing asks a user what they like; the app learns
+from what they do.
+
+1. Saving an experience → Library (requires an account).
+2. Booking.
 3. Organising saves into lists.
 
-**Detour:** user gives no signal at all — Explore must be good cold.
+**Cold start is the default, not a detour.** Every signed-out user, and every
+new account with no activity yet, has given the app nothing. Explore has to be
+good with zero signal — curated rails, guides, promotions — and it must not
+ask for anything to get there. A prompt, a swipe surface or an onboarding step
+would each add friction before the first thing the user came for, which loses
+to the one principle.
 
 ---
 

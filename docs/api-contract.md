@@ -115,11 +115,15 @@ Two presentations, and they must be distinguishable by the client:
 `from` is a **base rate excluding fees**. Copy says "from $45 + fees", never
 an implied all-in figure.
 
-**Budget filtering:** `from` items participate at their low bound. A "from
-$45" item appears in a $0–$100 search. The real price resolves when a date is
-entered, and if it then exceeds budget the cart raises a *resolved above
-estimate* state — distinct from generic over-budget, so the user sees which
-item moved and by how much.
+**Budget filtering — decided.** `from` items **participate** in budget
+filtering, at their low bound. A "from $45" item appears in a $0–$100 search,
+marked as an estimate; it is never hidden behind the filter or shown outside
+it. The real price resolves when a date is entered, and if it then exceeds
+budget the cart raises a *resolved above estimate* state — distinct from
+generic over-budget, so the user sees which item moved and by how much.
+
+(Mirrored in `interaction-spec.md` → *Price and estimate states*. If the two
+ever disagree again, this document is the client contract and wins.)
 
 ### `availability`
 
@@ -272,6 +276,60 @@ timestamp and the exact wording shown, and every message carries a working
 STOP.
 
 `[DECIDE]` Quiet hours. What happens when the last event ends at 1am?
+
+---
+
+## Explore
+
+The first screen, and the cold-start screen. Split into **three** calls rather
+than one, because states are per-section: a single call could only fail as a
+whole, and one slow vendor would hold the entire page.
+
+### `GET /explore/layout`
+
+**Returns:** `{ signal, sections[] }` — the ordered list of sections and how
+to draw each. `signal` is `none` for a user the app knows nothing about,
+which is everyone signed out; it exists so a personalised layout is a data
+change rather than a client change.
+
+Section kinds: `rail` (fetched separately, below), `collage` (drawn from the
+user's own collections), `editorial` (inline promo content — see below).
+
+**Cache:** long. This is close to static.
+**Partial:** not applicable; without a layout there is no screen.
+
+### `GET /explore/section/:id`
+
+**Returns:** `{ items[], sources: { answered[], failed[] } }`
+**Errors:** any normalised code. The client renders the error **inside that
+section only** and offers a retry when `retryable`.
+**Cache:** short — items are filtered by budget, which the user changes live.
+**Partial:** `sources.failed` names vendors that did not answer while others
+did. The section still renders what arrived.
+
+Filtered by `{ budget: { min, max, currency }, groupSize }`. Budget is a
+**hard** filter, and `from`-priced items participate at their low bound.
+
+### `GET /explore/collage/:id`
+
+**Returns:** `{ caption?, items[] }`, items being a subset of `Experience`.
+Empty for any user with no collections, which is the cold-start default and a
+designed empty state rather than a failure.
+
+### Editorial content `[ASSUMPTION]`
+
+The two promo cards are **not** `Experience` objects — they carry no price,
+availability, location, vendor or access tier, and one of them is not
+bookable at all. They are modelled client-side, discriminated on `kind`:
+
+```
+{ kind: "guides",    id, badge, headline, entries[{ id, label, href }] }
+{ kind: "promotion", id, badge, headline, caption, cta { label, href } }
+```
+
+There is no server contract for this yet, and `design-brief.md` puts
+CMS-dependent editorial out of v1 pending **D9**. Expect this to be replaced
+or deleted when D9 resolves; it is deliberately small.
 
 ---
 
