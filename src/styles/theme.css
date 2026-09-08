@@ -96,6 +96,35 @@
   --font-sans:
     var(--font-family-sans), ui-sans-serif, system-ui, -apple-system,
     'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Display/Medium in Figma is Ovo — the promo headlines. Same collision
+   * story as --leading-*: this is Tailwind's own name, unlayered here beats
+   * its @layer theme default, so `font-serif` resolves to ours. Ovo is not
+   * loaded either, so it degrades to the system serif for now. */
+  --font-serif:
+    var(--font-family-serif), ui-serif, Georgia, 'Times New Roman', serif;
+
+  /* == Line height =======================================================
+   * Unitless on purpose: a unitless line-height multiplies the element's own
+   * font-size, so it stays correct when text is resized or a component is
+   * nested inside larger type. A px line-height does not — it freezes the
+   * leading and produces overlapping lines the moment the font grows.
+   *
+   * WHY THESE ARE NOT IN tokens.css
+   * ------------------------------
+   * They cannot come through the Figma export. Figma has no unitless number
+   * variable: a number variable bound to line height is applied in pixels, so
+   * exporting one would give us exactly the frozen px leading described above.
+   * The matching Figma text styles express line height as a PERCENTAGE, which
+   * is the same idea as a unitless multiplier but is a property of the style
+   * rather than a variable, so it is not in the variables payload either.
+   *
+   * That makes these a genuine bridge-layer decision rather than a token we
+   * are choosing not to export. If Figma ever gains unitless number
+   * variables, move them to the export and delete this block. */
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
 }
 
 /* Expose the roles above to Tailwind as utilities: `bg-primary`,
@@ -126,6 +155,14 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Hands `leading-tight` and friends to Tailwind. These names are also
+   * Tailwind's own, so its defaults are replaced rather than sitting
+   * alongside ours. */
+  --leading-tight: var(--leading-tight);
+  --leading-snug: var(--leading-snug);
+  --leading-normal: var(--leading-normal);
+  --leading-relaxed: var(--leading-relaxed);
 }
 
 @layer base {
@@ -134,7 +171,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans leading-normal;
     -webkit-font-smoothing: antialiased;
   }
 
