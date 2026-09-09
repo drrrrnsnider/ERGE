@@ -134,7 +134,7 @@ export function ExperienceCard({
              * — that swap is the whole point of the treatment. */
             experience.elite
               ? 'border border-primary'
-              : 'border border-border-subtle',
+              : 'stroke-gradient',
           )}
         >
           {/* Hero, then a vertical rail of three thumbnails beside it. */}
@@ -186,14 +186,15 @@ export function ExperienceCard({
          * came from. */
         className="relative isolate flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card"
       >
-        {/* The image is flush with the card on three edges, so its stroke and
-          * the card's land on the same line. The card's is a ::after overlay
-          * and therefore paints later in tree order, which put the dark card
-          * stroke on top of the copper one — the wrong way round. `z-1` puts
-          * the image back on top; the save button stays above both at z-10. */}
+        {/* The image is flush with the card on three edges, so the two strokes
+          * land on the same line. Both are ::after overlays, and the card's
+          * belongs to a later element in tree order, which put the flat card
+          * stroke on top of the copper one — the wrong way round. `z-1` lifts
+          * the image and its stroke above it: positive z-index descendants
+          * paint after z-auto ones. The save button clears both at z-10. */}
         <Media
           experience={experience}
-          className="relative z-1 h-20 w-27.5 shrink-0 rounded-md border border-border-subtle"
+          className="relative z-1 h-20 w-27.5 shrink-0 rounded-md stroke-gradient"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-[3px] pr-9">
           <Link to={hrefFor(experience)} className="text-body-md text-foreground">
@@ -227,7 +228,7 @@ export function ExperienceCard({
     >
       <Media
         experience={experience}
-        className="h-27.5 w-full rounded-md border border-border-subtle"
+        className="h-27.5 w-full rounded-md stroke-gradient"
       />
       <div className="flex flex-col gap-[3px]">
         <Link to={hrefFor(experience)} className="text-body-md text-foreground">

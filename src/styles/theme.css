@@ -270,14 +270,21 @@
  * Gradient strokes. The design outlines things with a gradient, not a flat
  * line, and it uses TWO — which one depends on what is being outlined:
  *
- *   stroke-gradient       "Border Brighter -> 0"     IMAGES and media frames
- *   stroke-gradient-card  "Border Default 100 -> 0"  CARD surfaces
+ *   stroke-gradient       Border/Subtle Focus -> 0   IMAGES and media frames
+ *   stroke-gradient-card  "Border Default 100 -> 0"   CARD surfaces
  *
- * Confirmed per node: `Card / Media SM` carries both — Brighter on its
- * thumbnail, Default on the card around it — while the MD image area, the
- * SM Narrow image, the Trip LG band and a promo tile carry only Brighter.
- * Getting these the wrong way round puts the brighter, warmer line around
- * the card and the flatter one around the picture, which reads backwards.
+ * `Card / Media SM` carries both — the copper one on its thumbnail, the flat
+ * one on the card around it — while the MD image area, the SM Narrow image
+ * and the Trip LG band carry only the copper. Getting them the wrong way
+ * round puts the warmer line around the card and the flatter one around the
+ * picture, which reads backwards.
+ *
+ * The media stop is Border/Subtle Focus, NOT the Border/Brighter this
+ * originally used. get_design_context flattens the frame to a plain border
+ * and lists "Border Brighter -> 0" among the node's styles, which is what
+ * sent the first version wrong; get_variable_defs binds
+ * Color/Border/Subtle Focus and names no Border/Brighter at all. When those
+ * two disagree, the variable list is the design.
  *
  * Figma exports both as STYLES rather than variables, and the MCP flattens
  * gradient strokes to a single colour, so they are reconstructed here.
@@ -288,12 +295,12 @@
  * whatever corner the element already has, and it sits on ::after so it works
  * over any background without the caller having to repeat its own fill.
  *
- * [ASSUMPTION] The DIRECTION is top-to-bottom. The stops are known —
- * Border/Brighter to transparent — but neither `get_design_context` nor
- * `get_variable_defs` exposes a gradient's angle, and the stroke is 1px at
- * 1:1 so it cannot be read reliably off a render either. Top-down is the
- * usual dark-UI idiom (light from above); if the design fades left-to-right
- * or diagonally, change the angle here and every frame follows.
+ * DIRECTION is top-to-bottom: full strength at the top edge, nothing at the
+ * bottom. That was an open assumption here for a while — neither
+ * `get_design_context` nor `get_variable_defs` exposes a gradient's angle,
+ * and a 1px stroke cannot be read off a render at 1:1 — and it is now
+ * confirmed by the designer for the MEDIA stroke. The card stroke below
+ * still infers it from the same light-from-above idiom.
  *
  * The mask colour is arbitrary — only its alpha matters — so it uses a token
  * rather than a literal, which keeps the no-raw-colour rule satisfied
@@ -311,7 +318,7 @@
     pointer-events: none;
     background: linear-gradient(
       180deg,
-      var(--color-border-brighter),
+      var(--color-border-subtle-focus),
       transparent
     );
     -webkit-mask:

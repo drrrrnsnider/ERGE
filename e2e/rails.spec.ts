@@ -498,22 +498,24 @@ test.describe('the search overlay', () => {
 
 test.describe('card strokes', () => {
   /**
-   * Media is framed by Border/Subtle Focus — a TRANSLUCENT COPPER hairline —
-   * not the opaque neutral that separates surfaces.
+   * Media is framed by a Border/Subtle Focus gradient — translucent copper at
+   * the top edge, fading to nothing at the bottom.
    *
-   * Worth a test because this failed twice in different ways. First the frame
-   * was a Border/Brighter gradient, which the flattened Figma code showed but
-   * the variable list contradicted. Then the fix used `border-subtle`, which
-   * is not a class: the colour is named `border-subtle`, so with the `border-`
-   * utility prefix it is `border-border-subtle`. Tailwind dropped the unknown
-   * class silently and the border fell back to the default neutral, which
-   * looks almost right on a dark UI and would have shipped.
+   * Worth a test because this has been wrong three ways. It was a
+   * Border/Brighter gradient, which the flattened Figma code implies and the
+   * variable list contradicts. Then it became a flat Border/Subtle Focus
+   * border, which had the colour right and dropped the fade. In between, a
+   * fix used `border-subtle`, which is not a class at all — the colour is
+   * NAMED border-subtle, so with the `border-` prefix it is
+   * `border-border-subtle` — and Tailwind dropped the unknown class silently,
+   * leaving the opaque neutral, which on a dark UI looks close enough to ship.
    *
-   * So this asserts the two properties that separate the right colour from
-   * that fallback: it must be translucent, and it must be warm. Channel
-   * comparison rather than a pinned value, so retokenising cannot break it.
+   * So this asserts the properties that separate the real thing from all
+   * three: a gradient, warm and translucent at the top, fully transparent at
+   * the bottom. Channel comparison rather than pinned values, so retokenising
+   * cannot break it.
    */
-  test('media is framed in translucent copper, not the neutral border', async ({
+  test('media is framed in a copper gradient that fades out', async ({
     page,
   }) => {
     await page.goto('/')
@@ -521,13 +523,30 @@ test.describe('card strokes', () => {
     await expect(card).toBeVisible()
 
     const frame = await card.locator('> div').first().evaluate((el) => {
-      const c = getComputedStyle(el).borderTopColor
-      const parts = c.match(/[\d.]+/g)!.map(Number)
-      const [r, , b] = parts
-      return { colour: c, alpha: parts.length > 3 ? parts[3]! : 1, warm: r! > b! }
+      // The stroke is a gradient, so it lives on ::after's background rather
+      // than on any border-color — a gradient cannot BE a border colour.
+      const bg = getComputedStyle(el, '::after').backgroundImage
+      const stops = bg.match(/(?:rgba?|color)\([^)]*\)/g) ?? []
+      const nums = (c: string) => (c.match(/[\d.]+/g) ?? []).map(Number)
+      const first = nums(stops[0] ?? '')
+      const last = nums(stops[stops.length - 1] ?? '')
+      const alphaOf = (n: number[]) => (n.length > 3 ? n[3]! : 1)
+      return {
+        isGradient: bg.includes('gradient'),
+        stops: stops.length,
+        topAlpha: alphaOf(first),
+        topIsWarm: (first[0] ?? 0) > (first[2] ?? 0),
+        bottomAlpha: alphaOf(last),
+      }
     })
 
-    expect(frame.alpha).toBeLessThan(1)
-    expect(frame.warm).toBe(true)
+    expect(frame.isGradient).toBe(true)
+    expect(frame.stops).toBeGreaterThanOrEqual(2)
+    // Full strength at the top edge...
+    expect(frame.topAlpha).toBeGreaterThan(0)
+    expect(frame.topAlpha).toBeLessThan(1)
+    expect(frame.topIsWarm).toBe(true)
+    // ...and gone by the bottom.
+    expect(frame.bottomAlpha).toBe(0)
   })
 })
