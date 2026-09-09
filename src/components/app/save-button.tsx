@@ -15,7 +15,11 @@ import { cn } from '@/lib/utils'
  *           default, used on `Card / Media MD`.
  *   Icon    No chrome whatsoever — the glyph sits straight on a photo and
  *           carries its own backing fill and a drop shadow instead. Used on
- *           `Card / Media SM`.
+ *           `Card / Media SM`. The GLYPH is 20px, as drawn, but the button
+ *           around it is 32: the design models a drawing, not a hit area, and
+ *           a 20px target is under WCAG 2.5.8's 24px floor as well as our own
+ *           32px one. Nothing visible changes — the box is transparent — so
+ *           the card still looks exactly like the frame.
  *   Nav     48px, matching the other circular nav buttons. Its glyph is a
  *           22px drawing rather than the 20px one scaled up, so it is a
  *           separate asset.
@@ -75,7 +79,7 @@ export function SaveButton({
         style === 'Button' &&
           'size-8 border border-border bg-card/90 shadow-lift',
         style === 'Nav' && 'size-12 border border-border bg-card',
-        style === 'Icon' && 'drop-shadow-lift-sm',
+        style === 'Icon' && 'size-8 drop-shadow-lift-sm',
         className,
       )}
     >

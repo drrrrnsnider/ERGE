@@ -131,9 +131,35 @@ test.describe('accessibility', () => {
             height: Math.round(height),
             compact: el.getAttribute('data-target') === 'compact',
             control: el.matches(CONTROL),
+            /* SC 2.5.8's "Inline" exception, verbatim: the target is "in a
+             * sentence or its size is otherwise constrained by the
+             * line-height of non-target text". Detected structurally rather
+             * than by listing known links — an <a> whose parent holds text
+             * besides the link's own IS in a sentence. A heading that is
+             * nothing but a link fails this check and stays asserted, which
+             * is right: that one is a block target, not an inline one. */
+            inlineInText:
+              el.matches('a:not([role="button"]):not([data-slot="button"])') &&
+              (el.parentElement?.textContent ?? '').trim() !==
+                (el.textContent ?? '').trim(),
           }
         })
     })
+  }
+
+  /**
+   * Wait for the rails to render before measuring.
+   *
+   * This is not tidiness. Without it these three tests measured `page.goto`'s
+   * first paint — the top bar, the search field and the tabs — and nothing
+   * inside a card, because the sections are fetched. A 20x20 save button on
+   * `Card / Media SM` lived in the app through several green runs for exactly
+   * that reason: the assertion was real, the sample was empty.
+   */
+  async function settled(page: Page) {
+    await expect(
+      page.locator('[data-slot="experience-card"]').first(),
+    ).toBeVisible()
   }
 
   const tooSmall = (min: number) =>
@@ -146,7 +172,9 @@ test.describe('accessibility', () => {
    */
   test('every interactive target meets the 24px minimum', async ({ page }) => {
     await page.goto('/')
-    expect((await measureTargets(page)).filter(tooSmall(24))).toEqual([])
+    await settled(page)
+    const targets = (await measureTargets(page)).filter((t) => !t.inlineInText)
+    expect(targets.filter(tooSmall(24))).toEqual([])
   })
 
   /**
@@ -165,6 +193,7 @@ test.describe('accessibility', () => {
       'coarse-pointer sizing deliberately does not apply on desktop',
     )
     await page.goto('/')
+    await settled(page)
     const targets = await measureTargets(page)
     expect(
       targets.filter((t) => t.control && !t.compact).filter(tooSmall(44)),
@@ -187,8 +216,47 @@ test.describe('accessibility', () => {
       'coarse-pointer sizing deliberately does not apply on desktop',
     )
     await page.goto('/')
+    await settled(page)
     const targets = await measureTargets(page)
     expect(targets.filter((t) => t.compact).filter(tooSmall(32))).toEqual([])
+  })
+
+  /**
+   * A focused text field has to LOOK focused (SC 2.4.7).
+   *
+   * This is the test that was missing while the bug existed. Our Input pill
+   * puts `outline-none` on the inner <input> so the ring is not drawn around
+   * the bare text inside the pill — and for a while nothing drew it at all:
+   * measured as `outline-style: none` on a focused field. axe does not catch
+   * that, because a missing focus indicator is not detectable from the
+   * accessibility tree.
+   *
+   * Two things are asserted, because the design and the guideline want
+   * different things and both have to hold. The pill takes the global focus
+   * ring on the field's behalf, and its border turns Border/Focus — the
+   * design's own focus treatment, and the one you see the whole time you are
+   * typing. Colours are compared before against after rather than pinned to a
+   * value, so retokenising cannot break the test.
+   */
+  test('a focused text field is visibly focused', async ({ page }) => {
+    await page.goto('/')
+
+    const pill = page.locator('[data-slot="input-field"]').first()
+    await expect(pill).toBeVisible()
+
+    const read = () =>
+      pill.evaluate((el) => {
+        const cs = getComputedStyle(el)
+        return { outline: cs.outlineStyle, border: cs.borderTopColor }
+      })
+
+    const blurred = await read()
+    await page.getByRole('spinbutton', { name: /^min/i }).click()
+    const focused = await read()
+
+    expect(blurred.outline).toBe('none')
+    expect(focused.outline).not.toBe('none')
+    expect(focused.border).not.toBe(blurred.border)
   })
 
   /**

@@ -49,15 +49,17 @@ const hrefFor = (experience: Experience) =>
 function Price({ experience }: { experience: Experience }) {
   const { price } = experience
   const amount = formatMoney(priceLowBound(price))
+
+  /* One colour for the whole line — Text/Secondary, inherited from the <p>
+   * that wraps this. "from" and "/ couple" used to be Text/Muted, which
+   * split a five-word line across two greys and made the amount look like a
+   * separate element sitting inside a caption. They are one phrase and now
+   * read as one. */
   return (
     <>
-      {price.kind === 'from' ? (
-        <span className="text-muted-foreground">from </span>
-      ) : null}
+      {price.kind === 'from' ? 'from ' : null}
       {amount}
-      {price.unit ? (
-        <span className="text-muted-foreground"> / {price.unit}</span>
-      ) : null}
+      {price.unit ? ` / ${price.unit}` : null}
     </>
   )
 }
@@ -198,7 +200,10 @@ export function ExperienceCard({
           label={experience.title}
           onToggle={() => onToggleSave(experience.experienceId)}
           style="Icon"
-          className="absolute top-[7px] right-[7px] z-10"
+          /* The 20px glyph sits at 7px in the frame. The button is 32px with
+           * the glyph centred, so 1px here puts the DRAWING back at 7px
+           * (1 + 6 = 7) while the target grows outwards. */
+          className="absolute top-px right-px z-10"
         />
       </article>
     )

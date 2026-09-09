@@ -35,6 +35,11 @@ const pick = (...ids: string[]): Experience[] =>
  * The cold-start layout. `signal: 'none'` — this user has given the app
  * nothing, so every section is curated. Order matches the Explore frame.
  */
+/* Every rail carries an href, because the keyframe draws the chevron on
+ * every section heading except "Ideas for Your Trip" — the collage, which is
+ * the one heading with no arrow. The chevron is not decoration: Rail renders
+ * it only when there is somewhere to go, so an href missing here is the same
+ * thing as a missing arrow on screen. */
 const COLD_START: ExploreLayout = {
   signal: 'none',
   sections: [
@@ -43,6 +48,7 @@ const COLD_START: ExploreLayout = {
       id: 'date-nights-under-100',
       title: 'Date Nights Under $100',
       variant: 'media-md',
+      href: '/search?collection=date-nights-under-100',
     },
     {
       kind: 'rail',
@@ -56,6 +62,7 @@ const COLD_START: ExploreLayout = {
       id: 'elite-experiences',
       title: 'Erge Elite Experiences',
       variant: 'media-md',
+      href: '/search?collection=elite-experiences',
     },
     {
       kind: 'editorial',
@@ -90,12 +97,14 @@ const COLD_START: ExploreLayout = {
       id: 'group-destinations',
       title: 'Group Destinations',
       variant: 'media-md',
+      href: '/search?collection=group-destinations',
     },
     {
       kind: 'rail',
       id: 'unique-lodging',
       title: 'Unique Lodging',
       variant: 'media-sm-narrow',
+      href: '/search?collection=unique-lodging',
     },
   ],
 }

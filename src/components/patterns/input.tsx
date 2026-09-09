@@ -23,6 +23,13 @@ import { cn } from '@/lib/utils'
  *   Error     border Feedback/Error,   text Text/Muted,    helper ERROR
  *   Disabled  border Border/Default,   text Text/Disabled, helper muted
  *
+ * FOCUS is a third axis in the design — Figma models it as a Type alongside
+ * "Icon Left" and "Text" rather than as a State, but what it draws is just
+ * the top hairline turning Border/Focus. So it is derived here too, from
+ * :focus-within, and it does NOT override Error: an error border that
+ * vanishes the moment you focus the field to fix it is the wrong trade. The
+ * focus ring still appears in that case, so focus is never ambiguous.
+ *
  * The field carries a 0.5px TOP border only — not a full outline. That is
  * deliberate in the design: a hairline catching light on the upper edge, so
  * the pill reads as raised rather than boxed.
@@ -37,6 +44,13 @@ import { cn } from '@/lib/utils'
  *     red border communicates nothing without sight (SC 1.4.1)
  *   - the clear button is a real button with its own label, not a decorative
  *     icon, and is hidden entirely when there is nothing to clear
+ *   - the pill draws the global focus ring for the field inside it. The inner
+ *     <input> carries `outline-none` so the ring is not drawn around the bare
+ *     text, and before this the field had NO focus indicator at all —
+ *     measured as `outline-style: none` while focused, which is a 2.4.7
+ *     failure that an axe scan does not catch. theme.css now names
+ *     [data-slot="input-field"] alongside :focus-visible so both get the one
+ *     indicator.
  */
 export function Input({
   label,
@@ -95,6 +109,10 @@ export function Input({
               : disabled
                 ? 'border-t-border'
                 : 'border-t-input',
+            /* Guarded on `!error` on purpose. A pseudo-class outranks a plain
+             * utility whatever order they are written in, so without this the
+             * copper hairline would silently win over the error one. */
+            !error && 'focus-within:border-t-ring',
           )}
         >
           {LeftIcon ? (

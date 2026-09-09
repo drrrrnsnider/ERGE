@@ -7,6 +7,7 @@ import {
   PersonOutlined,
   ConciergeStar,
   Search,
+  Star,
   ShoppingCart,
 } from '@/components/icons'
 import { NavLink, Outlet } from 'react-router'
@@ -104,7 +105,17 @@ function BottomBar() {
   return (
     <div className="shrink-0 pb-[env(safe-area-inset-bottom)]">
       <search className="flex items-center gap-2 px-5 py-2">
-        <div className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-card pr-3.5 pl-2">
+        {/* `Input Field Special` in the keyframe: a FULL Border/Default ring
+          * rather than Input's top-only hairline, and it turns Border/Focus
+          * while the field is focused — which is the whole time you are
+          * typing. It carries data-slot="input-field" so the one focus-ring
+          * rule in theme.css covers it too; this input suppresses its own
+          * outline exactly like Input's does, and without that it had no
+          * focus indicator at all. */}
+        <div
+          data-slot="input-field"
+          className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-card pr-3.5 pl-2 focus-within:border-ring"
+        >
           <span className="grid size-[30px] shrink-0 place-items-center">
             <Search className="size-[22px] text-muted-foreground" aria-hidden="true" />
           </span>
@@ -142,10 +153,18 @@ function BottomBar() {
 const TABS: ReadonlyArray<{
   label: string
   icon: IconComponent
+  /**
+   * The icon for the selected tab, where the design draws a different one.
+   * Concierge is the case that has it: the keyframe shows the four-pointed
+   * star as a stroke, and it fills in when you are on it. Purely visual —
+   * NavLink's `aria-current` is what says "selected" to a screen reader, so
+   * nothing here rests on the fill alone (SC 1.4.1).
+   */
+  activeIcon?: IconComponent
   to?: string
 }> = [
   { label: 'Explore', icon: Browse, to: '/' },
-  { label: 'Concierge', icon: ConciergeStar },
+  { label: 'Concierge', icon: Star, activeIcon: ConciergeStar },
   { label: 'Cart', icon: ShoppingCart },
   { label: 'Library', icon: FavoriteFilled },
   { label: 'Profile', icon: PersonOutlined },
@@ -155,7 +174,7 @@ function TabBar() {
   return (
     <nav aria-label="Primary" className="border-t border-card bg-background">
       <ul className="flex items-stretch justify-around">
-        {TABS.map(({ label, icon: Icon, to }) => (
+        {TABS.map(({ label, icon: Icon, activeIcon: ActiveIcon, to }) => (
           <li key={label} className="flex-1">
             {to ? (
               <NavLink
@@ -168,8 +187,18 @@ function TabBar() {
                   )
                 }
               >
-                <Icon className="size-6" aria-hidden="true" />
-                {label}
+                {/* Children as a function, so the icon can react to selection
+                  * the same way the colour does. A tab with no activeIcon
+                  * keeps its one drawing and just changes colour. */}
+                {({ isActive }) => {
+                  const Glyph = isActive && ActiveIcon ? ActiveIcon : Icon
+                  return (
+                    <>
+                      <Glyph className="size-6" aria-hidden="true" />
+                      {label}
+                    </>
+                  )
+                }}
               </NavLink>
             ) : (
               <span className="flex min-h-14 flex-col items-center justify-center gap-0.5 p-2 text-[11px] font-medium text-muted-foreground">

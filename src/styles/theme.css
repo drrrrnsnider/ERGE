@@ -416,7 +416,14 @@
    * outrank `@layer base`, so on a button you see their ring, and on a link
    * you see this outline. Both are visible indicators; they are just drawn by
    * different layers, and `ui/` stays unmodified. */
-  :focus-visible {
+  /* The second selector is the SAME indicator, drawn on the right box. Our
+   * Input pill kills the inner field's own outline (the ring would otherwise
+   * be drawn inside the pill, hugging the bare text), so the pill takes it on
+   * behalf of the field it contains. Deliberately one rule and not a copy:
+   * a competing focus style in a component is the thing CLAUDE.md forbids,
+   * and this way the two can never drift. */
+  :focus-visible,
+  [data-slot='input-field']:has(:focus-visible) {
     outline: var(--size-focus-ring) solid var(--ring);
     outline-offset: var(--size-focus-offset);
   }
