@@ -324,3 +324,57 @@ test.describe('the save toggle', () => {
     await expect(unsave.first()).toHaveAttribute('aria-pressed', 'true')
   })
 })
+
+test.describe('the tab bar', () => {
+  /**
+   * Every tab has two drawings, and the current one is FILLED.
+   *
+   * Explore is the only routed tab, which is exactly what makes it testable:
+   * on `/` it is current, and on any unbuilt path it is not. Same element,
+   * same page, two states — so this compares the actual rendered path data
+   * rather than trusting that the right component was passed. A tab wired
+   * with one glyph for both states fails here.
+   */
+  test('the current tab is drawn filled, the resting ones outlined', async ({
+    page,
+  }) => {
+    // Scoped to the nav: the not-built screen has its own "Back to Explore"
+    // link, and an unscoped name match picks up both.
+    const explore = page
+      .locator('nav[aria-label="Primary"]')
+      .getByRole('link', { name: 'Explore' })
+    const glyph = () => explore.locator('svg path').first().getAttribute('d')
+
+    await page.goto('/')
+    await expect(explore).toHaveAttribute('aria-current', 'page')
+    const filled = await glyph()
+
+    await page.goto('/somewhere-unbuilt')
+    await expect(explore).not.toHaveAttribute('aria-current', 'page')
+    const outline = await glyph()
+
+    expect(outline).not.toBe(filled)
+  })
+
+  /**
+   * A resting tab's icon is dimmer than its own label — Text/Disabled against
+   * Text/Muted. That only survives review if it is written down as
+   * deliberate, so it is asserted rather than left to look like a mistake.
+   *
+   * It is legible because the icon is decorative: it carries aria-hidden and
+   * the label is the accessible name, so no meaning rests on the icon's
+   * contrast (SC 1.4.1).
+   */
+  test('a resting tab icon is dimmer than its label', async ({ page }) => {
+    await page.goto('/')
+
+    const cart = page.getByText('Cart', { exact: true })
+    const colours = await cart.evaluate((el) => ({
+      label: getComputedStyle(el).color,
+      icon: getComputedStyle(el.querySelector('svg') as Element).color,
+    }))
+
+    expect(colours.icon).not.toBe(colours.label)
+    await expect(page.locator('nav[aria-label="Primary"] svg')).toHaveCount(5)
+  })
+})

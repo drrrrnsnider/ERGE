@@ -1,14 +1,18 @@
 import { useId } from 'react'
 import {
-  Browse,
-  FavoriteFilled,
   LocationOn,
   Menu,
-  PersonOutlined,
-  ConciergeStar,
   Search,
-  Star,
-  ShoppingCart,
+  TabCart,
+  TabCartFilled,
+  TabConcierge,
+  TabConciergeFilled,
+  TabExplore,
+  TabExploreFilled,
+  TabLibrary,
+  TabLibraryFilled,
+  TabProfile,
+  TabProfileFilled,
 } from '@/components/icons'
 import { NavLink, Outlet } from 'react-router'
 import { ButtonIcon } from '@/components/patterns/button'
@@ -138,12 +142,22 @@ function BottomBar() {
 }
 
 /**
- * Five tabs (user-flows.md, "Navigation").
+ * Five tabs, from `Nav Tab Bar` (Figma 162:14602).
  *
- * The frame draws FOUR — Explore, Concierge, Cart, Library — with Profile as
- * a top-right icon button. The doc says Profile was promoted to a tab, and
- * the doc wins: it is a tab here and the top-bar button is gone, so there is
- * exactly one way to reach it.
+ * EVERY tab has two drawings — an outline at rest, a filled one when it is
+ * the tab you are on — so `activeIcon` is required rather than optional. An
+ * earlier build treated that as a Concierge-only flourish and left the other
+ * four with a single glyph, which also meant Explore was permanently showing
+ * its FILLED icon and Library its outline one under the name FavoriteFilled.
+ *
+ * Profile is settled too: the component set has all five tabs including a
+ * Profile variant, so the design and user-flows.md agree and the note about
+ * the frame drawing only four is gone.
+ *
+ * The resting icon is Text/Disabled while its label is Text/Muted — dimmer
+ * than the word beside it, which is what the file draws. That is legible
+ * because the icon is decorative: it carries aria-hidden and the label is the
+ * accessible name, so nothing is communicated by the icon's contrast alone.
  *
  * Only Explore is wired. The rest render as plain items — visible, correctly
  * placed, not links. Deliberately NOT `disabled` buttons: a disabled control
@@ -152,22 +166,17 @@ function BottomBar() {
  */
 const TABS: ReadonlyArray<{
   label: string
+  /** At rest. */
   icon: IconComponent
-  /**
-   * The icon for the selected tab, where the design draws a different one.
-   * Concierge is the case that has it: the keyframe shows the four-pointed
-   * star as a stroke, and it fills in when you are on it. Purely visual —
-   * NavLink's `aria-current` is what says "selected" to a screen reader, so
-   * nothing here rests on the fill alone (SC 1.4.1).
-   */
-  activeIcon?: IconComponent
+  /** When this is the current tab. Required — every tab in the set has one. */
+  activeIcon: IconComponent
   to?: string
 }> = [
-  { label: 'Explore', icon: Browse, to: '/' },
-  { label: 'Concierge', icon: Star, activeIcon: ConciergeStar },
-  { label: 'Cart', icon: ShoppingCart },
-  { label: 'Library', icon: FavoriteFilled },
-  { label: 'Profile', icon: PersonOutlined },
+  { label: 'Explore', icon: TabExplore, activeIcon: TabExploreFilled, to: '/' },
+  { label: 'Concierge', icon: TabConcierge, activeIcon: TabConciergeFilled },
+  { label: 'Cart', icon: TabCart, activeIcon: TabCartFilled },
+  { label: 'Library', icon: TabLibrary, activeIcon: TabLibraryFilled },
+  { label: 'Profile', icon: TabProfile, activeIcon: TabProfileFilled },
 ]
 
 function TabBar() {
@@ -187,14 +196,22 @@ function TabBar() {
                   )
                 }
               >
-                {/* Children as a function, so the icon can react to selection
-                  * the same way the colour does. A tab with no activeIcon
-                  * keeps its one drawing and just changes colour. */}
+                {/* Children as a function, so the glyph can swap on selection
+                  * the same way the colour does. */}
                 {({ isActive }) => {
-                  const Glyph = isActive && ActiveIcon ? ActiveIcon : Icon
+                  const Glyph = isActive ? ActiveIcon : Icon
                   return (
                     <>
-                      <Glyph className="size-6" aria-hidden="true" />
+                      <Glyph
+                        className={cn(
+                          'size-6',
+                          // The current tab's icon inherits Action/Primary
+                          // from the link; a resting one is dimmer than its
+                          // own label, which is what the design draws.
+                          !isActive && 'text-disabled-foreground',
+                        )}
+                        aria-hidden="true"
+                      />
                       {label}
                     </>
                   )
@@ -202,7 +219,10 @@ function TabBar() {
               </NavLink>
             ) : (
               <span className="flex min-h-14 flex-col items-center justify-center gap-0.5 p-2 text-[11px] font-medium text-muted-foreground">
-                <Icon className="size-6" aria-hidden="true" />
+                <Icon
+                  className="size-6 text-disabled-foreground"
+                  aria-hidden="true"
+                />
                 {label}
               </span>
             )}
