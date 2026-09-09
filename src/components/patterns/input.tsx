@@ -44,21 +44,21 @@ import { cn } from '@/lib/utils'
  *     red border communicates nothing without sight (SC 1.4.1)
  *   - the clear button is a real button with its own label, not a decorative
  *     icon, and is hidden entirely when there is nothing to clear
- *   - focus is shown by the border alone. The pill briefly also drew the
- *     global ring; that was removed deliberately, because two indicators on
- *     one control is one too many.
+ *   - focus is shown two ways, for two different situations. Click into the
+ *     field and you get the border alone: you pointed at it, so you already
+ *     know where typing will go. Tab into it and the pill also draws the
+ *     focus ring, because moving between controls without pointing at them is
+ *     the case that needs a strong signal.
  *
- *     The cost, measured rather than assumed: the border goes Border/Input to
- *     Border/Focus, and those two differ by only 1.76:1 across an edge that
- *     is half a pixel tall. The focused colour reads strongly against the
- *     field itself (6.56:1), so the state is visible — but the CHANGE is
- *     subtle, and 2.4.13 Focus Appearance (AAA, above our AA target) would
- *     not accept it. The bottom-bar search field does not have this problem:
- *     it has a full 1px border going Border/Default to Border/Focus, a 5.62:1
- *     change, which is why the ring was redundant there.
+ *     That split is why it is not plain `:focus-visible`. The spec has text
+ *     inputs match that ALWAYS, click included, so it cannot tell the two
+ *     apart; main.tsx records the modality instead.
  *
- *     If this ever needs strengthening without adding a ring back, thickening
- *     the focused border is the move — it stays the design's own treatment.
+ *     The measurement behind it: the border change on its own is Border/Input
+ *     to Border/Focus, only 1.76:1, across an edge half a pixel tall. Plenty
+ *     to confirm a field you just clicked; too subtle to track by keyboard.
+ *     (The bottom-bar search field is a full 1px border going Border/Default
+ *     to Border/Focus, a 5.62:1 change, so it was never the weak case.)
  */
 export function Input({
   label,

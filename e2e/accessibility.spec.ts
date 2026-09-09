@@ -229,14 +229,15 @@ test.describe('accessibility', () => {
    * which axe cannot catch, because a missing indicator is not detectable
    * from the accessibility tree.
    *
-   * The indicator is now the border alone: the ring was removed deliberately,
-   * so that is asserted as an absence rather than left untested. What remains
-   * is the design's own treatment, the border turning Border/Focus, and it
-   * still has to actually change. Colours are compared before against after
-   * rather than pinned to a value, so retokenising cannot break the test.
+   * The border change is the always-on part, and it has to actually happen.
+   * Colours are compared before against after rather than pinned to a value,
+   * so retokenising cannot break the test. Both fields are covered, because
+   * they get there differently: the budget field has a 0.5px top hairline and
+   * the search field a full 1px border.
    *
-   * Both fields are covered, because they get there differently: the budget
-   * field has a 0.5px top hairline and the search field a full 1px border.
+   * The ring is the keyboard-only part, asserted separately below. Both
+   * halves matter: a ring that never appears fails the keyboard user, and one
+   * that appears on click is the thing we deliberately removed.
    */
   test('a focused text field is visibly focused', async ({ page }) => {
     await page.goto('/')
@@ -265,10 +266,36 @@ test.describe('accessibility', () => {
       const focused = await read(pill)
 
       expect(focused.border).not.toBe(blurred.border)
-      // No ring, by design — see input.tsx for what that costs.
+      // Clicked, so no ring — that is the pointer case.
       expect(blurred.outline).toBe('none')
       expect(focused.outline).toBe('none')
     }
+  })
+
+  /**
+   * ...and the ring IS there for someone tabbing between fields.
+   *
+   * The two budget fields are adjacent in the tab order, so this clicks the
+   * first — establishing pointer modality and NO ring, which is half the
+   * assertion — and then presses Tab once to arrive at the second by
+   * keyboard. Same page, same controls, one keystroke apart: the only thing
+   * that differs is how focus got there.
+   */
+  test('the focus ring is for keyboard navigation, not for clicks', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const minPill = page.locator('[data-slot="input-field"]').first()
+    const maxPill = page.locator('[data-slot="input-field"]').nth(1)
+    await expect(minPill).toBeVisible()
+
+    await page.getByRole('spinbutton', { name: /^min/i }).click()
+    await expect(minPill).toHaveCSS('outline-style', 'none')
+
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('spinbutton', { name: /^max/i })).toBeFocused()
+    await expect(maxPill).not.toHaveCSS('outline-style', 'none')
   })
 
   /**

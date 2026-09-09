@@ -416,13 +416,26 @@
    * outrank `@layer base`, so on a button you see their ring, and on a link
    * you see this outline. Both are visible indicators; they are just drawn by
    * different layers, and `ui/` stays unmodified. */
-  /* Text fields are the deliberate exception. Their pill carries the design's
-   * own focus treatment — the border turns Border/Focus — and drawing a ring
-   * around it as well was two indicators on one control. So [data-slot=
-   * "input-field"] is NOT listed here, and the inner input keeps its
-   * `outline-none`. That is a design decision with a measured cost, recorded
-   * in input.tsx rather than buried here. */
   :focus-visible {
+    outline: var(--size-focus-ring) solid var(--ring);
+    outline-offset: var(--size-focus-offset);
+  }
+
+  /* Text fields get the ring only while someone is tabbing between them.
+   *
+   * Clicking into a field already tells you where typing will go — the pill's
+   * border turns Border/Focus — so a ring on top of that is a second
+   * indicator for a question already answered. Tabbing is the case that needs
+   * it: you are moving between controls without pointing at them, and a half
+   * pixel of colour change is not enough to follow.
+   *
+   * `:focus-visible` alone cannot express this. It is exactly right for
+   * buttons and links, but the spec has text inputs match it ALWAYS, click
+   * included, so it never distinguishes the two here. The modality flag comes
+   * from src/main.tsx, which sets data-keyboard-nav on <html> for Tab and
+   * clears it on pointerdown. It is the same indicator, drawn on the pill
+   * rather than the bare input inside it. */
+  [data-keyboard-nav] [data-slot='input-field']:has(:focus-visible) {
     outline: var(--size-focus-ring) solid var(--ring);
     outline-offset: var(--size-focus-offset);
   }
