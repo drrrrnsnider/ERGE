@@ -1,4 +1,4 @@
-import { Minus, Plus } from 'lucide-react'
+import { Add, Remove } from '@/components/icons'
 import { useId } from 'react'
 import { Button } from '@/components/ui/button'
 import type { ExploreFilters } from '@/lib/api/schemas/explore'
@@ -109,7 +109,7 @@ export function BudgetGroupControls({
             disabled={groupSize <= GROUP_MIN}
             onClick={() => setGroup(groupSize - 1)}
           >
-            <Minus />
+            <Remove />
           </Button>
           <input
             id={groupId}
@@ -129,7 +129,7 @@ export function BudgetGroupControls({
             disabled={groupSize >= GROUP_MAX}
             onClick={() => setGroup(groupSize + 1)}
           >
-            <Plus />
+            <Add />
           </Button>
         </div>
       </div>

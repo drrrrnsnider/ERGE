@@ -51,7 +51,7 @@ returns a final price at search time.
 Two price presentations, and they must be visually distinct:
 
 - **Final** — all-in, filterable, trustworthy at checkout
-- **Estimated** — marked, with fees resolved later
+- **Estimated** — marked by the word "from", with fees resolved later
 
 An estimate that isn't marked and then grows at checkout undermines the whole
 budget-transparency position. This is a component variant plus copy, not a

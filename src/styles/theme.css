@@ -242,6 +242,57 @@
   --leading-relaxed: var(--leading-relaxed);
 }
 
+/* -----------------------------------------------------------------------------
+ * `stroke-gradient` — the design's "Border Brighter -> 0" stroke.
+ *
+ * Every media frame in the Explore design is outlined with a gradient, not a
+ * flat line: Border/Brighter fading to nothing. Figma exports it as a STYLE
+ * rather than a variable, and the MCP flattens gradient strokes to a single
+ * colour, so it is reconstructed here.
+ *
+ * A gradient cannot be a `border-color`, so this is the standard two-layer
+ * mask: paint the gradient over the element's whole box, then mask out
+ * everything except a 1px frame. `border-radius: inherit` makes it follow
+ * whatever corner the element already has, and it sits on ::after so it works
+ * over any background without the caller having to repeat its own fill.
+ *
+ * [ASSUMPTION] The DIRECTION is top-to-bottom. The stops are known —
+ * Border/Brighter to transparent — but neither `get_design_context` nor
+ * `get_variable_defs` exposes a gradient's angle, and the stroke is 1px at
+ * 1:1 so it cannot be read reliably off a render either. Top-down is the
+ * usual dark-UI idiom (light from above); if the design fades left-to-right
+ * or diagonally, change the angle here and every frame follows.
+ *
+ * The mask colour is arbitrary — only its alpha matters — so it uses a token
+ * rather than a literal, which keeps the no-raw-colour rule satisfied
+ * without pretending the choice is meaningful.
+ * -------------------------------------------------------------------------- */
+@utility stroke-gradient {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      var(--color-border-brighter),
+      transparent
+    );
+    -webkit-mask:
+      linear-gradient(var(--foreground) 0 0) content-box,
+      linear-gradient(var(--foreground) 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(var(--foreground) 0 0) content-box,
+      linear-gradient(var(--foreground) 0 0);
+    mask-composite: exclude;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

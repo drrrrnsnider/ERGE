@@ -1,4 +1,5 @@
-import type { LucideIcon } from 'lucide-react'
+/** Any icon from src/components/icons. */
+type IconComponent = (props: React.SVGProps<SVGSVGElement>) => React.ReactElement
 import { cn } from '@/lib/utils'
 
 /**
@@ -24,7 +25,7 @@ export function EmptyState({
   className,
   ...props
 }: React.ComponentProps<'div'> & {
-  icon?: LucideIcon
+  icon?: IconComponent
   title: string
   description?: string
   action?: React.ReactNode

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Bookmark } from 'lucide-react'
+import { Bookmark } from '@/components/icons'
 import { useState } from 'react'
 import { EditorialCard } from '@/components/app/editorial-card'
 import { cn } from '@/lib/utils'
@@ -251,7 +251,7 @@ function CollageSection({ id, title }: { id: string; title: string }) {
          * fixed height whatever the images are, so a trip with four portraits
          * and a trip with four landscapes are the same shape on the page. */
         <div className="flex flex-col gap-2 px-4">
-          <ul className="flex h-45 gap-1 overflow-hidden rounded-lg border border-border-subtle">
+          <ul className="flex h-45 gap-1 overflow-hidden rounded-lg stroke-gradient">
             {query.data.items.map((item) => (
               <li key={item.experienceId} className="min-w-0 flex-1 bg-muted">
                 {item.images[0] ? (

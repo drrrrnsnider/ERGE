@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react'
+import { ErrorIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import type { ApiError } from '@/lib/api/schemas/error'
 import { cn } from '@/lib/utils'
@@ -42,7 +42,7 @@ export function ErrorState({
       )}
       {...props}
     >
-      <AlertCircle
+      <ErrorIcon
         className="size-8 text-muted-foreground"
         aria-hidden="true"
       />

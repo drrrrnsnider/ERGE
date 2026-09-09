@@ -1,17 +1,19 @@
-import type { LucideIcon } from 'lucide-react'
+import { useId } from 'react'
 import {
-  Heart,
-  LayoutGrid,
-  MapPin,
+  Browse,
+  FavoriteFilled,
+  LocationOn,
   Menu,
+  Person,
   Search,
   ShoppingCart,
-  Sparkles,
-  User,
-} from 'lucide-react'
-import { useId } from 'react'
+  Star,
+} from '@/components/icons'
 import { Link, NavLink, Outlet } from 'react-router'
 import { cn } from '@/lib/utils'
+
+/** Every icon in src/components/icons has this shape. */
+type IconComponent = (props: React.SVGProps<SVGSVGElement>) => React.ReactElement
 
 /**
  * The outermost layout archetype: the frame every screen renders inside.
@@ -76,7 +78,7 @@ function ButtonIcon({
   to,
 }: {
   label: string
-  icon: LucideIcon
+  icon: IconComponent
   to: string
 }) {
   return (
@@ -100,7 +102,7 @@ function TopBar() {
           * pushes the wordmark off-centre. The negative margin takes it back. */}
         <span className="-mr-[23px]">ERGE</span>
       </p>
-      <ButtonIcon label="Profile" icon={User} to="/profile" />
+      <ButtonIcon label="Profile" icon={Person} to="/profile" />
     </header>
   )
 }
@@ -132,7 +134,7 @@ function BottomBar() {
             className="h-full min-w-0 flex-1 bg-transparent text-body-md text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
-        <ButtonIcon label="Search near me" icon={MapPin} to="/search?near=me" />
+        <ButtonIcon label="Search near me" icon={LocationOn} to="/search?near=me" />
       </search>
 
       <TabBar />
@@ -156,14 +158,14 @@ function BottomBar() {
  */
 const TABS: ReadonlyArray<{
   label: string
-  icon: LucideIcon
+  icon: IconComponent
   to?: string
 }> = [
-  { label: 'Explore', icon: LayoutGrid, to: '/' },
-  { label: 'Concierge', icon: Sparkles },
+  { label: 'Explore', icon: Browse, to: '/' },
+  { label: 'Concierge', icon: Star },
   { label: 'Cart', icon: ShoppingCart },
-  { label: 'Library', icon: Heart },
-  { label: 'Profile', icon: User },
+  { label: 'Library', icon: FavoriteFilled },
+  { label: 'Profile', icon: Person },
 ]
 
 function TabBar() {

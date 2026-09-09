@@ -37,7 +37,7 @@ export function EditorialCard({ content }: { content: Editorial }) {
         data-kind="guides"
         /* The gradient is a copper wash fading out over the card's own
          * surface — built from role tokens, not literal colours. */
-        className="mx-4 flex flex-col gap-2.5 overflow-hidden rounded-lg border border-border-subtle bg-card bg-[linear-gradient(180deg,color-mix(in_oklch,var(--primary)_10%,transparent)_0%,transparent_63%)] py-4 shadow-card"
+        className="mx-4 flex flex-col gap-2.5 overflow-hidden rounded-lg stroke-gradient bg-card bg-[linear-gradient(180deg,color-mix(in_oklch,var(--primary)_10%,transparent)_0%,transparent_63%)] py-4 shadow-card"
       >
         <div className="flex flex-col gap-4 px-4">
           <Badge>{content.badge}</Badge>
@@ -53,7 +53,7 @@ export function EditorialCard({ content }: { content: Editorial }) {
             <li key={entry.id} className="shrink-0 snap-start">
               <Link
                 to={entry.href}
-                className="relative flex size-30 flex-col justify-end overflow-hidden rounded-md border border-border-subtle bg-muted p-3 shadow-tile"
+                className="relative flex size-30 flex-col justify-end overflow-hidden rounded-md stroke-gradient bg-muted p-3 shadow-tile"
               >
                 {entry.image ? (
                   <>

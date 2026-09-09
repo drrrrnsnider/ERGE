@@ -1,4 +1,4 @@
-import { Construction } from 'lucide-react'
+import { Construction } from '@/components/icons'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import { EmptyState } from '@/components/patterns/empty-state'
 import { Button } from '@/components/ui/button'

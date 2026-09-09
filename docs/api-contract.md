@@ -112,8 +112,10 @@ Two presentations, and they must be distinguishable by the client:
 { kind: "from",      base,  currency, taxesIncluded: false }
 ```
 
-`from` is a **base rate excluding fees**. Copy says "from $45 + fees", never
-an implied all-in figure.
+`from` is a **base rate excluding fees**. The word "from" is what marks it —
+copy reads "from $45 / couple", never an implied all-in figure. An earlier
+build appended "+ fees" as well; that is removed, because doubling the hedge
+made the line harder to scan without making it more honest.
 
 **Budget filtering — decided.** `from` items **participate** in budget
 filtering, at their low bound. A "from $45" item appears in a $0–$100 search,
@@ -153,8 +155,12 @@ ordering or a hero/thumbnail distinction.
 ```
 
 `unknown` is legitimate and common — availability often can't be determined
-without a date. The client renders it as "select a date to check", not as an
-error.
+without a date. It is never an error.
+
+**It is not surfaced on a card.** Explore's cards show title, meta and price
+and nothing else, so a status line there would be inventing chrome the design
+does not have. Availability belongs on the PDP, where a date can actually be
+chosen, and in the cart, where it blocks checkout.
 
 ---
 

@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react'
+import { ArrowForwardIos } from '@/components/icons'
 import { Link } from 'react-router'
 import { cn } from '@/lib/utils'
 
@@ -69,7 +69,7 @@ export function Rail({
         {href ? (
           <Link to={href} className="inline-flex items-center gap-1 rounded-md">
             {title}
-            <ChevronRight className="size-[21px] text-primary" aria-hidden="true" />
+            <ArrowForwardIos className="size-[21px] text-primary" />
           </Link>
         ) : (
           title

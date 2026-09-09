@@ -1,4 +1,9 @@
-import { Award, Heart } from 'lucide-react'
+import {
+  Elite as EliteIcon,
+  FavoriteFilled,
+  FavoriteOutline,
+  FavoriteOutlineOnImage,
+} from '@/components/icons'
 import { Link } from 'react-router'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
@@ -36,11 +41,14 @@ const hrefFor = (experience: Experience) =>
   `/experience/${experience.experienceId}`
 
 /**
- * "from $45 + fees" vs "$100". The two presentations MUST be distinguishable
- * (interaction-spec.md, "Price and estimate states"): an estimate that is not
- * marked and then grows at checkout undermines the whole budget position.
+ * "from $45 / couple" vs "$100 / person".
  *
- * The design's unit qualifier ("/ couple") rides along after the amount.
+ * The two presentations still have to be distinguishable — an estimate that
+ * is not marked and then grows at checkout undermines the whole budget
+ * position (interaction-spec.md) — but the marker is the word "from", which
+ * is what the design uses. An extra "+ fees" was in an earlier build and is
+ * gone: it made the line read "from $45 / couple + fees", and doubling the
+ * hedge made it harder to scan without making it more honest.
  */
 function Price({ experience }: { experience: Experience }) {
   const { price } = experience
@@ -54,21 +62,8 @@ function Price({ experience }: { experience: Experience }) {
       {price.unit ? (
         <span className="text-muted-foreground"> / {price.unit}</span>
       ) : null}
-      {price.kind === 'from' ? (
-        <span className="text-muted-foreground"> + fees</span>
-      ) : null}
     </>
   )
-}
-
-/** `unknown` is common and is not an error — it means "we need a date". */
-function Availability({ experience }: { experience: Experience }) {
-  const label = {
-    available: 'Available',
-    unavailable: 'Not available',
-    unknown: 'Select a date to check',
-  }[experience.availability.status]
-  return <p className="text-body-xs text-muted-foreground">{label}</p>
 }
 
 function SaveButton({
@@ -103,10 +98,16 @@ function SaveButton({
         className,
       )}
     >
-      <Heart
-        className={cn('size-5', saved ? 'fill-primary text-primary' : 'text-foreground')}
-        aria-hidden="true"
-      />
+      {/* The same heart, filled once saved — a state change rather than a
+        * different icon. On media-sm it sits straight on a photo, so it uses
+        * the backed variant to stay legible. */}
+      {saved ? (
+        <FavoriteFilled className="size-5 text-primary" />
+      ) : chrome ? (
+        <FavoriteOutline className="size-5 text-foreground" />
+      ) : (
+        <FavoriteOutlineOnImage className="size-5 text-foreground" />
+      )}
     </button>
   )
 }
@@ -115,7 +116,7 @@ function SaveButton({
 function EliteBadge() {
   return (
     <p className="absolute top-2 left-2 z-10 flex h-8 items-center gap-1 rounded-full border border-ring bg-card/90 pr-3 pl-2 text-body-md text-emphasis shadow-lift">
-      <Award className="size-5" aria-hidden="true" />
+      <EliteIcon className="size-5" />
       Elite
     </p>
   )
@@ -176,8 +177,12 @@ export function ExperienceCard({
       >
         <div
           className={cn(
-            'relative flex h-45 gap-1 overflow-hidden rounded-lg border',
-            experience.elite ? 'border-primary' : 'border-border-subtle',
+            'relative flex h-45 gap-1 overflow-hidden rounded-lg',
+            /* Elite replaces the gradient with a solid copper stroke — that
+             * swap is the whole point of the treatment. */
+            experience.elite
+              ? 'border border-primary'
+              : 'stroke-gradient',
           )}
         >
           {/* Hero, then a vertical rail of three thumbnails beside it. */}
@@ -213,7 +218,6 @@ export function ExperienceCard({
           <p className="text-h4 font-medium text-emphasis">
             <Price experience={experience} />
           </p>
-          <Availability experience={experience} />
         </div>
       </article>
     )
@@ -228,7 +232,7 @@ export function ExperienceCard({
       >
         <Media
           experience={experience}
-          className="h-20 w-27.5 shrink-0 rounded-md border border-border-subtle"
+          className="h-20 w-27.5 shrink-0 rounded-md stroke-gradient"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-[3px] pr-9">
           <Link to={hrefFor(experience)} className="text-body-md text-foreground">
@@ -238,7 +242,6 @@ export function ExperienceCard({
           <p className="text-body-sm text-emphasis">
             <Price experience={experience} />
           </p>
-          <Availability experience={experience} />
         </div>
         <SaveButton
           experience={experience}
@@ -260,7 +263,7 @@ export function ExperienceCard({
     >
       <Media
         experience={experience}
-        className="h-27.5 w-full rounded-md border border-border-subtle"
+        className="h-27.5 w-full rounded-md stroke-gradient"
       />
       <div className="flex flex-col gap-[3px]">
         <Link to={hrefFor(experience)} className="text-body-md text-foreground">

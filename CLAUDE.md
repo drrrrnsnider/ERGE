@@ -37,7 +37,11 @@ These are decided. Don't substitute alternatives without asking.
 - **Tailwind CSS v4** — no config file, no PostCSS. Configuration lives in CSS
   via `@theme`.
 - **shadcn/ui on Base UI** (`base-nova` style). Not Radix.
-- **Lucide** for icons
+- **Material Symbols** for icons, vendored as path data in
+  `src/components/icons/` — not an icon package. The design file's icons ARE
+  Material Symbols, so the exported bytes and the upstream set are the same
+  family, and several carry gradients a package would flatten. Figma asset
+  URLs expire in about a week, so nothing may stay a remote `<img src>`.
 - **TanStack Query** for server state
 - **React Hook Form + Zod** for forms and validation
 - **Vitest** for unit tests, **Playwright** for browser tests, **axe-core** for
