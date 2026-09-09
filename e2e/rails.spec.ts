@@ -495,3 +495,39 @@ test.describe('the search overlay', () => {
     await expect(fade).toHaveCSS('pointer-events', 'none')
   })
 })
+
+test.describe('card strokes', () => {
+  /**
+   * Media is framed by Border/Subtle Focus — a TRANSLUCENT COPPER hairline —
+   * not the opaque neutral that separates surfaces.
+   *
+   * Worth a test because this failed twice in different ways. First the frame
+   * was a Border/Brighter gradient, which the flattened Figma code showed but
+   * the variable list contradicted. Then the fix used `border-subtle`, which
+   * is not a class: the colour is named `border-subtle`, so with the `border-`
+   * utility prefix it is `border-border-subtle`. Tailwind dropped the unknown
+   * class silently and the border fell back to the default neutral, which
+   * looks almost right on a dark UI and would have shipped.
+   *
+   * So this asserts the two properties that separate the right colour from
+   * that fallback: it must be translucent, and it must be warm. Channel
+   * comparison rather than a pinned value, so retokenising cannot break it.
+   */
+  test('media is framed in translucent copper, not the neutral border', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const card = page.locator('[data-variant="media-sm"]').first()
+    await expect(card).toBeVisible()
+
+    const frame = await card.locator('> div').first().evaluate((el) => {
+      const c = getComputedStyle(el).borderTopColor
+      const parts = c.match(/[\d.]+/g)!.map(Number)
+      const [r, , b] = parts
+      return { colour: c, alpha: parts.length > 3 ? parts[3]! : 1, warm: r! > b! }
+    })
+
+    expect(frame.alpha).toBeLessThan(1)
+    expect(frame.warm).toBe(true)
+  })
+})

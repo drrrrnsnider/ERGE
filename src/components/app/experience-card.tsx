@@ -130,11 +130,11 @@ export function ExperienceCard({
         <div
           className={cn(
             'relative flex h-45 gap-1 overflow-hidden rounded-lg',
-            /* Elite replaces the gradient with a solid copper stroke — that
-             * swap is the whole point of the treatment. */
+            /* Elite replaces the hairline with a full-strength copper stroke
+             * — that swap is the whole point of the treatment. */
             experience.elite
               ? 'border border-primary'
-              : 'stroke-gradient',
+              : 'border border-border-subtle',
           )}
         >
           {/* Hero, then a vertical rail of three thumbnails beside it. */}
@@ -180,11 +180,20 @@ export function ExperienceCard({
       <article
         data-slot="experience-card"
         data-variant={variant}
-        className="relative flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card"
+        /* `isolate` so the two strokes below can be ordered against each
+         * other and nothing else. Without a stacking context here they would
+         * be competing up in `main`, which is where the last z-index bug
+         * came from. */
+        className="relative isolate flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card"
       >
+        {/* The image is flush with the card on three edges, so its stroke and
+          * the card's land on the same line. The card's is a ::after overlay
+          * and therefore paints later in tree order, which put the dark card
+          * stroke on top of the copper one — the wrong way round. `z-1` puts
+          * the image back on top; the save button stays above both at z-10. */}
         <Media
           experience={experience}
-          className="h-20 w-27.5 shrink-0 rounded-md stroke-gradient"
+          className="relative z-1 h-20 w-27.5 shrink-0 rounded-md border border-border-subtle"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-[3px] pr-9">
           <Link to={hrefFor(experience)} className="text-body-md text-foreground">
@@ -218,7 +227,7 @@ export function ExperienceCard({
     >
       <Media
         experience={experience}
-        className="h-27.5 w-full rounded-md stroke-gradient"
+        className="h-27.5 w-full rounded-md border border-border-subtle"
       />
       <div className="flex flex-col gap-[3px]">
         <Link to={hrefFor(experience)} className="text-body-md text-foreground">
