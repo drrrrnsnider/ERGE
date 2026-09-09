@@ -117,6 +117,7 @@ describe('theme bridge', () => {
       'input',
       'ring',
       'emphasis',
+      'disabled-foreground',
       /* --border-subtle is deliberately absent. It points at
        * Border/Subtle Focus, which is a color-mix() at 25% alpha, so it has
        * no flat hex and readSemantic() skips it by design — a translucent

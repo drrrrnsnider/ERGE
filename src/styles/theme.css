@@ -90,6 +90,12 @@
    *                 separator, and from --ring, which is focus. */
   --emphasis: var(--color-text-secondary);
   --border-subtle: var(--color-border-subtle-focus);
+  /* Text/Disabled. shadcn has no role for it — its own disabled treatment is
+   * `opacity-50` on the whole control, which is a different idea. This is a
+   * colour the design names, used by the Input's disabled state. Exempt from
+   * the contrast matrix by WCAG 1.4.3: inactive controls are meant to read as
+   * unavailable. */
+  --disabled-foreground: var(--color-text-disabled);
 
   /* The saved heart. Figma draws it with TWO gradients — a diagonal rose to
    * carnation fill, and a vertical highlight-to-shadow stroke — and the
@@ -185,6 +191,7 @@
   --color-ring: var(--ring);
   --color-emphasis: var(--emphasis);
   --color-border-subtle: var(--border-subtle);
+  --color-disabled-foreground: var(--disabled-foreground);
 
   /* == Type scale ========================================================
    * The Figma text styles, as utilities: `text-h2`, `text-body-sm`.
@@ -221,6 +228,10 @@
   --text-body-md: 14px;
   --text-body-sm: 13px;
   --text-body-xs: 12px;
+  /* Section/XXSmall — the Input's label. Uppercase with wide tracking, which
+   * is part of the style rather than the size, so it is applied alongside as
+   * `uppercase tracking-[0.08em]`. */
+  --text-section-xxs: 11px;
 
   /* == Elevation =========================================================
    * The design's four drop shadows, as utilities. Figma exports effects as

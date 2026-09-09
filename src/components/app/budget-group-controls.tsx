@@ -1,4 +1,5 @@
 import { Add, Remove } from '@/components/icons'
+import { Input } from '@/components/patterns/input'
 import { useId } from 'react'
 import { Button } from '@/components/ui/button'
 import type { ExploreFilters } from '@/lib/api/schemas/explore'
@@ -36,8 +37,6 @@ export function BudgetGroupControls({
   onChange: (next: ExploreFilters) => void
 }) {
   const id = useId()
-  const minId = `${id}-min`
-  const maxId = `${id}-max`
   const groupId = `${id}-group`
   const hintId = `${id}-hint`
 
@@ -56,42 +55,35 @@ export function BudgetGroupControls({
 
   return (
     <div className="flex flex-col gap-4 rounded-xl bg-card p-4">
-      <fieldset className="flex flex-col gap-2">
+      {/* `min-w-0` because a <fieldset> carries a browser default of
+        * `min-width: min-content` that no reset clears — without it the
+        * element refuses to shrink and the two fields overflow the card
+        * rather than sharing the row. */}
+      <fieldset className="flex min-w-0 flex-col gap-2">
         <legend className="font-medium text-card-foreground">Budget</legend>
         <p id={hintId} className="text-sm text-muted-foreground">
           Total for the group, including taxes and fees
         </p>
-        <div className="flex items-center gap-2">
-          <label htmlFor={minId} className="sr-only">
-            Minimum budget in {budget.currency}
-          </label>
-          <input
-            id={minId}
+        <div className="flex items-start gap-3">
+          <Input
+            label={`Min (${budget.currency})`}
+            value={String(toMajor(budget.min))}
+            onChange={(v) => setBudget({ min: toMinor(Number(v) || 0) })}
             type="number"
             inputMode="numeric"
             min={0}
             step={5}
-            value={toMajor(budget.min)}
-            aria-describedby={hintId}
-            onChange={(e) => setBudget({ min: toMinor(e.target.valueAsNumber || 0) })}
-            className="h-11 w-full rounded-lg border border-input bg-background px-3 text-foreground"
+            className="flex-1"
           />
-          <span className="text-muted-foreground" aria-hidden="true">
-            –
-          </span>
-          <label htmlFor={maxId} className="sr-only">
-            Maximum budget in {budget.currency}
-          </label>
-          <input
-            id={maxId}
+          <Input
+            label={`Max (${budget.currency})`}
+            value={String(toMajor(budget.max))}
+            onChange={(v) => setBudget({ max: toMinor(Number(v) || 0) })}
             type="number"
             inputMode="numeric"
             min={0}
             step={5}
-            value={toMajor(budget.max)}
-            aria-describedby={hintId}
-            onChange={(e) => setBudget({ max: toMinor(e.target.valueAsNumber || 0) })}
-            className="h-11 w-full rounded-lg border border-input bg-background px-3 text-foreground"
+            className="flex-1"
           />
         </div>
       </fieldset>

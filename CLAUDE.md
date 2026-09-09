@@ -173,7 +173,8 @@ tests — it is a continuous practice, not a pre-launch audit.
 - **The four data states are a system pattern, not per-screen work.**
   `EmptyState`, `Skeleton` and `ErrorState` live in `src/components/patterns/`
   — they are neither vendored primitives nor domain components, so they sit
-  beside both rather than inside either. Every screen inherits them; build a
+  beside both rather than inside either. `Input` lives there too: it is ours,
+  from the Figma component set, not a vendored shadcn control. Every screen inherits them; build a
   bespoke one only where the generic pattern genuinely fails.
 - **States are per-section, not per-page.** Explore fetches each rail
   separately, so one failing renders its own error while the rest of the page
@@ -244,7 +245,7 @@ below 32px fails the build.
 src/tokens/         generated primitives + contrast tests — never hand-edit
 src/styles/         theme.css, the bridge layer
 src/components/ui/  shadcn primitives, vendored, unmodified
-src/components/patterns/  the four data states — empty, loading, error
+src/components/patterns/  our own primitives — the four data states, form controls
 src/components/app/ our domain components — the booking contract lives here
 src/layouts/        the layout archetypes
 src/routes/         page-level screens

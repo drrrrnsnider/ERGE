@@ -255,7 +255,7 @@ test.describe('per-section states', () => {
     await page.goto('/')
     await expect(page.locator(CARD).first()).toBeVisible()
 
-    await page.getByLabel(/maximum budget/i).fill('1')
+    await page.getByLabel(/^max/i).fill('1')
 
     await expect(
       page.locator('[data-slot="empty-state"]').filter({
