@@ -17,7 +17,7 @@ import { ExperienceSchema } from './experience'
  */
 
 /** How a rail's cards are drawn. Same component, different variant config. */
-export const RailVariantSchema = z.enum(['portrait', 'compact', 'small'])
+export const RailVariantSchema = z.enum(['media-md', 'media-sm', 'media-sm-narrow'])
 export type RailVariant = z.infer<typeof RailVariantSchema>
 
 export const ExploreSectionSchema = z.discriminatedUnion('kind', [
@@ -29,8 +29,6 @@ export const ExploreSectionSchema = z.discriminatedUnion('kind', [
     variant: RailVariantSchema,
     /** Where the section heading links, if a destination exists yet. */
     href: z.string().optional(),
-    /** A marker every card in this rail carries, e.g. "Elite". */
-    badge: z.string().optional(),
   }),
   /**
    * "Ideas for Your Trip" — a collage drawn from the user's collections.

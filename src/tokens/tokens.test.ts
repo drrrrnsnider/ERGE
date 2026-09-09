@@ -116,6 +116,12 @@ describe('theme bridge', () => {
       'border',
       'input',
       'ring',
+      'emphasis',
+      /* --border-subtle is deliberately absent. It points at
+       * Border/Subtle Focus, which is a color-mix() at 25% alpha, so it has
+       * no flat hex and readSemantic() skips it by design — a translucent
+       * colour has no fixed contrast ratio until you know what is behind it.
+       * It is a real role and it is used; it just cannot be asserted here. */
     ]
     expect(Object.keys(roles).sort()).toEqual(required.sort())
   })

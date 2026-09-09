@@ -76,6 +76,21 @@
   --input: var(--color-border-input);
   --ring: var(--color-border-focus);
 
+  /* Two roles shadcn has no name for, both used throughout the Explore
+   * design. Added rather than reaching past the bridge to the token: a
+   * component asking for `Text/Secondary` by name would couple it to the
+   * export, which is the coupling this layer exists to prevent.
+   *
+   * --emphasis      Text/Secondary, champagne. Prices, the Elite label, and
+   *                 the promo call to action. Not `secondary-foreground`,
+   *                 which shadcn already spends on text sitting ON the
+   *                 secondary surface.
+   * --border-subtle Border/Subtle Focus — a translucent copper hairline that
+   *                 frames media. Distinct from --border, which is the opaque
+   *                 separator, and from --ring, which is focus. */
+  --emphasis: var(--color-text-secondary);
+  --border-subtle: var(--color-border-subtle-focus);
+
   /* == Radius ============================================================
    * Figma exports Radius/none|sm|md|lg|full as --radius-* directly into
    * :root. Those names are exactly the ones Tailwind's rounded-* utilities
@@ -155,6 +170,68 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-emphasis: var(--emphasis);
+  --color-border-subtle: var(--border-subtle);
+
+  /* == Type scale ========================================================
+   * The Figma text styles, as utilities: `text-h2`, `text-body-sm`.
+   *
+   * These are here for the same reason --leading-* is: they cannot come
+   * through the export. Figma text STYLES are not variables, so they are
+   * absent from the variables payload entirely — only `Font Size/12` made it
+   * across as a variable, and one size is not a scale.
+   *
+   * Named after the styles themselves so a component reads the way the
+   * design file does. Weight is not part of a Tailwind font-size entry, so
+   * the Figma weight is noted here and applied with font-medium /
+   * font-semibold at the call site:
+   *
+   *   display-md  Ovo    Regular  32
+   *   h2          Outfit SemiBold 21
+   *   h3          Outfit Medium   18
+   *   h4          Outfit Medium   16
+   *   h5          Outfit Medium   14
+   *   body-lg     Outfit Regular  16 / 1.5
+   *   body-md     Outfit Regular  14
+   *   body-sm     Outfit Regular  13
+   *   body-xs     Outfit Regular  12
+   *
+   * Use these instead of Tailwind's text-sm / text-lg, which are a different
+   * scale and only coincide by accident. */
+  --text-display-md: 32px;
+  --text-h2: 21px;
+  --text-h3: 18px;
+  --text-h4: 16px;
+  --text-h5: 14px;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: var(--leading-normal);
+  --text-body-md: 14px;
+  --text-body-sm: 13px;
+  --text-body-xs: 12px;
+
+  /* == Elevation =========================================================
+   * The design's four drop shadows, as utilities. Figma exports effects as
+   * STYLES, not variables, so — like the type scale — they cannot come
+   * through `npm run tokens` and are a bridge decision.
+   *
+   * Keyed off --background rather than a literal black so the shadow tracks
+   * the surface it is cast on. Writing the shadow inline at the call site
+   * would need a literal colour function, which the lint rule rightly
+   * rejects — that rule does not parse comments, so do not spell one out
+   * here either.
+   *
+   *   lift       badges and the save button   (Figma: "ERGE Button 4 24 50")
+   *   lift-sm    the bare save icon on media-sm
+   *   tile       a promo category tile
+   *   card       the Promo Tiles card itself */
+  --shadow-lift: 0 4px 24px
+    color-mix(in oklch, var(--background) 50%, transparent);
+  --shadow-tile: 0 8px 24px -2px
+    color-mix(in oklch, var(--background) 25%, transparent);
+  --shadow-card: 0 16px 40px -12px
+    color-mix(in oklch, var(--background) 40%, transparent);
+  --drop-shadow-lift-sm: 0 4px 12px
+    color-mix(in oklch, var(--background) 50%, transparent);
 
   /* Hands `leading-tight` and friends to Tailwind. These names are also
    * Tailwind's own, so its defaults are replaced rather than sitting

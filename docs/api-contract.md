@@ -125,6 +125,27 @@ generic over-budget, so the user sees which item moved and by how much.
 (Mirrored in `interaction-spec.md` → *Price and estimate states*. If the two
 ever disagree again, this document is the client contract and wins.)
 
+### Fields the Explore design needs that this contract lacks `[ASSUMPTION]`
+
+Three, added client-side so the screen could be built. Each is a real gap in
+the normalised shape, not a rendering convenience:
+
+- **`price.unit`** — the design writes "from $45 / couple", "from $89 /
+  person", "from $45 / bouquet". It cannot be derived from `category`: a
+  restaurant is per person and a picnic per couple, and both are `dining`.
+- **`summary`** — a short descriptor ("City views & candlelight"). The two
+  card sizes show DIFFERENT metadata: the large card reads
+  `summary • duration`, the compact one `address • duration`. That is a
+  design decision, so the summary is its own field rather than a `details[]`
+  entry found by label.
+- **`elite`** — a curation marker that draws a badge and a copper stroke.
+  Deliberately NOT `accessTier`, which is about whether we can book the thing;
+  the two are independent.
+
+Also unmodelled, and currently faked: `Card / Media MD` renders a hero plus
+**three thumbnails**, so it wants four images. `images[]` says nothing about
+ordering or a hero/thumbnail distinction.
+
 ### `availability`
 
 ```

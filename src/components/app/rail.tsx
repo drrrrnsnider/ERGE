@@ -59,14 +59,17 @@ export function Rail({
     <section
       aria-labelledby={headingId}
       data-slot="rail"
-      className={cn('flex flex-col gap-3', className)}
+      className={cn('flex flex-col gap-4', className)}
       {...props}
     >
-      <h2 id={headingId} className="px-4 text-lg font-medium text-foreground">
+      {/* `Section` — Heading/H2 with a chevron when there is somewhere to go.
+        * "Ideas for Your Trip" has no chevron in the design, and passing no
+        * href is what expresses that. */}
+      <h2 id={headingId} className="px-4 text-h2 font-semibold text-foreground">
         {href ? (
           <Link to={href} className="inline-flex items-center gap-1 rounded-md">
             {title}
-            <ChevronRight className="size-5 text-primary" aria-hidden="true" />
+            <ChevronRight className="size-[21px] text-primary" aria-hidden="true" />
           </Link>
         ) : (
           title
@@ -100,7 +103,7 @@ export function RailScroller({
     <ul
       data-slot="rail-scroller"
       className={cn(
-        'flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2',
+        'flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2',
         'scroll-px-4 motion-safe:scroll-smooth [scrollbar-width:thin]',
         className,
       )}

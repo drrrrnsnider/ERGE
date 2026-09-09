@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { Bookmark, Search } from 'lucide-react'
-import { useId, useState } from 'react'
+import { Bookmark } from 'lucide-react'
+import { useState } from 'react'
 import { EditorialCard } from '@/components/app/editorial-card'
+import { cn } from '@/lib/utils'
 import {
   ExperienceCard,
   ExperienceCardSkeleton,
@@ -58,7 +59,6 @@ const queryKeys = {
 
 export function ExploreRoute() {
   const [filters, setFilters] = useState<ExploreFilters>(DEFAULT_FILTERS)
-  const searchId = useId()
 
   const layout = useQuery({
     queryKey: queryKeys.layout,
@@ -66,32 +66,8 @@ export function ExploreRoute() {
   })
 
   return (
-    <div className="flex flex-col gap-6 pb-8">
-      <header className="flex items-center justify-center px-4 pt-4">
-        <h1 className="text-xl font-semibold tracking-[0.3em] text-foreground">
-          ERGE
-        </h1>
-      </header>
-
-      {/* An active field with no submit — search itself is not built. Kept as
-        * a real labelled input rather than a button so the affordance is
-        * honest about being a text field. */}
-      <search className="px-4">
-        <div className="flex items-center gap-2 rounded-full bg-card px-4 py-2">
-          <Search className="size-5 text-muted-foreground" aria-hidden="true" />
-          <label htmlFor={searchId} className="sr-only">
-            Search experiences
-          </label>
-          <input
-            id={searchId}
-            type="search"
-            placeholder="What's your ERGE?"
-            className="h-9 min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-      </search>
-
-      <div className="px-4">
+    <div className="flex flex-col gap-8 pb-8">
+      <div className="px-4 pt-4">
         <BudgetGroupControls value={filters} onChange={setFilters} />
       </div>
 
@@ -136,7 +112,6 @@ function Section({
       title={section.title}
       variant={section.variant}
       href={section.href}
-      badge={section.badge}
       filters={filters}
     />
   )
@@ -152,14 +127,12 @@ function RailSection({
   title,
   variant,
   href,
-  badge,
   filters,
 }: {
   id: string
   title: string
   variant: RailVariant
   href?: string
-  badge?: string
   filters: ExploreFilters
 }) {
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set())
@@ -209,13 +182,20 @@ function RailSection({
       ) : null}
 
       {query.isSuccess && query.data.items.length > 0 ? (
-        <RailScroller>
+        /* `media-sm` scrolls as a TWO-ROW grid in the design — the cards are
+         * short, so the rail stacks a pair per column and scrolls sideways.
+         * `grid-flow-col` with two rows is what produces that from one flat
+         * list, with no chunking in the data. */
+        <RailScroller
+          className={cn(
+            variant === 'media-sm' && 'grid grid-flow-col grid-rows-2 gap-2',
+          )}
+        >
           {query.data.items.map((experience) => (
             <RailItem key={experience.experienceId}>
               <ExperienceCard
                 experience={experience}
                 variant={variant}
-                badge={badge}
                 saved={saved.has(experience.experienceId)}
                 onToggleSave={toggleSave}
               />
@@ -266,10 +246,14 @@ function CollageSection({ id, title }: { id: string; title: string }) {
       ) : null}
 
       {query.isSuccess && query.data.items.length > 0 ? (
-        <div className="px-4">
-          <ul className="grid grid-cols-4 gap-1 overflow-hidden rounded-xl">
+        /* `Card / Trip LG` — one 180-tall band split into four equal columns
+         * with a 4px seam, caption beneath. Not a square grid: the band is a
+         * fixed height whatever the images are, so a trip with four portraits
+         * and a trip with four landscapes are the same shape on the page. */
+        <div className="flex flex-col gap-2 px-4">
+          <ul className="flex h-45 gap-1 overflow-hidden rounded-lg border border-border-subtle">
             {query.data.items.map((item) => (
-              <li key={item.experienceId} className="aspect-square bg-muted">
+              <li key={item.experienceId} className="min-w-0 flex-1 bg-muted">
                 {item.images[0] ? (
                   <img
                     src={item.images[0].url}
@@ -282,7 +266,7 @@ function CollageSection({ id, title }: { id: string; title: string }) {
             ))}
           </ul>
           {query.data.caption ? (
-            <p className="pt-2 text-sm text-muted-foreground">
+            <p className="px-2 text-body-lg text-muted-foreground">
               {query.data.caption}
             </p>
           ) : null}

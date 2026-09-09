@@ -1,222 +1,320 @@
-import { Heart } from 'lucide-react'
+import { Award, Heart } from 'lucide-react'
 import { Link } from 'react-router'
-import { Skeleton } from '@/components/patterns/skeleton'
-import { Button } from '@/components/ui/button'
-import type { Experience } from '@/lib/api/schemas/experience'
-import type { RailVariant } from '@/lib/api/schemas/explore'
+import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
 /**
- * The experience card — one component, driven by the Experience shape.
+ * The experience card, in the three shapes the design library defines.
  *
- * The same object renders here, in search, on the PDP, in the cart and in a
- * chat package (api-contract.md). So this takes the FULL `Experience` and a
- * variant, never an Explore-specific subset — a later screen should reach for
- * this with a different variant, not build a lookalike. If you are about to
- * build a card that is 80% this one, extend the variant config instead.
+ * These are three separate components in Figma — `Card / Media MD`,
+ * `Card / Media SM` and `Card / Media SM Narrow` — and the variant names
+ * here match them exactly, so a conversation about "media-sm" means the same
+ * thing in both places. They are one component in code because they render
+ * the same data through the same text block and differ only in arrangement;
+ * splitting them would be three files that must be changed together every
+ * time the contract moves.
  *
- * Variants (rails pick one):
- *   portrait  image above text — the default rail card
- *   compact   thumbnail beside text — dense lists ("Popular Nearby")
- *   small     narrow, three-up — secondary rails ("Unique Lodging")
+ * They are NOT interchangeable, and each is used where the design uses it:
  *
- * STRUCTURE
- * The whole card is a link to the PDP. The save button is a SIBLING of that
- * link, positioned over it, not a child: an interactive element inside
- * another is invalid HTML and breaks assistive tech. The article is the
- * container that holds both.
+ *   media-md         320x180 hero + a rail of three thumbnails. Carries the
+ *                    Elite treatment and a chrome-backed save button.
+ *   media-sm         320-wide horizontal row, 110x80 thumbnail, bare save
+ *                    icon with no button chrome.
+ *   media-sm-narrow  152-wide column, 110-tall image, NO save button.
  *
- * PRICE
- * Two presentations, and they must be visually distinct
- * (interaction-spec.md, "Price and estimate states"). `final` is the amount
- * alone. `from` reads "from $45 + fees" — the words are the marker, so this
- * does not rely on colour (SC 1.4.1). Never an implied all-in figure.
- *
- * AVAILABILITY
- * `unknown` is legitimate and common: it renders "Select a date to check",
- * never an error. Shown on portrait and compact; a small card has no room
- * and the PDP will say it properly.
- *
- * NOT YET
- * - Save is a local toggle. Per user-flows.md §5, saving requires an
- *   account; the account prompt does not exist, so the toggle just toggles.
- * - The PDP route does not exist; the link lands on a "not built" screen.
+ * The card is one link with the save button layered on top — not a link
+ * wrapping a button, which is invalid and unusable by keyboard. The link's
+ * accessible name carries the title, so the save button only has to name
+ * itself and the thing it acts on.
  */
-export type ExperienceCardVariant = RailVariant
 
-const VARIANT = {
-  portrait: {
-    root: 'w-64 flex-col',
-    media: 'aspect-[4/3] w-full',
-    body: 'gap-1 pt-3',
-    title: 'text-base',
-    showAvailability: true,
-  },
-  compact: {
-    root: 'w-80 flex-row items-stretch rounded-xl bg-card',
-    media: 'size-24 shrink-0',
-    body: 'gap-0.5 p-3',
-    title: 'text-sm',
-    showAvailability: true,
-  },
-  small: {
-    root: 'w-36 flex-col',
-    media: 'aspect-square w-full',
-    body: 'gap-0.5 pt-2',
-    title: 'text-sm',
-    showAvailability: false,
-  },
-} as const
+type Variant = 'media-md' | 'media-sm' | 'media-sm-narrow'
 
-const AVAILABILITY_COPY = {
-  available: 'Available',
-  unavailable: 'Unavailable',
-  unknown: 'Select a date to check',
-} as const
+/** Where a card goes. The PDP is not built; the route reports what it got. */
+const hrefFor = (experience: Experience) =>
+  `/experience/${experience.experienceId}`
 
-export function ExperienceCard({
-  experience,
-  variant = 'portrait',
-  badge,
-  saved = false,
-  onToggleSave,
-  className,
-}: {
-  experience: Experience
-  variant?: ExperienceCardVariant
-  /** A rail-level marker such as "Elite". Not part of the Experience shape. */
-  badge?: string
-  saved?: boolean
-  onToggleSave?: (experienceId: string) => void
-  className?: string
-}) {
-  const v = VARIANT[variant]
-  const image = experience.images[0]
-  const duration = experience.details.find(
-    (d) => d.label.toLowerCase() === 'duration',
-  )?.value
-  const meta = [experience.location.address, duration]
-    .filter(Boolean)
-    .join(' · ')
-
+/**
+ * "from $45 + fees" vs "$100". The two presentations MUST be distinguishable
+ * (interaction-spec.md, "Price and estimate states"): an estimate that is not
+ * marked and then grows at checkout undermines the whole budget position.
+ *
+ * The design's unit qualifier ("/ couple") rides along after the amount.
+ */
+function Price({ experience }: { experience: Experience }) {
+  const { price } = experience
+  const amount = formatMoney(priceLowBound(price))
   return (
-    <article
-      data-slot="experience-card"
-      data-variant={variant}
-      className={cn('relative flex shrink-0', v.root, className)}
-    >
-      <Link
-        to={`/experience/${experience.experienceId}`}
-        className={cn('flex min-w-0 flex-1 rounded-xl', {
-          'flex-col': variant !== 'compact',
-          'flex-row': variant === 'compact',
-        })}
-      >
-        {/* Media. An experience with no photo is a real case — a restaurant
-          * that has not supplied one — so the fallback is a plain surface,
-          * not a broken image. */}
-        <div
-          className={cn(
-            'relative overflow-hidden rounded-xl bg-muted',
-            v.media,
-          )}
-        >
-          {image ? (
-            <img
-              src={image.url}
-              alt={image.alt}
-              loading="lazy"
-              className="size-full object-cover"
-            />
-          ) : null}
-          {badge ? (
-            <span className="absolute top-2 left-2 rounded-full bg-card px-2 py-0.5 text-xs font-medium text-card-foreground ring-1 ring-primary">
-              {badge}
-            </span>
-          ) : null}
-        </div>
-
-        <div className={cn('flex min-w-0 flex-col', v.body)}>
-          <h3 className={cn('truncate font-medium text-foreground', v.title)}>
-            {experience.title}
-          </h3>
-          {meta ? (
-            <p className="truncate text-xs text-muted-foreground">{meta}</p>
-          ) : null}
-          <PriceLine price={experience.price} />
-          {v.showAvailability ? (
-            <p className="text-xs text-muted-foreground">
-              {AVAILABILITY_COPY[experience.availability.status]}
-            </p>
-          ) : null}
-        </div>
-      </Link>
-
-      {onToggleSave ? (
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          aria-pressed={saved}
-          aria-label={
-            saved
-              ? `Remove ${experience.title} from saved`
-              : `Save ${experience.title}`
-          }
-          onClick={() => onToggleSave(experience.experienceId)}
-          className="absolute top-2 right-2 rounded-full"
-        >
-          <Heart fill={saved ? 'currentColor' : 'none'} />
-        </Button>
+    <>
+      {price.kind === 'from' ? (
+        <span className="text-muted-foreground">from </span>
       ) : null}
-    </article>
+      {amount}
+      {price.unit ? (
+        <span className="text-muted-foreground"> / {price.unit}</span>
+      ) : null}
+      {price.kind === 'from' ? (
+        <span className="text-muted-foreground"> + fees</span>
+      ) : null}
+    </>
   )
 }
 
-function PriceLine({ price }: { price: Experience['price'] }) {
-  if (price.kind === 'final') {
-    return (
-      <p className="text-sm font-medium text-foreground">
-        {formatMoney({ amount: price.total, currency: price.currency })}
-      </p>
-    )
-  }
+/** `unknown` is common and is not an error — it means "we need a date". */
+function Availability({ experience }: { experience: Experience }) {
+  const label = {
+    available: 'Available',
+    unavailable: 'Not available',
+    unknown: 'Select a date to check',
+  }[experience.availability.status]
+  return <p className="text-body-xs text-muted-foreground">{label}</p>
+}
+
+function SaveButton({
+  experience,
+  saved,
+  onToggleSave,
+  className,
+  chrome,
+}: {
+  experience: Experience
+  saved: boolean
+  onToggleSave: (experienceId: string) => void
+  className?: string
+  /** media-md wears a filled circle; media-sm is a bare icon with a shadow. */
+  chrome: boolean
+}) {
   return (
-    <p className="text-sm text-muted-foreground">
-      from{' '}
-      <span className="font-medium text-foreground">
-        {formatMoney({ amount: price.base, currency: price.currency })}
-      </span>{' '}
-      + fees
+    <button
+      type="button"
+      aria-pressed={saved}
+      aria-label={
+        saved
+          ? `Remove ${experience.title} from saved`
+          : `Save ${experience.title}`
+      }
+      onClick={() => onToggleSave(experience.experienceId)}
+      className={cn(
+        'absolute z-10 grid place-items-center rounded-full',
+        chrome
+          ? 'size-8 border border-border bg-card/90 shadow-lift'
+          : 'drop-shadow-lift-sm',
+        className,
+      )}
+    >
+      <Heart
+        className={cn('size-5', saved ? 'fill-primary text-primary' : 'text-foreground')}
+        aria-hidden="true"
+      />
+    </button>
+  )
+}
+
+/** `Badge Icon/Elite` — 32px pill, icon plus label, on the hero image. */
+function EliteBadge() {
+  return (
+    <p className="absolute top-2 left-2 z-10 flex h-8 items-center gap-1 rounded-full border border-ring bg-card/90 pr-3 pl-2 text-body-md text-emphasis shadow-lift">
+      <Award className="size-5" aria-hidden="true" />
+      Elite
     </p>
   )
 }
 
-/**
- * The loading shape of the card above — same footprint per variant, so the
- * rail does not jump when real cards land.
- */
-export function ExperienceCardSkeleton({
-  variant = 'portrait',
+/** A picture, or the surface that stands in for one. */
+function Media({
+  experience,
+  index = 0,
+  className,
 }: {
-  variant?: ExperienceCardVariant
+  experience: Experience
+  index?: number
+  className?: string
 }) {
-  const v = VARIANT[variant]
+  const image = experience.images[index]
+  return (
+    <div className={cn('overflow-hidden bg-muted', className)}>
+      {image ? (
+        <img
+          src={image.url}
+          alt={image.alt}
+          loading="lazy"
+          className="size-full object-cover"
+        />
+      ) : null}
+    </div>
+  )
+}
+
+export function ExperienceCard({
+  experience,
+  variant,
+  saved,
+  onToggleSave,
+}: {
+  experience: Experience
+  variant: Variant
+  saved: boolean
+  onToggleSave: (experienceId: string) => void
+}) {
+  const duration = experience.details.find((d) => d.label === 'Duration')?.value
+
+  /* The two sizes deliberately show different metadata — the large card
+   * leads with the descriptor, the compact one with where it is. */
+  const meta =
+    variant === 'media-md'
+      ? [experience.summary, duration]
+      : [experience.location.address, duration]
+  const metaLine = meta.filter(Boolean).join('  •  ')
+
+  if (variant === 'media-md') {
+    return (
+      <article
+        data-slot="experience-card"
+        data-variant={variant}
+        className="relative flex w-80 flex-col gap-2"
+      >
+        <div
+          className={cn(
+            'relative flex h-45 gap-1 overflow-hidden rounded-lg border',
+            experience.elite ? 'border-primary' : 'border-border-subtle',
+          )}
+        >
+          {/* Hero, then a vertical rail of three thumbnails beside it. */}
+          <Media
+            experience={experience}
+            index={0}
+            className="h-full w-57.5 shrink-0"
+          />
+          {experience.elite ? <EliteBadge /> : null}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            {[1, 2, 3].map((i) => (
+              <Media
+                key={i}
+                experience={experience}
+                index={i}
+                className="min-h-0 flex-1"
+              />
+            ))}
+          </div>
+          <SaveButton
+            experience={experience}
+            saved={saved}
+            onToggleSave={onToggleSave}
+            chrome
+            className="top-2 right-2"
+          />
+        </div>
+        <div className="flex flex-col gap-1 px-2">
+          <Link to={hrefFor(experience)} className="text-h3 font-medium text-foreground">
+            {experience.title}
+          </Link>
+          <p className="text-body-md text-muted-foreground">{metaLine}</p>
+          <p className="text-h4 font-medium text-emphasis">
+            <Price experience={experience} />
+          </p>
+          <Availability experience={experience} />
+        </div>
+      </article>
+    )
+  }
+
+  if (variant === 'media-sm') {
+    return (
+      <article
+        data-slot="experience-card"
+        data-variant={variant}
+        className="relative flex w-80 items-center gap-3 rounded-md border border-border bg-card"
+      >
+        <Media
+          experience={experience}
+          className="h-20 w-27.5 shrink-0 rounded-md border border-border-subtle"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-[3px] pr-9">
+          <Link to={hrefFor(experience)} className="text-body-md text-foreground">
+            {experience.title}
+          </Link>
+          <p className="text-body-xs text-muted-foreground">{metaLine}</p>
+          <p className="text-body-sm text-emphasis">
+            <Price experience={experience} />
+          </p>
+          <Availability experience={experience} />
+        </div>
+        <SaveButton
+          experience={experience}
+          saved={saved}
+          onToggleSave={onToggleSave}
+          chrome={false}
+          className="top-[7px] right-[7px]"
+        />
+      </article>
+    )
+  }
+
+  /* media-sm-narrow — no save button, by design. */
+  return (
+    <article
+      data-slot="experience-card"
+      data-variant={variant}
+      className="flex w-38 flex-col justify-center gap-3"
+    >
+      <Media
+        experience={experience}
+        className="h-27.5 w-full rounded-md border border-border-subtle"
+      />
+      <div className="flex flex-col gap-[3px]">
+        <Link to={hrefFor(experience)} className="text-body-md text-foreground">
+          {experience.title}
+        </Link>
+        <p className="text-body-xs text-muted-foreground">{metaLine}</p>
+        <p className="text-body-sm text-emphasis">
+          <Price experience={experience} />
+        </p>
+      </div>
+    </article>
+  )
+}
+
+/** Skeletons match the shape they replace, so nothing shifts on load. */
+export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
+  if (variant === 'media-md') {
+    return (
+      <div
+        data-slot="experience-card-skeleton"
+        className="flex w-80 flex-col gap-2"
+        aria-hidden="true"
+      >
+        <div className="h-45 rounded-lg bg-muted motion-safe:animate-pulse" />
+        <div className="flex flex-col gap-1 px-2">
+          <div className="h-5 w-3/4 rounded-sm bg-muted motion-safe:animate-pulse" />
+          <div className="h-4 w-1/2 rounded-sm bg-muted motion-safe:animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'media-sm') {
+    return (
+      <div
+        data-slot="experience-card-skeleton"
+        className="flex w-80 items-center gap-3 rounded-md border border-border bg-card"
+        aria-hidden="true"
+      >
+        <div className="h-20 w-27.5 shrink-0 rounded-md bg-muted motion-safe:animate-pulse" />
+        <div className="flex flex-1 flex-col gap-[3px]">
+          <div className="h-4 w-3/4 rounded-sm bg-muted motion-safe:animate-pulse" />
+          <div className="h-3 w-1/2 rounded-sm bg-muted motion-safe:animate-pulse" />
+        </div>
+      </div>
+    )
+  }
   return (
     <div
       data-slot="experience-card-skeleton"
-      className={cn('flex shrink-0', v.root, {
-        'flex-col': variant !== 'compact',
-        'flex-row': variant === 'compact',
-      })}
+      className="flex w-38 flex-col gap-3"
+      aria-hidden="true"
     >
-      <Skeleton className={cn('rounded-xl', v.media)} />
-      <div className={cn('flex flex-1 flex-col', v.body)}>
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
-        <Skeleton className="h-3 w-1/3" />
-      </div>
+      <div className="h-27.5 rounded-md bg-muted motion-safe:animate-pulse" />
+      <div className="h-4 w-3/4 rounded-sm bg-muted motion-safe:animate-pulse" />
     </div>
   )
 }

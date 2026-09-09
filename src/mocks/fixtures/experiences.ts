@@ -19,7 +19,16 @@ const MIAMI = {
   timezone: 'America/New_York',
 } as const
 
-const PHOTO = { url: '/placeholder.svg', alt: '' } as const
+/**
+ * `Card / Media MD` shows a hero plus a rail of three thumbnails, so an
+ * experience needs FOUR images to fill it. Real photos come from partner
+ * APIs; this stands in for all of them.
+ */
+const shots = (alt: string) =>
+  [alt, 'Detail', 'Detail', 'Detail'].map((a) => ({
+    url: '/placeholder.svg',
+    alt: a === alt ? a : '',
+  }))
 
 export const experiences: readonly Experience[] = [
   {
@@ -30,8 +39,9 @@ export const experiences: readonly Experience[] = [
     vendorId: 'viator',
     accessTier: 'full',
     location: MIAMI,
-    images: [{ url: PHOTO.url, alt: 'A blanket and lanterns on a rooftop at dusk' }],
-    price: { kind: 'from', base: 4500, currency: 'USD', taxesIncluded: false },
+    images: shots('A blanket and lanterns on a rooftop at dusk'),
+    summary: 'City views & candlelight',
+    price: { kind: 'from', base: 4500, currency: 'USD', taxesIncluded: false, unit: 'couple' },
     availability: { status: 'unknown' },
     details: [
       { label: 'Duration', value: '3 hrs' },
@@ -46,8 +56,9 @@ export const experiences: readonly Experience[] = [
     vendorId: 'viator',
     accessTier: 'full',
     location: MIAMI,
-    images: [{ url: PHOTO.url, alt: 'A sailboat against an orange sky' }],
-    price: { kind: 'from', base: 8900, currency: 'USD', taxesIncluded: false },
+    images: shots('A sailboat against an orange sky'),
+    summary: 'Sunset cruise with a tasting flight',
+    price: { kind: 'from', base: 8900, currency: 'USD', taxesIncluded: false, unit: 'person' },
     availability: { status: 'unknown' },
     details: [{ label: 'Duration', value: '3–4 hours' }],
   },
@@ -60,8 +71,10 @@ export const experiences: readonly Experience[] = [
     vendorId: 'opentable',
     accessTier: 'authenticated',
     location: { ...MIAMI, address: 'Wynwood, Miami, FL' },
-    images: [], // No photo. A real case; the card must cope.
-    price: { kind: 'final', total: 10000, currency: 'USD', taxesIncluded: true },
+    images: [], // No photo at all. A real case; every variant must cope.
+    summary: 'Chef’s table, wine pairings',
+    elite: true,
+    price: { kind: 'final', total: 10000, currency: 'USD', taxesIncluded: true, unit: 'person' },
     availability: { status: 'available', slots: ['2026-09-12T19:30:00-04:00'] },
     details: [
       { label: 'Duration', value: '2.5 hrs' },
@@ -76,8 +89,9 @@ export const experiences: readonly Experience[] = [
     vendorId: 'todaytix',
     accessTier: 'full',
     location: { ...MIAMI, address: 'Little Havana, Miami, FL' },
-    images: [{ url: PHOTO.url, alt: 'A dim stage with a double bass' }],
-    price: { kind: 'final', total: 3200, currency: 'USD', taxesIncluded: true },
+    images: shots('A dim stage with a double bass'),
+    summary: 'Live trio, standing room',
+    price: { kind: 'final', total: 3200, currency: 'USD', taxesIncluded: true, unit: 'ticket' },
     availability: { status: 'available' },
     details: [{ label: 'Doors', value: '9:30pm' }],
   },
@@ -88,8 +102,9 @@ export const experiences: readonly Experience[] = [
     vendorId: 'classpass',
     accessTier: 'full',
     location: MIAMI,
-    images: [{ url: PHOTO.url, alt: 'Singing bowls laid out on a beach towel' }],
-    price: { kind: 'from', base: 2500, currency: 'USD', taxesIncluded: false },
+    images: shots('Singing bowls laid out on a beach towel'),
+    summary: 'Sunrise session on the sand',
+    price: { kind: 'from', base: 2500, currency: 'USD', taxesIncluded: false, unit: 'person' },
     availability: { status: 'unavailable' },
     details: [{ label: 'Duration', value: '1 hr' }],
   },
@@ -101,7 +116,8 @@ export const experiences: readonly Experience[] = [
     accessTier: 'deeplink', // Cannot book in-app. Excluded from cart.
     location: MIAMI,
     images: [],
-    price: { kind: 'from', base: 1800, currency: 'USD', taxesIncluded: false },
+    summary: 'Door to door, on demand',
+    price: { kind: 'from', base: 1800, currency: 'USD', taxesIncluded: false, unit: 'trip' },
     availability: { status: 'unknown' },
     details: [{ label: 'Vehicle', value: 'UberX' }],
   },
@@ -112,8 +128,9 @@ export const experiences: readonly Experience[] = [
     vendorId: 'floristone',
     accessTier: 'full',
     location: MIAMI,
-    images: [{ url: PHOTO.url, alt: 'A wrapped bouquet of ranunculus' }],
-    price: { kind: 'final', total: 4500, currency: 'USD', taxesIncluded: true },
+    images: shots('A wrapped bouquet of ranunculus'),
+    summary: 'Hand-tied, delivered same day',
+    price: { kind: 'final', total: 4500, currency: 'USD', taxesIncluded: true, unit: 'bouquet' },
     availability: { status: 'available' },
     details: [{ label: 'Category', value: 'Flowers & Gifts' }],
   },
@@ -124,8 +141,9 @@ export const experiences: readonly Experience[] = [
     vendorId: 'stayco',
     accessTier: 'full',
     location: { ...MIAMI, address: 'Coconut Grove, Miami, FL' },
-    images: [{ url: PHOTO.url, alt: 'A houseboat moored at dusk' }],
-    price: { kind: 'from', base: 21000, currency: 'USD', taxesIncluded: false },
+    images: shots('A houseboat moored at dusk'),
+    summary: 'Sleeps two, on the water',
+    price: { kind: 'from', base: 21000, currency: 'USD', taxesIncluded: false, unit: 'night' },
     availability: { status: 'unknown' },
     details: [{ label: 'Sleeps', value: '2' }],
   },
@@ -136,8 +154,9 @@ export const experiences: readonly Experience[] = [
     vendorId: 'stayco',
     accessTier: 'full',
     location: { lat: 24.66, lng: -81.55, address: 'Marathon, FL', timezone: 'America/New_York' },
-    images: [{ url: PHOTO.url, alt: 'A glass-walled cabin among mangroves' }],
-    price: { kind: 'from', base: 34000, currency: 'USD', taxesIncluded: false },
+    images: shots('A glass-walled cabin among mangroves'),
+    summary: 'Glass walls, mangrove views',
+    price: { kind: 'from', base: 34000, currency: 'USD', taxesIncluded: false, unit: 'night' },
     availability: { status: 'unknown' },
     details: [{ label: 'Sleeps', value: '4' }],
   },
@@ -148,8 +167,10 @@ export const experiences: readonly Experience[] = [
     vendorId: 'viator',
     accessTier: 'full',
     location: { lat: 25.76, lng: -80.77, address: 'Everglades, FL', timezone: 'America/New_York' },
-    images: [{ url: PHOTO.url, alt: 'An airboat cutting through sawgrass' }],
-    price: { kind: 'final', total: 7800, currency: 'USD', taxesIncluded: true },
+    images: shots('An airboat cutting through sawgrass'),
+    summary: 'Golden hour on the sawgrass',
+    elite: true,
+    price: { kind: 'final', total: 7800, currency: 'USD', taxesIncluded: true, unit: 'person' },
     availability: { status: 'available' },
     details: [
       { label: 'Duration', value: '2 hrs' },

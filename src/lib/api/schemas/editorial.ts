@@ -30,6 +30,13 @@ const GuidesSchema = z.object({
       id: z.string(),
       label: z.string(),
       href: HrefSchema,
+      /**
+       * A tile may carry a background photo behind its label — one of the
+       * four in the design does. [ASSUMPTION] no contract field for it.
+       */
+      image: z
+        .object({ url: z.string(), alt: z.string() })
+        .optional(),
     }),
   ),
 })

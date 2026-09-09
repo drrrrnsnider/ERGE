@@ -65,12 +65,29 @@ test.describe('rails', () => {
    * browser's native scroll-into-view. So this asserts the scroller actually
    * moved AND that the focused card ended up inside its box.
    */
-  test('tabbing to an off-screen card scrolls it into view', async ({
+  /**
+   * The failure this is really about: a card you can reach but cannot see.
+   *
+   * Asserted differently per engine, for the same reason the skip-link test
+   * is (see e2e/accessibility.spec.ts). WebKit keeps links out of the tab
+   * sequence, AND a programmatic `.focus()` does not set its sequential-focus
+   * starting point — so `focus()` then Tab restarts at the top of the
+   * document and never enters the rail at all. That is an automation limit,
+   * not a rail defect: focusing an off-screen card scrolls it into view in
+   * WebKit exactly as it does in Chromium, which is what the WebKit branch
+   * below asserts directly.
+   *
+   * Chromium therefore asserts the whole journey — tab along the rail and
+   * watch it scroll — and WebKit asserts the property that journey exists to
+   * produce. Both are hard assertions; neither is skipped.
+   */
+  test('a focused off-screen card is scrolled into view', async ({
     page,
+    browserName,
   }) => {
     /* A phone-width viewport in every project, so the rail genuinely
-     * overflows. At desktop width all four cards fit, there is nothing to
-     * scroll, and the test would pass while proving nothing. */
+     * overflows. At desktop width the cards fit, there is nothing to scroll,
+     * and the test would pass while proving nothing. */
     await page.setViewportSize({ width: 390, height: 800 })
 
     const rail = await firstPopulatedRail(page)
@@ -84,27 +101,35 @@ test.describe('rails', () => {
 
     const startScroll = await rail.evaluate((el) => el.scrollLeft)
 
-    /* Tab one step at a time, letting the scroll SETTLE after each. The
-     * scroller is `scroll-smooth`, so polling scrollLeft immediately after a
-     * keypress races the animation: the loop tabs straight past the end of
-     * the rail while the number is still 0, and the failure looks like "focus
-     * left the rail" rather than "the scroll had not finished yet". */
-    await rail.locator('a').first().focus()
+    if (browserName === 'chromium') {
+      /* Tab one step at a time, letting the scroll SETTLE after each. The
+       * scroller is `scroll-smooth`, so reading scrollLeft straight after a
+       * keypress races the animation and reports a pending scroll as none. */
+      await rail.locator('button, a').first().focus()
 
-    let moved = startScroll
-    let insideRail = true
-    for (let i = 0; i < 12 && moved === startScroll && insideRail; i++) {
-      await page.keyboard.press('Tab')
+      let moved = startScroll
+      let insideRail = true
+      for (let i = 0; i < 12 && moved === startScroll && insideRail; i++) {
+        await page.keyboard.press('Tab')
+        const state = await settle(rail)
+        moved = state.scrollLeft
+        insideRail = state.inside
+      }
+      expect(
+        moved,
+        'the rail never scrolled while tabbing through it',
+      ).toBeGreaterThan(startScroll)
+    } else {
+      // Focus the third card directly — far enough along to be off-screen.
+      await rail.locator('[data-slot="experience-card"] a').nth(2).focus()
       const state = await settle(rail)
-      moved = state.scrollLeft
-      insideRail = state.inside
+      expect(
+        state.scrollLeft,
+        'focusing an off-screen card did not scroll it into view',
+      ).toBeGreaterThan(startScroll)
     }
 
-    expect(moved, 'the rail never scrolled while tabbing through it').toBeGreaterThan(
-      startScroll,
-    )
-
-    // And the focused element is genuinely visible inside the scroller.
+    // Either way, the focused element ends up visible inside the scroller.
     const visible = await rail.evaluate((el) => {
       const active = document.activeElement
       if (!active || !el.contains(active))
@@ -127,7 +152,8 @@ test.describe('rails', () => {
    */
   test('a rail is not a keyboard trap', async ({ page }) => {
     const rail = await firstPopulatedRail(page)
-    await rail.locator('a').first().focus()
+    // A button, for the same WebKit reason as above.
+    await rail.locator('button, a').first().focus()
 
     const cardCount = await rail.locator(CARD).count()
     // Generous: every card, its save button, and headroom.

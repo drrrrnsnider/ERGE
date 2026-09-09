@@ -1,34 +1,39 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  Compass,
   Heart,
+  LayoutGrid,
+  MapPin,
+  Menu,
+  Search,
   ShoppingCart,
   Sparkles,
   User,
 } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router'
+import { useId } from 'react'
+import { Link, NavLink, Outlet } from 'react-router'
 import { cn } from '@/lib/utils'
 
 /**
  * The outermost layout archetype: the frame every screen renders inside.
  *
- * `<Outlet />` is the hole the current route's screen drops into. Swapping
- * screens swaps only what's inside the outlet — the frame stays mounted.
+ * STRUCTURE, per the Explore frame
+ * --------------------------------
+ * Three bands in a full-height column: a top bar, the scrolling main region,
+ * and a bottom bar holding the search field and the tab bar together.
  *
- * STRUCTURE
- * ---------
- * A full-height column: main region, then the tab bar. `main` is the scroll
- * container, NOT the page. That is what lets the tab bar sit below it as a
- * sibling rather than floating over it with `position: fixed`, and it settles
- * WCAG 2.4.11 Focus Not Obscured structurally — the bar can never cover a
- * focused element inside main, because the two never overlap.
+ * `main` is the scroll container, NOT the page. That is what lets both bars
+ * sit as siblings rather than floating over content with `position: fixed`,
+ * and it settles WCAG 2.4.11 Focus Not Obscured structurally — a bar can
+ * never cover a focused element inside main, because the two never overlap.
+ * The design draws a gradient scrim behind the bottom bar, which only makes
+ * sense over scrolling content; as siblings we do not need it, and dropping
+ * it is what buys the guarantee.
  *
  * SAFE AREAS
  * ----------
- * `env(safe-area-inset-*)` from the start. On a phone with a home indicator
- * the bar pads itself above it; on a notched top the main region pads under
- * it. index.html carries `viewport-fit=cover`, which is what makes these
- * values non-zero. Retrofitting this later means touching every screen.
+ * `env(safe-area-inset-*)` from the start. index.html carries
+ * `viewport-fit=cover`, which is what makes these values non-zero.
+ * Retrofitting this later means touching every screen.
  */
 export function RootLayout() {
   return (
@@ -41,19 +46,94 @@ export function RootLayout() {
         Skip to main content
       </a>
 
+      <TopBar />
+
       {/* tabIndex={-1} makes this focusable programmatically but keeps it out
         * of the tab order. Without it the skip link does not actually skip:
         * the hash changes and the page scrolls, but focus stays on <body>, so
         * the next Tab starts from the top of the chrome again — measured as
-        * failing in Chromium and WebKit alike before this was added. A
-        * keyboard user would land back where they started. */}
+        * failing in Chromium and WebKit alike before this was added. */}
       <main
         id="main"
         tabIndex={-1}
-        className="min-h-0 flex-1 overflow-y-auto outline-none pt-[env(safe-area-inset-top)]"
+        className="min-h-0 flex-1 overflow-y-auto outline-none"
       >
         <Outlet />
       </main>
+
+      <BottomBar />
+    </div>
+  )
+}
+
+/**
+ * `Button Icon` — a 48px circle on the card surface. Used three times in the
+ * frame: menu, profile, and the location button beside search.
+ */
+function ButtonIcon({
+  label,
+  icon: Icon,
+  to,
+}: {
+  label: string
+  icon: LucideIcon
+  to: string
+}) {
+  return (
+    <Link
+      to={to}
+      aria-label={label}
+      className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card"
+    >
+      <Icon className="size-[22px]" aria-hidden="true" />
+    </Link>
+  )
+}
+
+/** Menu, wordmark, profile. The wordmark's tracking is 23px in the design. */
+function TopBar() {
+  return (
+    <header className="flex items-center justify-between px-4 pt-[env(safe-area-inset-top)] pb-4">
+      <ButtonIcon label="Menu" icon={Menu} to="/menu" />
+      <p className="text-[23px] font-semibold tracking-[23px] text-foreground">
+        {/* The tracking adds a trailing gap after the last letter, which
+          * pushes the wordmark off-centre. The negative margin takes it back. */}
+        <span className="-mr-[23px]">ERGE</span>
+      </p>
+      <ButtonIcon label="Profile" icon={User} to="/profile" />
+    </header>
+  )
+}
+
+/**
+ * Search and the tab bar, as one band — the design groups them.
+ *
+ * The search field is a real, typeable input with no submit: Search itself is
+ * not built, and a field that silently swallows Enter is more honest than a
+ * button that goes nowhere. It is a `<search>` landmark so it is reachable
+ * directly.
+ */
+function BottomBar() {
+  const searchId = useId()
+  return (
+    <div className="shrink-0 pb-[env(safe-area-inset-bottom)]">
+      <search className="flex items-center gap-2 px-5 py-2">
+        <div className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-card pr-3.5 pl-2">
+          <span className="grid size-[30px] shrink-0 place-items-center">
+            <Search className="size-[22px] text-muted-foreground" aria-hidden="true" />
+          </span>
+          <label htmlFor={searchId} className="sr-only">
+            Search experiences
+          </label>
+          <input
+            id={searchId}
+            type="search"
+            placeholder="What's your ERGE?"
+            className="h-full min-w-0 flex-1 bg-transparent text-body-md text-foreground outline-none placeholder:text-muted-foreground"
+          />
+        </div>
+        <ButtonIcon label="Search near me" icon={MapPin} to="/search?near=me" />
+      </search>
 
       <TabBar />
     </div>
@@ -61,18 +141,25 @@ export function RootLayout() {
 }
 
 /**
- * Five tabs (user-flows.md, "Navigation"). Only Explore is wired: the rest
- * render as plain items — visible, correctly placed, not links. Deliberately
- * NOT `disabled` buttons: a disabled control promises interaction and then
- * refuses it, which is worse for a screen reader than an item that is simply
- * not interactive. When a tab gets a screen, it becomes a NavLink here.
+ * Five tabs (user-flows.md, "Navigation").
+ *
+ * The frame draws FOUR — Explore, Concierge, Cart, Library — with Profile as
+ * the top-right icon button. The doc says Profile was promoted to a tab, and
+ * the doc wins, so Profile is both: a tab here and the top-bar button, which
+ * are two entry points to one screen. Worth collapsing to one once the design
+ * and the doc agree.
+ *
+ * Only Explore is wired. The rest render as plain items — visible, correctly
+ * placed, not links. Deliberately NOT `disabled` buttons: a disabled control
+ * promises interaction and then refuses it, which is worse for a screen
+ * reader than an item that is simply not interactive.
  */
 const TABS: ReadonlyArray<{
   label: string
   icon: LucideIcon
   to?: string
 }> = [
-  { label: 'Explore', icon: Compass, to: '/' },
+  { label: 'Explore', icon: LayoutGrid, to: '/' },
   { label: 'Concierge', icon: Sparkles },
   { label: 'Cart', icon: ShoppingCart },
   { label: 'Library', icon: Heart },
@@ -81,10 +168,7 @@ const TABS: ReadonlyArray<{
 
 function TabBar() {
   return (
-    <nav
-      aria-label="Primary"
-      className="border-t border-border bg-background pb-[env(safe-area-inset-bottom)]"
-    >
+    <nav aria-label="Primary" className="border-t border-card bg-background">
       <ul className="flex items-stretch justify-around">
         {TABS.map(({ label, icon: Icon, to }) => (
           <li key={label} className="flex-1">
@@ -94,7 +178,7 @@ function TabBar() {
                 end
                 className={({ isActive }) =>
                   cn(
-                    'flex min-h-14 flex-col items-center justify-center gap-1 px-2 py-2 text-xs',
+                    'flex min-h-14 flex-col items-center justify-center gap-0.5 p-2 text-[11px] font-medium',
                     isActive ? 'text-primary' : 'text-muted-foreground',
                   )
                 }
@@ -103,7 +187,7 @@ function TabBar() {
                 {label}
               </NavLink>
             ) : (
-              <span className="flex min-h-14 flex-col items-center justify-center gap-1 px-2 py-2 text-xs text-muted-foreground">
+              <span className="flex min-h-14 flex-col items-center justify-center gap-0.5 p-2 text-[11px] font-medium text-muted-foreground">
                 <Icon className="size-6" aria-hidden="true" />
                 {label}
               </span>

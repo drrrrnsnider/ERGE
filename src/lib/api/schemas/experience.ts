@@ -26,18 +26,32 @@ export type Money = z.infer<typeof MoneySchema>
  * Discriminated on `kind` so a component cannot read `total` off a `from`
  * price by accident: TypeScript narrows, and the wrong field does not exist.
  */
+
+/**
+ * What the amount buys — the design writes "from $45 / couple", "from $89 /
+ * person", "from $45 / bouquet".
+ *
+ * [ASSUMPTION] docs/api-contract.md has no field for this; `price` is
+ * kind/amount/currency only. It cannot be derived from `category` — a
+ * restaurant is priced per person and a picnic per couple, both `dining` —
+ * so it has to travel with the price. Optional, because plenty of things are
+ * priced flat and the qualifier would be noise.
+ */
+export const PriceUnitSchema = z.string().min(1).optional()
 export const PriceSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('final'),
     total: z.number().int().nonnegative(),
     currency: z.string().length(3),
     taxesIncluded: z.literal(true),
+    unit: PriceUnitSchema,
   }),
   z.object({
     kind: z.literal('from'),
     base: z.number().int().nonnegative(),
     currency: z.string().length(3),
     taxesIncluded: z.literal(false),
+    unit: PriceUnitSchema,
   }),
 ])
 export type Price = z.infer<typeof PriceSchema>
@@ -135,5 +149,28 @@ export const ExperienceSchema = z.object({
   price: PriceSchema,
   availability: AvailabilitySchema,
   details: z.array(DetailSchema),
+
+  /**
+   * The short descriptor the large card shows above its duration — "City
+   * views & candlelight". [ASSUMPTION] Not in docs/api-contract.md.
+   *
+   * It exists because the two card sizes show DIFFERENT metadata: the large
+   * card reads `summary • duration`, the compact one `address • duration`.
+   * That is a real difference in the design, not a rendering choice, so the
+   * summary is its own field rather than a `details[]` entry the component
+   * has to go looking for by label.
+   */
+  summary: z.string().optional(),
+
+  /**
+   * The "Elite" marker — a badge plus a copper stroke on the card.
+   *
+   * [ASSUMPTION] Nothing in docs/api-contract.md covers it. Deliberately NOT
+   * `accessTier`, which is about whether we can book the thing (full /
+   * authenticated / deeplink); this is a curation or quality tier and the two
+   * are independent. Modelled on the experience rather than the section
+   * because an Elite experience stays Elite wherever it is rendered.
+   */
+  elite: z.boolean().optional(),
 })
 export type Experience = z.infer<typeof ExperienceSchema>

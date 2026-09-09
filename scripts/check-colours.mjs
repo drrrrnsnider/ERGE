@@ -82,7 +82,13 @@ const RULES = [
   },
   {
     name: "raw colour function",
-    re: /\b(?:rgba?|hsla?|oklch|oklab)\s*\(/g,
+    /* NOT `\b`. Tailwind joins the parts of an arbitrary value with
+     * underscores — `shadow-[0_4px_24px_rgba(0,0,0,0.5)]` — and `_` is a word
+     * character, so there is no word boundary before `rgba` and `\b` misses
+     * it entirely. Five real violations hid behind that. A letter-only
+     * lookbehind catches the underscore form while still refusing to match
+     * the `oklch` inside `color-mix(in_oklch, ...)`, which has no paren. */
+    re: /(?<![a-zA-Z])(?:rgba?|hsla?|oklch|oklab)\s*\(/g,
   },
   {
     name: "Tailwind default palette utility",
