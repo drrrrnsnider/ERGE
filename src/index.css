@@ -2,11 +2,15 @@
  *
  *   1. Tailwind itself
  *   2. tw-animate-css   — animation utilities newer shadcn components expect
- *   3. tokens.css       — GENERATED primitives from Figma (never hand-edited)
- *   4. theme.css        — our bridge: what those primitives MEAN
+ *   3. fonts.css        — @font-face for Outfit and Ovo, served by us
+ *   4. tokens.css       — GENERATED primitives from Figma (never hand-edited)
+ *   5. theme.css        — our bridge: what those primitives MEAN
  *
- * Tokens must load before the theme, because the theme refers to them. */
+ * Tokens must load before the theme, because the theme refers to them.
+ * fonts.css is only @font-face declarations, which take no part in the
+ * cascade, so its position is convention rather than a requirement. */
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./styles/fonts.css";
 @import "./tokens/tokens.css";
 @import "./styles/theme.css";

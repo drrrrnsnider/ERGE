@@ -42,6 +42,14 @@ These are decided. Don't substitute alternatives without asking.
   Material Symbols, so the exported bytes and the upstream set are the same
   family, and several carry gradients a package would flatten. Figma asset
   URLs expire in about a week, so nothing may stay a remote `<img src>`.
+- **Outfit and Ovo**, self-hosted from `src/assets/fonts/` — deliberately not
+  the Google Fonts CDN. The web build gets wrapped with Capacitor, and an app
+  serving from the local filesystem cannot have its typography depend on a
+  network request at launch. Outfit is one variable face covering 400-600,
+  which measured 47 KB against 141 KB for the six static files Google serves
+  for the same three weights. `src/styles/fonts.css` carries the rest of the
+  reasoning. Both families are SIL Open Font License and their licences sit
+  beside the woff2 files, which the licence requires.
 - **TanStack Query** for server state
 - **React Hook Form + Zod** for forms and validation
 - **Vitest** for unit tests, **Playwright** for browser tests, **axe-core** for
@@ -289,7 +297,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **18 unit tests** and **19 e2e** passing, 2 e2e skipped by
+Current state: **38 unit tests** and **49 e2e** passing, 2 e2e skipped by
 design (the coarse-pointer size assertions do not apply to `desktop-chrome`).
 `npm run verify` exits 0. There are no known-failing tests — if something is
 red, you broke it.
@@ -301,6 +309,24 @@ WebKit asserts that focusing it reveals it, that it paints on top, and that
 activating it moves focus to `#main`. Both are hard assertions. Don't collapse
 them into one — the comment in the spec explains what each branch is the only
 thing testing.
+
+## Deployment
+
+Vercel, connected to this repo. **Pushing to `main` deploys it.** There is no
+staging branch and no review step, so a push is a release — worth knowing
+before running one, because nothing else in this file implies that.
+
+None of the deployment configuration lives here. There is no `vercel.json`:
+the build command, output directory and Node version are set in Vercel's
+dashboard, so someone reading the repo alone cannot see them or reproduce the
+build. Moving them into `vercel.json` is the fix if that ever matters.
+
+Deep links survive a hard refresh — `/search?near=me` pasted straight into the
+address bar serves the app rather than a 404 — because Vercel's Vite preset
+falls back to `index.html` for paths that are not files. That is inherited
+from framework detection rather than pinned by us, so re-test it if the preset
+or the build output changes. `src/router.tsx` is a single catch-all, so every
+path that has no screen yet renders the not-built route instead of erroring.
 
 ## Working practice
 

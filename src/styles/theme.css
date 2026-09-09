@@ -123,17 +123,17 @@
   --radius-xl: var(--radius-lg);
 
   /* == Typography ========================================================
-   * Figma gives the family name only. The fallback stack is ours: Outfit is
-   * not currently loaded anywhere (no @font-face, no stylesheet link), so
-   * today every glyph comes from the system font and this quietly degrades
-   * rather than breaking. */
+   * Figma gives the family name only; the fallback stack is ours. Outfit is
+   * loaded by src/styles/fonts.css as a self-hosted variable face covering
+   * 400-600. The stack still matters: it is what paints during `swap`, and
+   * what a character outside the latin subsets falls back to. */
   --font-sans:
     var(--font-family-sans), ui-sans-serif, system-ui, -apple-system,
     'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   /* Display/Medium in Figma is Ovo — the promo headlines. Same collision
    * story as --leading-*: this is Tailwind's own name, unlayered here beats
-   * its @layer theme default, so `font-serif` resolves to ours. Ovo is not
-   * loaded either, so it degrades to the system serif for now. */
+   * its @layer theme default, so `font-serif` resolves to ours. Ovo is
+   * self-hosted too, at its single weight — 400 is all it ships. */
   --font-serif:
     var(--font-family-serif), ui-serif, Georgia, 'Times New Roman', serif;
 
