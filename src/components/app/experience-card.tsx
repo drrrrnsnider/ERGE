@@ -1,9 +1,5 @@
-import {
-  Elite as EliteIcon,
-  FavoriteFilled,
-  FavoriteOutline,
-  FavoriteOutlineOnImage,
-} from '@/components/icons'
+import { SaveButton } from '@/components/app/save-button'
+import { Elite as EliteIcon } from '@/components/icons'
 import { Link } from 'react-router'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
@@ -63,52 +59,6 @@ function Price({ experience }: { experience: Experience }) {
         <span className="text-muted-foreground"> / {price.unit}</span>
       ) : null}
     </>
-  )
-}
-
-function SaveButton({
-  experience,
-  saved,
-  onToggleSave,
-  className,
-  chrome,
-}: {
-  experience: Experience
-  saved: boolean
-  onToggleSave: (experienceId: string) => void
-  className?: string
-  /** media-md wears a filled circle; media-sm is a bare icon with a shadow. */
-  chrome: boolean
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={saved}
-      aria-label={
-        saved
-          ? `Remove ${experience.title} from saved`
-          : `Save ${experience.title}`
-      }
-      onClick={() => onToggleSave(experience.experienceId)}
-      className={cn(
-        'absolute z-10 grid place-items-center rounded-full',
-        chrome
-          ? 'size-8 border border-border bg-card/90 shadow-lift'
-          : 'drop-shadow-lift-sm',
-        className,
-      )}
-    >
-      {/* The same heart, filled once saved — a state change rather than a
-        * different icon. On media-sm it sits straight on a photo, so it uses
-        * the backed variant to stay legible. */}
-      {saved ? (
-        <FavoriteFilled className="size-5 text-primary" />
-      ) : chrome ? (
-        <FavoriteOutline className="size-5 text-foreground" />
-      ) : (
-        <FavoriteOutlineOnImage className="size-5 text-foreground" />
-      )}
-    </button>
   )
 }
 
@@ -203,11 +153,11 @@ export function ExperienceCard({
             ))}
           </div>
           <SaveButton
-            experience={experience}
             saved={saved}
-            onToggleSave={onToggleSave}
-            chrome
-            className="top-2 right-2"
+            label={experience.title}
+            onToggle={() => onToggleSave(experience.experienceId)}
+            style="Button"
+            className="absolute top-2 right-2 z-10"
           />
         </div>
         <div className="flex flex-col gap-1 px-2">
@@ -244,11 +194,11 @@ export function ExperienceCard({
           </p>
         </div>
         <SaveButton
-          experience={experience}
           saved={saved}
-          onToggleSave={onToggleSave}
-          chrome={false}
-          className="top-[7px] right-[7px]"
+          label={experience.title}
+          onToggle={() => onToggleSave(experience.experienceId)}
+          style="Icon"
+          className="absolute top-[7px] right-[7px] z-10"
         />
       </article>
     )

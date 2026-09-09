@@ -91,6 +91,19 @@
   --emphasis: var(--color-text-secondary);
   --border-subtle: var(--color-border-subtle-focus);
 
+  /* The saved heart. Figma draws it with TWO gradients — a diagonal rose to
+   * carnation fill, and a vertical highlight-to-shadow stroke — and the
+   * export has no semantic token for any of the four stops: the icon uses
+   * primitives directly. Named here so the component does not have to reach
+   * past the bridge to reach them, which is exactly the case this layer
+   * exists for. Not colour roles in the shadcn sense and not in the contrast
+   * matrix: they are the two ends of a gradient on a 20px glyph, not a
+   * foreground on a surface. */
+  --saved-fill-from: var(--color-rose-400);
+  --saved-fill-to: var(--color-carnation-400);
+  --saved-edge-from: var(--color-rose-200);
+  --saved-edge-to: var(--color-carnation-900);
+
   /* == Radius ============================================================
    * Figma exports Radius/none|sm|md|lg|full as --radius-* directly into
    * :root. Those names are exactly the ones Tailwind's rounded-* utilities
