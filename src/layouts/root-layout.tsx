@@ -29,13 +29,32 @@ type IconComponent = (props: React.SVGProps<SVGSVGElement>) => React.ReactElemen
  * Three bands in a full-height column: a top bar, the scrolling main region,
  * and a bottom bar holding the search field and the tab bar together.
  *
- * `main` is the scroll container, NOT the page. That is what lets both bars
- * sit as siblings rather than floating over content with `position: fixed`,
- * and it settles WCAG 2.4.11 Focus Not Obscured structurally — a bar can
- * never cover a focused element inside main, because the two never overlap.
- * The design draws a gradient scrim behind the bottom bar, which only makes
- * sense over scrolling content; as siblings we do not need it, and dropping
- * it is what buys the guarantee.
+ * `main` is the scroll container, NOT the page. Both bars therefore sit in
+ * normal flow rather than floating with `position: fixed`.
+ *
+ * THE SEARCH ROW IS THE ONE EXCEPTION, and it is a deliberate reversal. The
+ * design draws `bottom-input-fade` (Figma 230:8114) — a 104px scrim of
+ * Surface/Base fading up to nothing — with the search field and the location
+ * button sitting in it, so content is meant to pass UNDER them and dissolve.
+ * That cannot be expressed by a sibling with a solid background, so the row
+ * overlays the scroll area.
+ *
+ * An earlier version of this comment claimed that keeping every bar a sibling
+ * settled WCAG 2.4.11 Focus Not Obscured structurally. That was true and it
+ * is no longer, so it is replaced rather than left to mislead. The overlay is
+ * held to the same guarantee by other means:
+ *
+ *   - `scroll-pb-*` on the scroll container reserves the row's height, so
+ *     when focus moves to something underneath it the browser scrolls that
+ *     element clear rather than treating it as already visible.
+ *   - `pb-*` gives the content itself the same room, so the last card in a
+ *     screen can reach a position where nothing covers it.
+ *   - a Playwright test focuses the last card on the page and asserts its
+ *     rectangle does not intersect the row's. Structure was doing this job;
+ *     now a test does.
+ *
+ * The TAB BAR is still a sibling and still solid, exactly as the design draws
+ * it — the fade ends where the tab bar begins.
  *
  * SAFE AREAS
  * ----------
@@ -61,15 +80,26 @@ export function RootLayout() {
         * the hash changes and the page scrolls, but focus stays on <body>, so
         * the next Tab starts from the top of the chrome again — measured as
         * failing in Chromium and WebKit alike before this was added. */}
-      <main
-        id="main"
-        tabIndex={-1}
-        className="min-h-0 flex-1 overflow-y-auto outline-none"
-      >
-        <Outlet />
-      </main>
+      {/* The positioning context for the search overlay: it anchors to the
+        * bottom of the SCROLL AREA, not the viewport, so the tab bar below
+        * stays untouched and the fade ends exactly where it begins. */}
+      <div className="relative min-h-0 flex-1">
+        <main
+          id="main"
+          tabIndex={-1}
+          /* h-full, not flex-1: this is now a positioned box's child rather
+           * than a flex item. `pb` lets content scroll clear of the overlay
+           * and `scroll-pb` makes the browser scroll focus clear of it — the
+           * two halves of keeping 2.4.11 without a structural guarantee. */
+          className="h-full overflow-y-auto pb-16 outline-none scroll-pb-16"
+        >
+          <Outlet />
+        </main>
 
-      <BottomBar />
+        <SearchOverlay />
+      </div>
+
+      <TabBar />
     </div>
   )
 }
@@ -97,18 +127,33 @@ function TopBar() {
 }
 
 /**
- * Search and the tab bar, as one band — the design groups them.
+ * The search field and the location button, floating over the scroll area on
+ * `bottom-input-fade` (Figma 230:8114).
+ *
+ * The fade is 104px of Surface/Base at 75% dissolving upward to nothing, and
+ * it ends where the tab bar starts — so content passes under the row and
+ * disappears rather than meeting a hard edge. The alpha is expressed as
+ * `from-background/75` rather than an rgba literal, which keeps it pointing
+ * at the token: restyling Surface/Base moves the fade with it.
+ *
+ * `pointer-events-none` on the scrim, because it covers 104px of scrollable
+ * content and is decoration — without it, everything under it stops being
+ * clickable. `aria-hidden` for the same reason.
  *
  * The search field is a real, typeable input with no submit: Search itself is
  * not built, and a field that silently swallows Enter is more honest than a
  * button that goes nowhere. It is a `<search>` landmark so it is reachable
  * directly.
  */
-function BottomBar() {
+function SearchOverlay() {
   const searchId = useId()
   return (
-    <div className="shrink-0 pb-[env(safe-area-inset-bottom)]">
-      <search className="flex items-center gap-2 px-5 py-2">
+    <>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-26 bg-linear-to-t from-background/75 to-transparent"
+      />
+      <search className="absolute inset-x-0 bottom-0 flex items-center gap-2 px-5 py-2">
         {/* `Input Field Special` in the keyframe: a FULL Border/Default ring
           * rather than Input's top-only hairline, and it turns Border/Focus
           * while the field is focused — which is the whole time you are
@@ -135,9 +180,7 @@ function BottomBar() {
         </div>
         <ButtonIcon label="Search near me" icon={LocationOn} to="/search?near=me" />
       </search>
-
-      <TabBar />
-    </div>
+    </>
   )
 }
 
@@ -181,7 +224,12 @@ const TABS: ReadonlyArray<{
 
 function TabBar() {
   return (
-    <nav aria-label="Primary" className="border-t border-card bg-background">
+    <nav
+      aria-label="Primary"
+      /* Solid and in normal flow, unlike the search row above it — the design
+       * fades INTO this, not over it. The safe-area inset moved here with it. */
+      className="shrink-0 border-t border-card bg-background pb-[env(safe-area-inset-bottom)]"
+    >
       <ul className="flex items-stretch justify-around">
         {TABS.map(({ label, icon: Icon, activeIcon: ActiveIcon, to }) => (
           <li key={label} className="flex-1">

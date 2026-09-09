@@ -378,3 +378,58 @@ test.describe('the tab bar', () => {
     await expect(page.locator('nav[aria-label="Primary"] svg')).toHaveCount(5)
   })
 })
+
+test.describe('the search overlay', () => {
+  /**
+   * WCAG 2.4.11 Focus Not Obscured, which used to be free.
+   *
+   * The search row and its fade sit OVER the scroll area, because the design
+   * has content dissolve under them (`bottom-input-fade`). Before that the
+   * bars were siblings of `main` and could not overlap it at all, so this
+   * criterion held structurally and needed no test. It no longer does, so the
+   * guarantee moves here.
+   *
+   * `scroll-pb` on the scroll container is what keeps it true: the browser
+   * treats the reserved strip as outside the scrollport, so focusing an
+   * element under the row scrolls it clear rather than deciding it is already
+   * visible. This focuses the LAST card link on the page — the one nearest
+   * the bottom, and the one that fails first if that reservation is dropped.
+   */
+  test('a focused card is never left under the search row', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator(CARD).first()).toBeVisible()
+
+    const link = page.locator(`${CARD} a`).first()
+
+    /* Put the card UNDER the row first. That is the case the criterion is
+     * actually about: the element is inside the scrollport, so without a
+     * reserved strip the browser calls it visible and does not scroll at all.
+     * An element merely below the fold proves nothing here — it scrolls clear
+     * on ordinary padding, which is how an earlier version of this test
+     * passed with the reservation removed. */
+    await link.evaluate((el) => {
+      const main = document.getElementById('main')!
+      const rowTop = document.querySelector('search')!.getBoundingClientRect().top
+      main.scrollTop += el.getBoundingClientRect().bottom - (rowTop + 20)
+    })
+
+    const covered = await link.boundingBox()
+    const rowBefore = await page.locator('search').boundingBox()
+    expect(covered!.y + covered!.height).toBeGreaterThan(rowBefore!.y)
+
+    await link.focus()
+
+    const card = await link.boundingBox()
+    const overlay = await page.locator('search').boundingBox()
+    // Its bottom edge must clear the top of the row, not merely overlap less.
+    expect(card!.y + card!.height).toBeLessThanOrEqual(overlay!.y + 1)
+  })
+
+  /** The scrim is decoration over 104px of scrollable content. If it ever
+   * stops being click-through, everything beneath it silently stops working. */
+  test('the fade does not swallow clicks', async ({ page }) => {
+    await page.goto('/')
+    const fade = page.locator('search').locator('xpath=preceding-sibling::div[1]')
+    await expect(fade).toHaveCSS('pointer-events', 'none')
+  })
+})
