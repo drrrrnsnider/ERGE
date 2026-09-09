@@ -1,7 +1,7 @@
 import { Add, Remove } from '@/components/icons'
 import { Input } from '@/components/patterns/input'
 import { useId } from 'react'
-import { Button } from '@/components/ui/button'
+import { ButtonIcon } from '@/components/patterns/button'
 import type { ExploreFilters } from '@/lib/api/schemas/explore'
 
 /**
@@ -93,16 +93,12 @@ export function BudgetGroupControls({
           Group size
         </label>
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Decrease group size"
-            disabled={groupSize <= GROUP_MIN}
+          <ButtonIcon
+            label="Decrease group size"
+            icon={Remove}
+            size="Sm"
             onClick={() => setGroup(groupSize - 1)}
-          >
-            <Remove />
-          </Button>
+          />
           <input
             id={groupId}
             type="number"
@@ -113,16 +109,12 @@ export function BudgetGroupControls({
             onChange={(e) => setGroup(e.target.valueAsNumber || GROUP_MIN)}
             className="h-11 w-16 rounded-lg border border-input bg-background text-center text-foreground"
           />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Increase group size"
-            disabled={groupSize >= GROUP_MAX}
+          <ButtonIcon
+            label="Increase group size"
+            icon={Add}
+            size="Sm"
             onClick={() => setGroup(groupSize + 1)}
-          >
-            <Add />
-          </Button>
+          />
         </div>
       </div>
     </div>

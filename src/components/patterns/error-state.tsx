@@ -1,5 +1,5 @@
 import { ErrorIcon } from '@/components/icons'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/patterns/button'
 import type { ApiError } from '@/lib/api/schemas/error'
 import { cn } from '@/lib/utils'
 
@@ -48,9 +48,12 @@ export function ErrorState({
       />
       <p className="font-medium text-card-foreground">{error.message}</p>
       {error.retryable && onRetry ? (
-        <Button variant="outline" onClick={onRetry} className="mt-2">
-          Try again
-        </Button>
+        <Button
+          label="Try again"
+          color="Subtle"
+          onClick={onRetry}
+          className="mt-2"
+        />
       ) : null}
     </div>
   )

@@ -1,8 +1,17 @@
 # `src/components/ui/` — shadcn primitives
 
-Unstyled, unopinionated building blocks: button, input, dialog, sheet, popover.
-These are generic. Nothing here knows what a flight or an itinerary is — that
-belongs in [`../app/`](../app/README.md).
+Unstyled, unopinionated building blocks: card today, and dialog, sheet or
+popover when a screen needs one. These are generic. Nothing here knows what a
+flight or an itinerary is — that belongs in [`../app/`](../app/README.md).
+
+**Button is deliberately not here.** Ours lives in
+[`../patterns/button.tsx`](../patterns/button.tsx), written from the Figma
+component set rather than vendored, because `Type=Split` is two adjacent
+buttons with a 2px seam and base-nova's Button is a single `<button>` with
+class variants — no amount of styling produces two hit areas. Shaping the
+vendored one would have meant editing this folder, which is the one thing this
+architecture exists to prevent. Re-add it with the CLI any day it turns out to
+be useful; nothing here depends on it.
 
 ## These are vendored, not installed
 
@@ -17,7 +26,10 @@ the whole point of shadcn: you own the component, so you can change its markup
 and behaviour, not just its theme.
 
 The primitives underneath (focus traps, ARIA wiring, keyboard handling) come
-from Base UI (`@base-ui/react`), which *is* a real dependency.
+from Base UI (`@base-ui/react`), which *is* a real dependency. Nothing imports
+it at the moment — Card is plain markup and Button left — but it stays
+installed, because the next `shadcn add` of anything with behaviour needs it
+and the CLI does not reliably install it itself.
 
 **The primitive library is selected by the `style` field in `components.json`,
 not by a `base` field.** The CLI resolves each component from

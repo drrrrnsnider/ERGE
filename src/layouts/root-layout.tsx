@@ -5,11 +5,12 @@ import {
   LocationOn,
   Menu,
   PersonOutlined,
+  ConciergeStar,
   Search,
   ShoppingCart,
-  Star,
 } from '@/components/icons'
-import { Link, NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet } from 'react-router'
+import { ButtonIcon } from '@/components/patterns/button'
 import { cn } from '@/lib/utils'
 
 /** Every icon in src/components/icons has this shape. */
@@ -65,30 +66,6 @@ export function RootLayout() {
 
       <BottomBar />
     </div>
-  )
-}
-
-/**
- * `Button Icon` — a 48px circle on the card surface. Used three times in the
- * frame: menu, profile, and the location button beside search.
- */
-function ButtonIcon({
-  label,
-  icon: Icon,
-  to,
-}: {
-  label: string
-  icon: IconComponent
-  to: string
-}) {
-  return (
-    <Link
-      to={to}
-      aria-label={label}
-      className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card"
-    >
-      <Icon className="size-[22px]" aria-hidden="true" />
-    </Link>
   )
 }
 
@@ -168,7 +145,7 @@ const TABS: ReadonlyArray<{
   to?: string
 }> = [
   { label: 'Explore', icon: Browse, to: '/' },
-  { label: 'Concierge', icon: Star },
+  { label: 'Concierge', icon: ConciergeStar },
   { label: 'Cart', icon: ShoppingCart },
   { label: 'Library', icon: FavoriteFilled },
   { label: 'Profile', icon: PersonOutlined },

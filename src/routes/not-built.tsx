@@ -1,7 +1,7 @@
 import { Construction } from '@/components/icons'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import { EmptyState } from '@/components/patterns/empty-state'
-import { Button } from '@/components/ui/button'
+
 
 /**
  * Where links land before their screen exists.
@@ -29,9 +29,15 @@ export function NotBuiltRoute() {
         title="Not built yet"
         description={`${pathname} is on the list.`}
         action={
-          <Button render={<Link to="/" />} variant="outline">
+          /* A link, not a button — it navigates. Styled to match the Subtle
+           * button rather than rendered as one, because a <button> that
+           * navigates loses middle-click and open-in-new-tab. */
+          <Link
+            to="/"
+            className="inline-flex h-8 items-center justify-center rounded-full border border-border bg-card px-4 text-body-md text-primary"
+          >
             Back to Explore
-          </Button>
+          </Link>
         }
       />
       {paramEntries.length > 0 || filterEntries.length > 0 ? (
