@@ -178,7 +178,7 @@ export function ExperienceCard({
       <article
         data-slot="experience-card"
         data-variant={variant}
-        className="relative flex w-80 items-center gap-3 rounded-md border border-border bg-card"
+        className="relative flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card"
       >
         <Media
           experience={experience}
@@ -249,7 +249,7 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
     return (
       <div
         data-slot="experience-card-skeleton"
-        className="flex w-80 items-center gap-3 rounded-md border border-border bg-card"
+        className="flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card"
         aria-hidden="true"
       >
         <div className="h-20 w-27.5 shrink-0 rounded-md bg-muted motion-safe:animate-pulse" />

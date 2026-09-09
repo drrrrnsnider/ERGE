@@ -4,7 +4,7 @@ import {
   FavoriteFilled,
   LocationOn,
   Menu,
-  Person,
+  PersonOutlined,
   Search,
   ShoppingCart,
   Star,
@@ -92,17 +92,24 @@ function ButtonIcon({
   )
 }
 
-/** Menu, wordmark, profile. The wordmark's tracking is 23px in the design. */
+/**
+ * Menu and wordmark. Profile used to sit on the right and is now a tab only,
+ * so there is one entry point rather than two.
+ *
+ * A three-column grid rather than `justify-between`, because with the right
+ * button gone the wordmark would drift off centre — the grid reserves the
+ * space the button occupied and keeps it optically centred whatever ends up
+ * on either side.
+ */
 function TopBar() {
   return (
-    <header className="flex items-center justify-between px-4 pt-[env(safe-area-inset-top)] pb-4">
+    <header className="grid grid-cols-[3rem_1fr_3rem] items-center px-4 pt-[env(safe-area-inset-top)] pb-4">
       <ButtonIcon label="Menu" icon={Menu} to="/menu" />
-      <p className="text-[23px] font-semibold tracking-[23px] text-foreground">
+      <p className="text-center text-[23px] font-semibold tracking-[23px] text-foreground">
         {/* The tracking adds a trailing gap after the last letter, which
           * pushes the wordmark off-centre. The negative margin takes it back. */}
         <span className="-mr-[23px]">ERGE</span>
       </p>
-      <ButtonIcon label="Profile" icon={Person} to="/profile" />
     </header>
   )
 }
@@ -146,10 +153,9 @@ function BottomBar() {
  * Five tabs (user-flows.md, "Navigation").
  *
  * The frame draws FOUR — Explore, Concierge, Cart, Library — with Profile as
- * the top-right icon button. The doc says Profile was promoted to a tab, and
- * the doc wins, so Profile is both: a tab here and the top-bar button, which
- * are two entry points to one screen. Worth collapsing to one once the design
- * and the doc agree.
+ * a top-right icon button. The doc says Profile was promoted to a tab, and
+ * the doc wins: it is a tab here and the top-bar button is gone, so there is
+ * exactly one way to reach it.
  *
  * Only Explore is wired. The rest render as plain items — visible, correctly
  * placed, not links. Deliberately NOT `disabled` buttons: a disabled control
@@ -165,7 +171,7 @@ const TABS: ReadonlyArray<{
   { label: 'Concierge', icon: Star },
   { label: 'Cart', icon: ShoppingCart },
   { label: 'Library', icon: FavoriteFilled },
-  { label: 'Profile', icon: Person },
+  { label: 'Profile', icon: PersonOutlined },
 ]
 
 function TabBar() {

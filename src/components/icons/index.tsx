@@ -58,11 +58,18 @@ export function Menu(props: IconProps) {
   )
 }
 
-/** `person` — Profile, in the top bar and the tab bar. */
-export function Person(props: IconProps) {
+/**
+ * `person`, outlined — the Profile tab.
+ *
+ * Outlined, not filled. Figma's `person` asset is the FILLED glyph, because
+ * it was drawn for the top-bar button that no longer exists; a filled person
+ * beside four outlined tab icons reads as permanently selected. Sourced from
+ * the upstream Material set at the same weight as the rest.
+ */
+export function PersonOutlined(props: IconProps) {
   return (
-    <Svg viewBox="0 0 22 22" {...props}>
-      <path fill="currentColor" d="M8.41042 9.92292C7.69236 9.20486 7.33333 8.34167 7.33333 7.33333C7.33333 6.325 7.69236 5.46181 8.41042 4.74375C9.12847 4.02569 9.99167 3.66667 11 3.66667C12.0083 3.66667 12.8715 4.02569 13.5896 4.74375C14.3076 5.46181 14.6667 6.325 14.6667 7.33333C14.6667 8.34167 14.3076 9.20486 13.5896 9.92292C12.8715 10.641 12.0083 11 11 11C9.99167 11 9.12847 10.641 8.41042 9.92292ZM3.66667 18.3333V15.7667C3.66667 15.2472 3.80035 14.7698 4.06771 14.3344C4.33507 13.899 4.69028 13.5667 5.13333 13.3375C6.08056 12.8639 7.04306 12.5087 8.02083 12.2719C8.99861 12.0351 9.99167 11.9167 11 11.9167C12.0083 11.9167 13.0014 12.0351 13.9792 12.2719C14.9569 12.5087 15.9194 12.8639 16.8667 13.3375C17.3097 13.5667 17.6649 13.899 17.9323 14.3344C18.1997 14.7698 18.3333 15.2472 18.3333 15.7667V18.3333H3.66667Z" />
+    <Svg viewBox="0 -960 960 960" {...props}>
+      <path fill="currentColor" d="M372-523q-42-42-42-108t42-108q42-42 108-42t108 42q42 42 42 108t-42 108q-42 42-108 42t-108-42ZM160-160v-94q0-38 19-65t49-41q67-30 128.5-45T480-420q62 0 123 15.5T731-360q31 14 50 41t19 65v94H160Zm60-60h520v-34q0-16-9.5-30.5T707-306q-64-31-117-42.5T480-360q-57 0-111 11.5T252-306q-14 7-23 21.5t-9 30.5v34Zm324.5-346.5Q570-592 570-631t-25.5-64.5Q519-721 480-721t-64.5 25.5Q390-670 390-631t25.5 64.5Q441-541 480-541t64.5-25.5ZM480-631Zm0 411Z" />
     </Svg>
   )
 }

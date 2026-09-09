@@ -256,12 +256,20 @@
 }
 
 /* -----------------------------------------------------------------------------
- * `stroke-gradient` — the design's "Border Brighter -> 0" stroke.
+ * Gradient strokes. The design outlines things with a gradient, not a flat
+ * line, and it uses TWO — which one depends on what is being outlined:
  *
- * Every media frame in the Explore design is outlined with a gradient, not a
- * flat line: Border/Brighter fading to nothing. Figma exports it as a STYLE
- * rather than a variable, and the MCP flattens gradient strokes to a single
- * colour, so it is reconstructed here.
+ *   stroke-gradient       "Border Brighter -> 0"     IMAGES and media frames
+ *   stroke-gradient-card  "Border Default 100 -> 0"  CARD surfaces
+ *
+ * Confirmed per node: `Card / Media SM` carries both — Brighter on its
+ * thumbnail, Default on the card around it — while the MD image area, the
+ * SM Narrow image, the Trip LG band and a promo tile carry only Brighter.
+ * Getting these the wrong way round puts the brighter, warmer line around
+ * the card and the flatter one around the picture, which reads backwards.
+ *
+ * Figma exports both as STYLES rather than variables, and the MCP flattens
+ * gradient strokes to a single colour, so they are reconstructed here.
  *
  * A gradient cannot be a `border-color`, so this is the standard two-layer
  * mask: paint the gradient over the element's whole box, then mask out
@@ -293,6 +301,33 @@
     background: linear-gradient(
       180deg,
       var(--color-border-brighter),
+      transparent
+    );
+    -webkit-mask:
+      linear-gradient(var(--foreground) 0 0) content-box,
+      linear-gradient(var(--foreground) 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(var(--foreground) 0 0) content-box,
+      linear-gradient(var(--foreground) 0 0);
+    mask-composite: exclude;
+  }
+}
+
+/** The card-surface stroke: Border/Default fading out, same technique. */
+@utility stroke-gradient-card {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      var(--color-border-default),
       transparent
     );
     -webkit-mask:

@@ -59,6 +59,14 @@ export function SaveButton({
       type="button"
       data-slot="save-button"
       data-style={style}
+      /* 32px, as designed. The coarse-pointer rule would otherwise raise
+       * this to 44 and the card would stop matching the design on a phone.
+       * Save qualifies for the opt-out: it is secondary to the card's real
+       * action, which is opening the experience, and the whole card is the
+       * 320x180 target for that. Floored at 32 and asserted there, so it can
+       * never quietly shrink to the 24px legal minimum. Not applied to the
+       * Nav variant, which is 48px and needs no help. */
+      data-target={style === 'Nav' ? undefined : 'compact'}
       aria-pressed={saved}
       aria-label={saved ? `Remove ${label} from saved` : `Save ${label}`}
       onClick={onToggle}
