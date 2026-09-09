@@ -549,4 +549,61 @@ test.describe('card strokes', () => {
     // ...and gone by the bottom.
     expect(frame.bottomAlpha).toBe(0)
   })
+
+  /**
+   * Elite is the same stroke turned up, not a different object.
+   *
+   * Its gradient runs Border/Focus to Border/Subtle Focus — so unlike the
+   * media stroke it does NOT reach transparent, it lands on the exact hairline
+   * an ordinary card is framed in. That bottom stop is the whole point, and
+   * it is the one thing a careless "make it copper" would get wrong, so it is
+   * what this asserts hardest.
+   *
+   * The badge carries the identical gradient, and the two are compared to
+   * each other rather than to pinned values: the frame and the pill inside it
+   * have to stay one treatment.
+   */
+  test('an Elite card and its badge share a gradient that lands on the hairline', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await expect(page.getByText('Elite', { exact: true }).first()).toBeVisible()
+
+    const elite = await page.evaluate(() => {
+      const badge = [...document.querySelectorAll('p')].find(
+        (p) => p.textContent?.trim() === 'Elite',
+      )!
+      const frame = badge.closest('[data-slot="experience-card"]')!
+        .firstElementChild!
+      const read = (el: Element) => {
+        const bg = getComputedStyle(el, '::after').backgroundImage
+        const stops = bg.match(/(?:rgba?|color)\([^)]*\)/g) ?? []
+        const nums = (c: string) => (c.match(/[\d.]+/g) ?? []).map(Number)
+        const alpha = (n: number[]) => (n.length > 3 ? n[3]! : 1)
+        const first = nums(stops[0] ?? '')
+        const last = nums(stops[stops.length - 1] ?? '')
+        return {
+          bg,
+          topAlpha: alpha(first),
+          topWarm: (first[0] ?? 0) > (first[2] ?? 0),
+          bottomAlpha: alpha(last),
+          bottomWarm: (last[0] ?? 0) > (last[2] ?? 0),
+        }
+      }
+      return { badge: read(badge), frame: read(frame) }
+    })
+
+    // Full strength at the top.
+    expect(elite.frame.topAlpha).toBe(1)
+    expect(elite.frame.topWarm).toBe(true)
+
+    // And it eases to the house hairline, NOT to nothing. A media stroke ends
+    // at alpha 0; this one must not.
+    expect(elite.frame.bottomAlpha).toBeGreaterThan(0)
+    expect(elite.frame.bottomAlpha).toBeLessThan(1)
+    expect(elite.frame.bottomWarm).toBe(true)
+
+    // Badge and frame are one treatment.
+    expect(elite.badge.bg).toBe(elite.frame.bg)
+  })
 })

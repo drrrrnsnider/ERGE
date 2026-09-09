@@ -359,6 +359,47 @@
   }
 }
 
+/**
+ * The Elite stroke: Border/Focus at the top edge easing to Border/Subtle
+ * Focus at the bottom. Used on an Elite card's image area and on the Elite
+ * badge sitting inside it.
+ *
+ * Unlike its two siblings this one does NOT fade to transparent — it lands on
+ * the same translucent copper that frames ordinary media, so an Elite card
+ * reads as the normal treatment turned up rather than as a different idea.
+ * Full strength where the light hits, the house hairline everywhere else.
+ *
+ * ALSO UNLIKE ITS SIBLINGS, it does not set `position: relative`. The Elite
+ * badge is `absolute`, and a utility that forced `relative` would fight that
+ * — two utilities setting `position` with equal specificity, decided by
+ * whichever Tailwind happens to emit last. Both call sites are already
+ * positioned, so the ::after has the containing block it needs. Anything new
+ * using this must be positioned too.
+ */
+@utility stroke-gradient-elite {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      var(--color-border-focus),
+      var(--color-border-subtle-focus)
+    );
+    -webkit-mask:
+      linear-gradient(var(--foreground) 0 0) content-box,
+      linear-gradient(var(--foreground) 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(var(--foreground) 0 0) content-box,
+      linear-gradient(var(--foreground) 0 0);
+    mask-composite: exclude;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

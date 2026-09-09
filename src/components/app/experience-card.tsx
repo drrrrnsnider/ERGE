@@ -64,10 +64,18 @@ function Price({ experience }: { experience: Experience }) {
   )
 }
 
-/** `Badge Icon/Elite` — 32px pill, icon plus label, on the hero image. */
+/**
+ * `Badge Icon/Elite` — 32px pill, icon plus label, on the hero image.
+ *
+ * Its stroke is the same Elite gradient as the card's, so the badge and the
+ * frame around it are visibly one treatment. Note there is no `relative`
+ * here: the badge is already `absolute`, which is the containing block the
+ * gradient's ::after needs, and `stroke-gradient-elite` deliberately does not
+ * set position for exactly this reason.
+ */
 function EliteBadge() {
   return (
-    <p className="absolute top-2 left-2 z-10 flex h-8 items-center gap-1 rounded-full border border-ring bg-card/90 pr-3 pl-2 text-body-md text-emphasis shadow-lift">
+    <p className="absolute top-2 left-2 z-10 flex h-8 items-center gap-1 rounded-full stroke-gradient-elite bg-card/90 pr-3 pl-2 text-body-md text-emphasis shadow-lift">
       <EliteIcon className="size-5" />
       Elite
     </p>
@@ -130,10 +138,14 @@ export function ExperienceCard({
         <div
           className={cn(
             'relative flex h-45 gap-1 overflow-hidden rounded-lg',
-            /* Elite replaces the hairline with a full-strength copper stroke
-             * — that swap is the whole point of the treatment. */
+            /* Elite swaps the media stroke for its own gradient — full
+             * Border/Focus at the top easing to the same translucent copper
+             * an ordinary card gets at the bottom. That swap is the whole
+             * point of the treatment, and landing on the house hairline
+             * rather than on nothing is what keeps it a promotion of the
+             * normal card instead of a different object. */
             experience.elite
-              ? 'border border-primary'
+              ? 'stroke-gradient-elite'
               : 'stroke-gradient',
           )}
         >
