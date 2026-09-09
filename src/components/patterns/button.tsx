@@ -142,8 +142,16 @@ export function ButtonIcon({
   onClick?: () => void
   className?: string
 }) {
+  /* The glyph is Action/Primary, not the surrounding text colour. Both
+   * Button Icons the keyframe draws are copper — the top-bar menu is flat
+   * Action/Primary and the location pin is the champagne-to-copper gradient
+   * — so this is the component's colour rather than a per-call-site override,
+   * checked by fetching both exported assets. `text-primary` sets
+   * currentColor, so a gradient glyph like LocationOn simply ignores it and
+   * keeps its own stops. Overridable through className if a future call site
+   * genuinely differs. */
   const shape = cn(
-    'grid shrink-0 place-items-center rounded-full border border-border bg-card',
+    'grid shrink-0 place-items-center rounded-full border border-border bg-card text-primary',
     size === 'Md' ? 'size-12' : 'size-8',
     className,
   )

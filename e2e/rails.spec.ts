@@ -379,7 +379,7 @@ test.describe('the tab bar', () => {
   })
 })
 
-test.describe('the search overlay', () => {
+test.describe('the overlay bars', () => {
   /**
    * WCAG 2.4.11 Focus Not Obscured, which used to be free.
    *
@@ -423,6 +423,40 @@ test.describe('the search overlay', () => {
     const overlay = await page.locator('search').boundingBox()
     // Its bottom edge must clear the top of the row, not merely overlap less.
     expect(card!.y + card!.height).toBeLessThanOrEqual(overlay!.y + 1)
+  })
+
+  /**
+   * The same guarantee at the top edge.
+   *
+   * The top bar is an overlay too now — it has to be, for content to fade
+   * under it — so `scroll-pt` reserves its height the way `scroll-pb` does
+   * below. Same construction as the test above: put the card under the bar
+   * first, prove it is covered, then focus it and require it to have moved
+   * clear. Merely being above the fold proves nothing.
+   */
+  test('a focused card is never left under the top bar', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator(CARD).first()).toBeVisible()
+
+    const link = page.locator(`${CARD} a`).first()
+
+    await link.evaluate((el) => {
+      const main = document.getElementById('main')!
+      const barBottom = document
+        .querySelector('header')!
+        .getBoundingClientRect().bottom
+      main.scrollTop += el.getBoundingClientRect().top - (barBottom - 20)
+    })
+
+    const covered = await link.boundingBox()
+    const barBefore = await page.locator('header').boundingBox()
+    expect(covered!.y).toBeLessThan(barBefore!.y + barBefore!.height)
+
+    await link.focus()
+
+    const card = await link.boundingBox()
+    const bar = await page.locator('header').boundingBox()
+    expect(card!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height - 1)
   })
 
   /**
@@ -485,6 +519,39 @@ test.describe('the search overlay', () => {
 
     expect(result.found).toBe(true)
     expect(result.topmostIsTheRow).toBe(true)
+  })
+
+  /**
+   * The top bar paints above the screen.
+   *
+   * It cannot rely on tree order the way the search row does: it has to come
+   * BEFORE `main` in the DOM so the menu button precedes the page content in
+   * the tab order, and `main` carries `isolate`, which makes it paint as
+   * though it were a positioned z-index:0 element. Measured before the fix:
+   * cards scrolled straight over the wordmark. Hence an explicit z-index,
+   * which cannot be outbid from inside the screen precisely because `main`
+   * is a stacking context.
+   */
+  test('the top bar paints above the scrolling content', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator(CARD).first()).toBeVisible()
+
+    const topmost = await page.evaluate(() => {
+      const main = document.getElementById('main')!
+      const header = document.querySelector('header')!
+      main.scrollTop = 300
+      const b = header.getBoundingClientRect()
+      // Sample across the bar: content overlaps different parts of it.
+      return [0.1, 0.5, 0.85].map((fx) => {
+        const el = document.elementsFromPoint(
+          Math.round(b.width * fx),
+          Math.round(b.top + b.height / 2),
+        )[0]
+        return header.contains(el ?? null)
+      })
+    })
+
+    expect(topmost).toEqual([true, true, true])
   })
 
   /** The scrim is decoration over 104px of scrollable content. If it ever

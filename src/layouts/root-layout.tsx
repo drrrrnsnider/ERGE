@@ -73,17 +73,22 @@ export function RootLayout() {
         Skip to main content
       </a>
 
-      <TopBar />
-
-      {/* tabIndex={-1} makes this focusable programmatically but keeps it out
-        * of the tab order. Without it the skip link does not actually skip:
-        * the hash changes and the page scrolls, but focus stays on <body>, so
-        * the next Tab starts from the top of the chrome again — measured as
-        * failing in Chromium and WebKit alike before this was added. */}
-      {/* The positioning context for the search overlay: it anchors to the
-        * bottom of the SCROLL AREA, not the viewport, so the tab bar below
-        * stays untouched and the fade ends exactly where it begins. */}
+      {/* The positioning context for BOTH overlays. They anchor to the edges
+        * of the SCROLL AREA, not the viewport, so the tab bar below stays
+        * untouched and each fade ends exactly where its bar does.
+        *
+        * TopBar comes before main in the DOM on purpose. It is positioned, so
+        * its place here does not affect where it is drawn — but it does set
+        * the tab order, and the menu button has to come before the page
+        * content, not after it. */}
       <div className="relative min-h-0 flex-1">
+        <TopBar />
+
+        {/* tabIndex={-1} makes this focusable programmatically but keeps it
+          * out of the tab order. Without it the skip link does not actually
+          * skip: the hash changes and the page scrolls, but focus stays on
+          * <body>, so the next Tab starts from the top of the chrome again —
+          * measured as failing in Chromium and WebKit alike before it. */}
         <main
           id="main"
           tabIndex={-1}
@@ -104,7 +109,7 @@ export function RootLayout() {
            * Deliberately not "give the overlay z-20". That wins today and
            * loses to the first z-30 someone writes in a card; this cannot be
            * outbid, because there is no number to bid. */
-          className="isolate h-full overflow-y-auto pb-16 outline-none scroll-pb-16"
+          className="isolate h-full overflow-y-auto pt-[calc(4rem+env(safe-area-inset-top))] pb-16 outline-none scroll-pt-[calc(4rem+env(safe-area-inset-top))] scroll-pb-16"
         >
           <Outlet />
         </main>
@@ -128,14 +133,40 @@ export function RootLayout() {
  */
 function TopBar() {
   return (
-    <header className="grid grid-cols-[3rem_1fr_3rem] items-center px-4 pt-[env(safe-area-inset-top)] pb-4">
+    <>
+      {/* The same fade as the bottom, flipped: opaque at the top edge, gone
+        * by the bottom. Content scrolls up under the bar and dissolves rather
+        * than sliding behind a hard edge.
+        *
+        * Same rules as the bottom one. `pointer-events-none` because it
+        * covers 104px of scrollable content and is decoration; `aria-hidden`
+        * for the same reason; and `from-background/75` rather than an rgba
+        * literal so it still tracks Surface/Base.
+        *
+        * It sits BEFORE the header, so the header paints over it.
+        *
+        * BOTH CARRY z-10, and unlike the usual case that is not a bidding
+        * war. The search overlay needs no z-index because it comes after
+        * `main` in the DOM; this one has to come BEFORE it, so the menu
+        * button lands ahead of the page content in the tab order. Measured:
+        * `main` carries `isolate`, which makes it paint as though it were a
+        * positioned z-index:0 element, so on tree order alone it covered the
+        * header — the wordmark had cards scrolling over it. The z-index is
+        * safe from being outbid precisely BECAUSE main is isolated: nothing
+        * inside the screen can escape its stacking context to compete. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-26 bg-linear-to-b from-background/75 to-transparent"
+      />
+      <header className="absolute inset-x-0 top-0 z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-4 pt-[env(safe-area-inset-top)] pb-4">
       <ButtonIcon label="Menu" icon={Menu} to="/menu" />
       <p className="text-center text-[23px] font-semibold tracking-[23px] text-foreground">
         {/* The tracking adds a trailing gap after the last letter, which
           * pushes the wordmark off-centre. The negative margin takes it back. */}
         <span className="-mr-[23px]">ERGE</span>
       </p>
-    </header>
+      </header>
+    </>
   )
 }
 
