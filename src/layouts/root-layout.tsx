@@ -90,8 +90,21 @@ export function RootLayout() {
           /* h-full, not flex-1: this is now a positioned box's child rather
            * than a flex item. `pb` lets content scroll clear of the overlay
            * and `scroll-pb` makes the browser scroll focus clear of it — the
-           * two halves of keeping 2.4.11 without a structural guarantee. */
-          className="h-full overflow-y-auto pb-16 outline-none scroll-pb-16"
+           * two halves of keeping 2.4.11 without a structural guarantee.
+           *
+           * `isolate` is what keeps the overlay on top, and it is the whole
+           * fix rather than a tweak. Neither this element (static) nor the
+           * wrapper (relative, z-index auto) was creating a stacking context,
+           * so a z-10 inside a card — the Elite badge, the save buttons — was
+           * competing directly with the overlay's z-auto in the ROOT stacking
+           * context, and winning. `isolation: isolate` makes this a stacking
+           * context of its own, so every z-index in the screen is scoped to
+           * it and none can outrank a later sibling.
+           *
+           * Deliberately not "give the overlay z-20". That wins today and
+           * loses to the first z-30 someone writes in a card; this cannot be
+           * outbid, because there is no number to bid. */
+          className="isolate h-full overflow-y-auto pb-16 outline-none scroll-pb-16"
         >
           <Outlet />
         </main>

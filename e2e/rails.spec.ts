@@ -425,6 +425,68 @@ test.describe('the search overlay', () => {
     expect(card!.y + card!.height).toBeLessThanOrEqual(overlay!.y + 1)
   })
 
+  /**
+   * Content passes UNDER the row, never over it.
+   *
+   * Cards lift things above their siblings with z-index — the Elite badge,
+   * the save heart — and those were painting on top of the search row,
+   * because neither `main` (static) nor its wrapper (relative, z-index auto)
+   * created a stacking context, so a card's z-10 was competing with the
+   * overlay's z-auto in the ROOT stacking context and winning.
+   *
+   * `isolate` on `main` is the fix, and this asserts the OUTCOME rather than
+   * the property: it scrolls until a lifted element sits inside the search
+   * pill's rectangle, then checks what is actually topmost at that point.
+   * Asserting `isolation: isolate` instead would pass just as happily if
+   * someone later added a z-index that broke it again.
+   *
+   * `found` is asserted too. Without it, a fixture change that stopped
+   * producing an overlap would turn this into a test that always passes.
+   */
+  test('content scrolls under the search row, never over it', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await expect(page.locator(CARD).first()).toBeVisible()
+
+    const result = await page.evaluate(() => {
+      const main = document.getElementById('main')!
+      const row = document.querySelector('search')!
+      const pill = row.querySelector('[data-slot="input-field"]')!
+      const lifted = () =>
+        [...document.querySelectorAll('[data-slot="experience-card"] *')].filter(
+          (el) => getComputedStyle(el).zIndex !== 'auto',
+        )
+
+      for (let top = 0; top < main.scrollHeight - main.clientHeight; top += 20) {
+        main.scrollTop = top
+        const p = pill.getBoundingClientRect()
+        for (const el of lifted()) {
+          const r = el.getBoundingClientRect()
+          // Its CENTRE has to land on the pill — that is the point the hit
+          // test uses. Requiring the whole element to fit inside the pill is
+          // too strict to ever happen on a phone, where the card is nearly
+          // as wide as the field.
+          const x = Math.round(r.left + r.width / 2)
+          const y = Math.round(r.top + r.height / 2)
+          const onPill =
+            x > p.left + 4 && x < p.right - 4 && y > p.top + 4 && y < p.bottom - 4
+          if (!onPill) continue
+          const stack = document.elementsFromPoint(x, y)
+          return {
+            found: true,
+            zIndex: getComputedStyle(el).zIndex,
+            topmostIsTheRow: row.contains(stack[0] ?? null),
+          }
+        }
+      }
+      return { found: false, zIndex: null, topmostIsTheRow: false }
+    })
+
+    expect(result.found).toBe(true)
+    expect(result.topmostIsTheRow).toBe(true)
+  })
+
   /** The scrim is decoration over 104px of scrollable content. If it ever
    * stops being click-through, everything beneath it silently stops working. */
   test('the fade does not swallow clicks', async ({ page }) => {
