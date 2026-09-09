@@ -250,18 +250,57 @@ test.describe('per-section states', () => {
   /**
    * Budget is a HARD filter (user-flows.md §0). Narrowing it past everything
    * has to empty the rails rather than silently ignore the filter.
+   *
+   * `getByRole('spinbutton')` rather than `getByLabel(/^max/i)`, which now
+   * matches two controls: the slider's upper thumb is also named "Maximum
+   * budget". That ambiguity is the point of the next test.
    */
   test('budget is a hard filter', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator(CARD).first()).toBeVisible()
 
-    await page.getByLabel(/^max/i).fill('1')
+    await page.getByRole('spinbutton', { name: /^max/i }).fill('1')
 
     await expect(
       page.locator('[data-slot="empty-state"]').filter({
         hasText: 'Nothing in this range',
       }).first(),
     ).toBeVisible({ timeout: 20_000 })
+  })
+
+  /**
+   * The slider and the number fields are two views of ONE value, and the
+   * whole risk in having both is that they drift apart. So this drives the
+   * slider by keyboard — which is also the only way a keyboard user sets a
+   * budget — and asserts the field followed.
+   *
+   * Keyboard rather than a drag on purpose: a two-thumb slider that is
+   * mouse-only is the classic failure of this control, and it is worth a
+   * hard test that the arrow keys reach it.
+   */
+  test('the budget slider and the budget fields are one value', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await expect(page.locator(CARD).first()).toBeVisible()
+
+    const maxThumb = page.getByRole('slider', { name: /^maximum/i })
+    const maxField = page.getByRole('spinbutton', { name: /^max/i })
+
+    await expect(maxField).toHaveValue('500')
+
+    await maxThumb.focus()
+    await maxThumb.press('ArrowRight')
+    await maxThumb.press('ArrowRight')
+
+    // Two steps of 25 from 500. If the step ever changes this number moves,
+    // which is correct — it is asserting the coupling, not the arithmetic.
+    await expect(maxField).toHaveValue('550')
+
+    // And the other direction: the field is the exact-entry path, so the
+    // thumb has to follow it, not just lead it.
+    await maxField.fill('300')
+    await expect(maxThumb).toHaveJSProperty('value', '300')
   })
 })
 

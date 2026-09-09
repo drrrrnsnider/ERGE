@@ -26,10 +26,12 @@ the whole point of shadcn: you own the component, so you can change its markup
 and behaviour, not just its theme.
 
 The primitives underneath (focus traps, ARIA wiring, keyboard handling) come
-from Base UI (`@base-ui/react`), which *is* a real dependency. Nothing imports
-it at the moment — Card is plain markup and Button left — but it stays
-installed, because the next `shadcn add` of anything with behaviour needs it
-and the CLI does not reliably install it itself.
+from Base UI (`@base-ui/react`), which *is* a real dependency — and is used
+directly as well as through this folder. `patterns/range-slider.tsx` composes
+`Slider.*` itself, because the behaviour underneath (two `<input type="range">`
+thumbs, arrow keys, aria-valuetext) is exactly what is worth taking from
+upstream, while the geometry is Figma's and would have meant editing a file in
+here.
 
 **The primitive library is selected by the `style` field in `components.json`,
 not by a `base` field.** The CLI resolves each component from
