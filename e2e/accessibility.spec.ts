@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 /**
  * Automated accessibility scan of every screen, in a real browser.
@@ -224,39 +224,51 @@ test.describe('accessibility', () => {
   /**
    * A focused text field has to LOOK focused (SC 2.4.7).
    *
-   * This is the test that was missing while the bug existed. Our Input pill
-   * puts `outline-none` on the inner <input> so the ring is not drawn around
-   * the bare text inside the pill — and for a while nothing drew it at all:
-   * measured as `outline-style: none` on a focused field. axe does not catch
-   * that, because a missing focus indicator is not detectable from the
-   * accessibility tree.
+   * This is the test that was missing while these fields had no focus
+   * indicator at all — measured as `outline-style: none` on a focused field,
+   * which axe cannot catch, because a missing indicator is not detectable
+   * from the accessibility tree.
    *
-   * Two things are asserted, because the design and the guideline want
-   * different things and both have to hold. The pill takes the global focus
-   * ring on the field's behalf, and its border turns Border/Focus — the
-   * design's own focus treatment, and the one you see the whole time you are
-   * typing. Colours are compared before against after rather than pinned to a
-   * value, so retokenising cannot break the test.
+   * The indicator is now the border alone: the ring was removed deliberately,
+   * so that is asserted as an absence rather than left untested. What remains
+   * is the design's own treatment, the border turning Border/Focus, and it
+   * still has to actually change. Colours are compared before against after
+   * rather than pinned to a value, so retokenising cannot break the test.
+   *
+   * Both fields are covered, because they get there differently: the budget
+   * field has a 0.5px top hairline and the search field a full 1px border.
    */
   test('a focused text field is visibly focused', async ({ page }) => {
     await page.goto('/')
 
-    const pill = page.locator('[data-slot="input-field"]').first()
-    await expect(pill).toBeVisible()
-
-    const read = () =>
+    const read = (pill: Locator) =>
       pill.evaluate((el) => {
         const cs = getComputedStyle(el)
         return { outline: cs.outlineStyle, border: cs.borderTopColor }
       })
 
-    const blurred = await read()
-    await page.getByRole('spinbutton', { name: /^min/i }).click()
-    const focused = await read()
+    const cases = [
+      {
+        pill: page.locator('[data-slot="input-field"]').first(),
+        control: page.getByRole('spinbutton', { name: /^min/i }),
+      },
+      {
+        pill: page.locator('[data-slot="input-field"]').last(),
+        control: page.getByRole('searchbox'),
+      },
+    ]
 
-    expect(blurred.outline).toBe('none')
-    expect(focused.outline).not.toBe('none')
-    expect(focused.border).not.toBe(blurred.border)
+    for (const { pill, control } of cases) {
+      await expect(pill).toBeVisible()
+      const blurred = await read(pill)
+      await control.click()
+      const focused = await read(pill)
+
+      expect(focused.border).not.toBe(blurred.border)
+      // No ring, by design — see input.tsx for what that costs.
+      expect(blurred.outline).toBe('none')
+      expect(focused.outline).toBe('none')
+    }
   })
 
   /**

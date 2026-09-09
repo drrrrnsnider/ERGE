@@ -44,13 +44,21 @@ import { cn } from '@/lib/utils'
  *     red border communicates nothing without sight (SC 1.4.1)
  *   - the clear button is a real button with its own label, not a decorative
  *     icon, and is hidden entirely when there is nothing to clear
- *   - the pill draws the global focus ring for the field inside it. The inner
- *     <input> carries `outline-none` so the ring is not drawn around the bare
- *     text, and before this the field had NO focus indicator at all —
- *     measured as `outline-style: none` while focused, which is a 2.4.7
- *     failure that an axe scan does not catch. theme.css now names
- *     [data-slot="input-field"] alongside :focus-visible so both get the one
- *     indicator.
+ *   - focus is shown by the border alone. The pill briefly also drew the
+ *     global ring; that was removed deliberately, because two indicators on
+ *     one control is one too many.
+ *
+ *     The cost, measured rather than assumed: the border goes Border/Input to
+ *     Border/Focus, and those two differ by only 1.76:1 across an edge that
+ *     is half a pixel tall. The focused colour reads strongly against the
+ *     field itself (6.56:1), so the state is visible — but the CHANGE is
+ *     subtle, and 2.4.13 Focus Appearance (AAA, above our AA target) would
+ *     not accept it. The bottom-bar search field does not have this problem:
+ *     it has a full 1px border going Border/Default to Border/Focus, a 5.62:1
+ *     change, which is why the ring was redundant there.
+ *
+ *     If this ever needs strengthening without adding a ring back, thickening
+ *     the focused border is the move — it stays the design's own treatment.
  */
 export function Input({
   label,
