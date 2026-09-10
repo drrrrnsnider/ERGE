@@ -394,6 +394,51 @@
 }
 
 /**
+ * The field stroke: a 0.5px gradient ring, full strength on the top edge and
+ * gone by the bottom.
+ *
+ * ONE utility rather than four, because only the colour changes between an
+ * Input's states — Border/Input at rest, Feedback/Error, Border/Focus when
+ * focused, Border/Default when disabled. The colour comes from
+ * `--field-stroke`, which a state sets as an arbitrary property
+ * (`[--field-stroke:var(--ring)]`) and which inherits into the ::after that
+ * draws the ring. Four near-identical utilities would drift apart the first
+ * time one of them was adjusted.
+ *
+ * 0.5px, not the 1px its siblings use: the design draws a field's ring finer
+ * than a card's. On a 1x display that lands as a partial-alpha line, which is
+ * the intent — it should read as a hairline, not a border.
+ *
+ * Same two-layer mask as the other stroke utilities; see the block above for
+ * why a gradient cannot simply be a border-color.
+ */
+@utility stroke-gradient-field {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.5px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      var(--field-stroke, var(--input)),
+      transparent
+    );
+    -webkit-mask:
+      linear-gradient(var(--foreground) 0 0) content-box,
+      linear-gradient(var(--foreground) 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(var(--foreground) 0 0) content-box,
+      linear-gradient(var(--foreground) 0 0);
+    mask-composite: exclude;
+  }
+}
+
+/**
  * The Elite stroke: Border/Focus at the top edge easing to Border/Subtle
  * Focus at the bottom. Used on an Elite card's image area and on the Elite
  * badge sitting inside it.

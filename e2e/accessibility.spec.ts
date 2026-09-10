@@ -242,10 +242,18 @@ test.describe('accessibility', () => {
   test('a focused text field is visibly focused', async ({ page }) => {
     await page.goto('/')
 
+    /* "The stroke" is drawn two different ways, so read both and compare the
+     * pair. Input's ring is a gradient on ::after — a gradient cannot be a
+     * border-color — while the search pill uses a real border. Reading only
+     * borderTopColor passed for the pill and silently stopped testing Input
+     * the moment its ring became a gradient. */
     const read = (pill: Locator) =>
       pill.evaluate((el) => {
         const cs = getComputedStyle(el)
-        return { outline: cs.outlineStyle, border: cs.borderTopColor }
+        return {
+          outline: cs.outlineStyle,
+          stroke: `${cs.borderTopColor} | ${getComputedStyle(el, '::after').backgroundImage}`,
+        }
       })
 
     const cases = [
@@ -265,7 +273,7 @@ test.describe('accessibility', () => {
       await control.click()
       const focused = await read(pill)
 
-      expect(focused.border).not.toBe(blurred.border)
+      expect(focused.stroke).not.toBe(blurred.stroke)
       // Clicked, so no ring — that is the pointer case.
       expect(blurred.outline).toBe('none')
       expect(focused.outline).toBe('none')

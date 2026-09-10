@@ -23,10 +23,10 @@ import { cn } from '@/lib/utils'
  *
  * WHAT THE STATES CHANGE
  *
- *   Empty     border Border/Input,     text Text/Muted,    helper muted
- *   Filled    border Border/Input,     text Text/Primary,  helper muted
- *   Error     border Feedback/Error,   text Text/Muted,    helper ERROR
- *   Disabled  border Border/Default,   text Text/Disabled, helper muted
+ *   Empty     stroke Border/Input,     text Text/Muted,    helper muted
+ *   Filled    stroke Border/Input,     text Text/Primary,  helper muted
+ *   Error     stroke Feedback/Error,   text Text/Muted,    helper ERROR
+ *   Disabled  stroke Border/Default,   text Text/Disabled, helper muted
  *
  * FOCUS is a third axis in the design — Figma models it as a Type alongside
  * "Icon Left" and "Text" rather than as a State, but what it draws is just
@@ -35,9 +35,14 @@ import { cn } from '@/lib/utils'
  * vanishes the moment you focus the field to fix it is the wrong trade. The
  * focus ring still appears in that case, so focus is never ambiguous.
  *
- * The field carries a 0.5px TOP border only — not a full outline. That is
- * deliberate in the design: a hairline catching light on the upper edge, so
- * the pill reads as raised rather than boxed.
+ * The field's ring is a 0.5px GRADIENT, full strength on the top edge and
+ * gone by the bottom — the same light-from-above idea the whole system uses,
+ * now drawn all the way round rather than on the top edge alone. It was a
+ * top-only border until the design moved to a full ring.
+ *
+ * The colour is the only thing a state changes, so it is passed as
+ * `--field-stroke` rather than as four separate stroke utilities that would
+ * drift apart. `stroke-gradient-field` in theme.css reads it.
  *
  * ACCESSIBILITY, none of which is in the design file:
  *   - the label is a real <label>, so tapping it focuses the field
@@ -116,16 +121,16 @@ export function Input({
         <div
           data-slot="input-field"
           className={cn(
-            'flex h-12 w-full min-w-0 items-center gap-3 rounded-full border-t-[0.5px] bg-card px-3.5 py-2.5',
+            'flex h-12 w-full min-w-0 items-center gap-3 rounded-full stroke-gradient-field bg-card px-3.5 py-2.5',
             error
-              ? 'border-t-destructive'
+              ? '[--field-stroke:var(--destructive)]'
               : disabled
-                ? 'border-t-border'
-                : 'border-t-input',
+                ? '[--field-stroke:var(--border)]'
+                : '[--field-stroke:var(--input)]',
             /* Guarded on `!error` on purpose. A pseudo-class outranks a plain
              * utility whatever order they are written in, so without this the
-             * copper hairline would silently win over the error one. */
-            !error && 'focus-within:border-t-ring',
+             * copper stroke would silently win over the error one. */
+            !error && 'focus-within:[--field-stroke:var(--ring)]',
           )}
         >
           {LeftIcon ? (
