@@ -281,7 +281,13 @@
    *   lift       badges and the save button   (Figma: "ERGE Button 4 24 50")
    *   lift-sm    the bare save icon on media-sm
    *   tile       a promo category tile
-   *   card       the Promo Tiles card itself */
+   *   card       the Promo Tiles card itself
+   *   flow       the concierge flow button — the ONE exception below
+   *
+   * `flow` is cast in COPPER rather than the surface, which is why it does
+   * not follow the rule above. It is not depth: it is a faint glow marking
+   * the one control that hands the task to the concierge, and casting it in
+   * --background would make it invisible on the base surface it sits on. */
   --shadow-lift: 0 4px 24px
     color-mix(in oklch, var(--background) 50%, transparent);
   --shadow-tile: 0 8px 24px -2px
@@ -290,6 +296,8 @@
     color-mix(in oklch, var(--background) 40%, transparent);
   --drop-shadow-lift-sm: 0 4px 12px
     color-mix(in oklch, var(--background) 50%, transparent);
+  --drop-shadow-flow: 0 2px 11.5px
+    color-mix(in oklch, var(--primary) 10%, transparent);
 
   /* Hands `leading-tight` and friends to Tailwind. These names are also
    * Tailwind's own, so its defaults are replaced rather than sitting
