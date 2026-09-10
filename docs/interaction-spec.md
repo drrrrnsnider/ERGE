@@ -113,11 +113,15 @@ Dates appear in three places with different rules:
 - **PDP** — date and time, both carried into the cart on add
 - **Cart card** — required before that item can check out
 
-`[DECIDE]` What date picker? A native input is free, accessible and familiar
-but visually unstyleable; a custom one is a substantial accessible component
-(roving focus, arrow-key grid navigation, month announcement). Given the
-budget and the one-designer constraint, native is the pragmatic answer unless
-the designs demand otherwise.
+**Decided: the shadcn date picker, in range mode.** The question was whether
+to accept a native input's unstyleable appearance or pay for a custom
+component (roving focus, arrow-key grid navigation, month announcement). The
+answer is neither — shadcn's picker is vendored, already accessible, and
+matches the surrounding design system, so the accessible-component cost is
+paid upstream rather than by us.
+
+Search takes a **range**, not a single date. It adds `react-day-picker` as a
+dependency; that is the price of the decision and was accepted knowingly.
 
 ---
 

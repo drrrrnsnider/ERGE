@@ -231,8 +231,12 @@ the Playbook, not the code:
    opt-out.
 3. **Capacitor was deferred** — now reversed by the check-in agent requirement.
    Bring forward.
-4. **The no-raw-hex lint rule is missing** — it is in the Playbook's own
-   Definition of Done and is a genuine gap. Add it.
+4. ~~**The no-raw-hex lint rule is missing**~~ — **resolved.** It is in the
+   Playbook's own Definition of Done and was a genuine gap;
+   `scripts/check-colours.mjs` now runs inside `npm run lint`, so a raw hex,
+   `rgb()`, `hsl()`, `oklch()` or a Tailwind palette utility fails the build
+   before typecheck or tests start. It is a script rather than an oxlint rule
+   because oxlint does not implement `no-restricted-syntax`.
 
 Also worth flagging: Playbook §1 states that **code is the source of truth**
 and the design surface renders from it. The PM brief that initiated this build

@@ -56,9 +56,17 @@ These are decided. Don't substitute alternatives without asking.
   accessibility
 - **oxlint** for linting
 
-Deliberately deferred — **do not add these**: Storybook, Chromatic, Capacitor,
-PWA plugin, state management libraries. Each has a named trigger for when it
-gets introduced. Adding them early is scope creep, not thoroughness.
+- **Capacitor** is **v1**, not deferred. `docs/design-brief.md` moved it: the
+  post-booking check-in agent needs push notifications and a deep link from a
+  notification into a chat thread, and neither is reachable from the web build
+  alone. It is not installed yet and should not be added as a side effect of
+  other work — it gets its own setup task. Until then, anything that will need
+  it (durable storage, notifications, deep links) goes behind a seam thin
+  enough to swap in one file.
+
+Deliberately deferred — **do not add these**: Storybook, Chromatic, PWA
+plugin, state management libraries. Each has a named trigger for when it gets
+introduced. Adding them early is scope creep, not thoroughness.
 
 ## Token architecture
 
@@ -154,9 +162,16 @@ only legible once found.
 There are roughly 60 screens in the design. **This is a component problem, not a
 screen problem.** Building 60 screens is the failure mode.
 
-(That count lives in Figma. `docs/design-brief.md` is still a stub — audience,
-principles and out-of-scope are all unfilled — so don't go looking for the screen
-inventory in the repo.)
+(The exact count lives in Figma, but `docs/design-brief.md` now carries a **V1
+scope table by area** — Discovery, Library, Trips, Cart, Checkout, Concierge,
+Gifting, Post-booking, Social ingest — which is the closest thing to a screen
+inventory the repo has. Read it before assuming a screen is needed.
+
+That table is followed by the section that matters more: **Cart, Trip,
+Wishlist, List and Saved are one thing** — a collection of experiences, varying
+only in metadata and available actions. If that holds, most of the screen list
+collapses into one list archetype and one detail archetype. That is the same
+argument as this section, made in product terms.)
 
 Every booking type — flight, hotel, restaurant, rideshare, event — shares one
 polymorphic structure:
@@ -268,10 +283,18 @@ Screens are built against mock data behind a **typed API layer** from the start.
 Zod schemas define the shapes, TanStack Query handles fetching, mocks live in one
 swappable module.
 
-**None of this is built yet.** `src/lib/api/` and `src/mocks/` hold only their
-READMEs, and the `src/lib/api/schemas/` path that `docs/api-contract.md` calls
-authoritative does not exist. What follows is how to build it, not a description
-of what's there — the first screen that needs data is the one that creates it.
+**This is built, and Explore is the worked example.** `src/lib/api/explore.ts`
+exposes the three calls that screen makes; `src/lib/api/schemas/` holds the Zod
+definitions `docs/api-contract.md` calls authoritative — `experience.ts` is the
+polymorphic core, with `explore.ts`, `editorial.ts` and `error.ts` beside it;
+`src/mocks/handlers.ts` and `src/mocks/fixtures/` supply the data. Follow that
+shape for a new screen rather than inventing a second one.
+
+Two things in there are load-bearing and easy to undo by accident. Responses
+are **parsed at the edge**, so a shape that drifts fails in the API layer with
+a Zod error rather than as `undefined` three components deep. And one mock
+section — Unique Lodging — **fails on purpose**, so the per-section error path
+is exercised on every run instead of being theoretical.
 
 Components must never import from `src/mocks/` directly. They go through
 `src/lib/api/`. The point is that the backend team can swap in real endpoints
