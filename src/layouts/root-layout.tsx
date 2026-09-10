@@ -16,6 +16,7 @@ import {
 } from '@/components/icons'
 import { NavLink, Outlet } from 'react-router'
 import { ButtonIcon } from '@/components/patterns/button'
+import { InputFieldSpecial } from '@/components/patterns/input-field-special'
 import { cn } from '@/lib/utils'
 
 /** Every icon in src/components/icons has this shape. */
@@ -207,29 +208,32 @@ function SearchOverlay() {
         * and the gap between the field and the button would otherwise eat
         * taps meant for the cards underneath. */}
       <search className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-2 px-5 py-2">
-        {/* `Input Field Special` in the keyframe: a FULL Border/Default ring
-          * rather than Input's top-only hairline, and it turns Border/Focus
-          * while the field is focused — which is the whole time you are
-          * typing. It carries data-slot="input-field" so the one focus-ring
-          * rule in theme.css covers it too; this input suppresses its own
-          * outline exactly like Input's does, and without that it had no
-          * focus indicator at all. */}
-        <div
-          data-slot="input-field"
-          className="pointer-events-auto flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-card pr-3.5 pl-2 focus-within:border-ring"
-        >
-          <span className="grid size-[30px] shrink-0 place-items-center">
-            <Search className="size-[22px] text-muted-foreground" aria-hidden="true" />
-          </span>
-          <label htmlFor={searchId} className="sr-only">
-            Search experiences
-          </label>
-          <input
-            id={searchId}
-            type="search"
-            placeholder="What's your ERGE?"
-            className="h-full min-w-0 flex-1 bg-transparent text-body-md text-foreground outline-none placeholder:text-muted-foreground"
-          />
+        {/* The hand-rolled copy of `Input Field Special` that used to live here
+          * is now the component in patterns/, which the search screens share.
+          * Two things it fixes on the way out: the search glyph is
+          * Action/Primary, not the muted grey this had — checked against the
+          * exported asset — and the pill is `w-full` inside a flex-1 wrapper
+          * rather than being flex-1 itself, so the component does not have to
+          * know what it is sitting in. */}
+        {/* The pill is w-full, so this wrapper is what gives it the row's
+          * spare space beside the fixed-width location button. Keeping the
+          * flex maths out here means the component does not need to know what
+          * it is sitting in. */}
+        <div className="min-w-0 flex-1">
+          <InputFieldSpecial
+            className="pointer-events-auto"
+            leading={<Search aria-hidden="true" />}
+          >
+            <label htmlFor={searchId} className="sr-only">
+              Search experiences
+            </label>
+            <input
+              id={searchId}
+              type="search"
+              placeholder="What's your ERGE?"
+              className="h-full min-w-0 flex-1 bg-transparent text-body-md text-foreground outline-none placeholder:text-muted-foreground"
+            />
+          </InputFieldSpecial>
         </div>
         <ButtonIcon
           label="Search near me"
