@@ -133,40 +133,36 @@ export function RootLayout() {
  */
 function TopBar() {
   return (
-    <>
-      {/* The same fade as the bottom, flipped: opaque at the top edge, gone
-        * by the bottom. Content scrolls up under the bar and dissolves rather
-        * than sliding behind a hard edge.
+    <header className="absolute inset-x-0 top-0 z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-4 pt-[env(safe-area-inset-top)] pb-4">
+      {/* Blur first, then tint over it — the order design tools use, and the
+        * order the layer names in the frame imply ("gradient + blur").
         *
-        * Same rules as the bottom one. `pointer-events-none` because it
-        * covers 104px of scrollable content and is decoration; `aria-hidden`
-        * for the same reason; and `from-background/75` rather than an rgba
-        * literal so it still tracks Surface/Base.
+        * Both live INSIDE the header rather than beside it so the header
+        * sizes them. They used to be a sibling with a hardcoded 104px, which
+        * had to be kept in step with the bar's height by hand; `inset-0`
+        * cannot drift. `-z-10` keeps them behind the wordmark and the menu
+        * button while staying inside the header's stacking context, so they
+        * ride its z-10 over the scroll area.
         *
-        * It sits BEFORE the header, so the header paints over it.
-        *
-        * BOTH CARRY z-10, and unlike the usual case that is not a bidding
-        * war. The search overlay needs no z-index because it comes after
-        * `main` in the DOM; this one has to come BEFORE it, so the menu
-        * button lands ahead of the page content in the tab order. Measured:
-        * `main` carries `isolate`, which makes it paint as though it were a
-        * positioned z-index:0 element, so on tree order alone it covered the
-        * header — the wordmark had cards scrolling over it. The z-index is
-        * safe from being outbid precisely BECAUSE main is isolated: nothing
-        * inside the screen can escape its stacking context to compete. */}
+        * `pointer-events-none` because they cover the bar's whole width and
+        * are decoration; `aria-hidden` for the same reason. The tint is
+        * `from-background/75` rather than an rgba literal so it still tracks
+        * Surface/Base. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-26 bg-linear-to-b from-background/75 to-transparent"
+        className="pointer-events-none absolute inset-0 -z-10 backdrop-blur-fade-b"
       />
-      <header className="absolute inset-x-0 top-0 z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-4 pt-[env(safe-area-inset-top)] pb-4">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-background/75 to-transparent"
+      />
       <ButtonIcon label="Menu" icon={Menu} to="/menu" />
       <p className="text-center text-[23px] font-semibold tracking-[23px] text-foreground">
         {/* The tracking adds a trailing gap after the last letter, which
           * pushes the wordmark off-centre. The negative margin takes it back. */}
         <span className="-mr-[23px]">ERGE</span>
       </p>
-      </header>
-    </>
+    </header>
   )
 }
 

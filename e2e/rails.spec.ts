@@ -554,6 +554,57 @@ test.describe('the overlay bars', () => {
     expect(topmost).toEqual([true, true, true])
   })
 
+  /**
+   * The top bar's blur and tint are exactly the bar's own size, and the blur
+   * RAMPS rather than switching on at a hard edge.
+   *
+   * The sizing half is the regression risk. Both layers used to be siblings
+   * of the header with a hardcoded height, which had to be kept in step with
+   * the bar by hand; they are children with `inset-0` now, and this asserts
+   * the outcome so the arrangement cannot quietly go back to two numbers that
+   * drift apart. A bar that grows a row of chrome and leaves its fade behind
+   * is the exact bug.
+   *
+   * The ramp half asserts a mask alongside the backdrop-filter, because
+   * `backdrop-filter` takes ONE radius: without the mask the blur would stop
+   * dead at the bar's edge, which is the thing the fade exists to avoid.
+   */
+  test('the top bar fade is the size of the bar and ramps out', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const measured = await page.evaluate(() => {
+      const header = document.querySelector('header')!
+      const layers = [...header.children].filter((c) =>
+        c.hasAttribute('aria-hidden'),
+      )
+      const box = (el: Element) => {
+        const b = el.getBoundingClientRect()
+        return `${Math.round(b.width)}x${Math.round(b.height)}@${Math.round(b.top)}`
+      }
+      const blur = layers.find(
+        (l) => getComputedStyle(l).backdropFilter !== 'none',
+      )
+      return {
+        layerCount: layers.length,
+        headerBox: box(header),
+        layerBoxes: layers.map(box),
+        backdrop: blur ? getComputedStyle(blur).backdropFilter : null,
+        masked: blur ? getComputedStyle(blur).maskImage.includes('gradient') : false,
+      }
+    })
+
+    expect(measured.layerCount).toBe(2)
+    // Both layers are the bar, exactly — not a number kept in step by hand.
+    expect(measured.layerBoxes).toEqual([
+      measured.headerBox,
+      measured.headerBox,
+    ])
+    expect(measured.backdrop).toContain('blur')
+    expect(measured.masked).toBe(true)
+  })
+
   /** The scrim is decoration over 104px of scrollable content. If it ever
    * stops being click-through, everything beneath it silently stops working. */
   test('the fade does not swallow clicks', async ({ page }) => {

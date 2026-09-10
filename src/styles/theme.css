@@ -400,6 +400,38 @@
   }
 }
 
+/**
+ * A backdrop blur that RAMPS instead of switching on at a hard edge: full
+ * strength at the top of the element, nothing at the bottom.
+ *
+ * `backdrop-filter` takes one radius, so a blur cannot literally be a
+ * gradient. Two ways round that:
+ *
+ *   1. Stack several layers, each with a bigger radius and each masked to a
+ *      narrower band, and let them compound. That ramps the RADIUS, which is
+ *      what "progressive blur" strictly means — at the cost of four extra
+ *      elements and a compounding rule (radii add in quadrature, not
+ *      linearly) that nobody will remember in six weeks.
+ *   2. One layer at the full radius, faded out by a mask. That ramps the
+ *      blur's OPACITY: the top shows the blurred backdrop, the bottom shows
+ *      the sharp one, and between them the two are cross-faded.
+ *
+ * This is 2, because at a 4px radius the difference is not visible. The
+ * artefact to watch for is ghosting — a faint double image mid-ramp, where
+ * sharp and blurred are both half-visible. It shows up when the radius is
+ * large enough that the blurred copy is noticeably displaced; 4px is not.
+ * If the radius is ever raised much past this, look for it, and switch to 1.
+ *
+ * The mask colour is arbitrary — only its alpha matters — so it uses a token
+ * rather than a literal, the same as the stroke utilities above.
+ */
+@utility backdrop-blur-fade-b {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  mask-image: linear-gradient(to bottom, var(--foreground), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, var(--foreground), transparent);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
