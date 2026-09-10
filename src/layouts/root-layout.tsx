@@ -164,7 +164,7 @@ function TopBar() {
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-background/75 to-transparent"
+        className="pointer-events-none absolute inset-0 -z-10 bg-fade-b"
       />
       <ButtonIcon label="Menu" icon={Menu} to="/menu" className="pointer-events-auto" />
       <p className="text-center text-[23px] font-semibold tracking-[23px] text-foreground">

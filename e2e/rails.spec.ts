@@ -584,6 +584,13 @@ test.describe('the overlay bars', () => {
    * The ramp half asserts a mask alongside the backdrop-filter, because
    * `backdrop-filter` takes ONE radius: without the mask the blur would stop
    * dead at the bar's edge, which is the thing the fade exists to avoid.
+   *
+   * It also asserts that the ramp is EASED and that both layers ride the same
+   * one. A two-stop linear fade bands at the bottom edge — measured, the last
+   * rows fall 5 to 6 alpha levels each and then arrive at zero, and the eye
+   * reads that corner as a line. The eased curve decays to about one level
+   * per row instead. And the tint and blur have to share the curve or they
+   * come apart, with the blur still going where the tint has finished.
    */
   test('the top bar fade is the size of the bar and ramps out', async ({
     page,
@@ -602,12 +609,20 @@ test.describe('the overlay bars', () => {
       const blur = layers.find(
         (l) => getComputedStyle(l).backdropFilter !== 'none',
       )
+      const tint = layers.find(
+        (l) => getComputedStyle(l).backdropFilter === 'none',
+      )
+      const masks = layers.map((l) => getComputedStyle(l).maskImage)
+      // Colour functions in the resolved mask: a plain linear fade has two.
+      const stops = (m: string) => (m.match(/(?:rgba?|color|oklab|oklch)\(/g) ?? []).length
       return {
         layerCount: layers.length,
         headerBox: box(header),
         layerBoxes: layers.map(box),
         backdrop: blur ? getComputedStyle(blur).backdropFilter : null,
         masked: blur ? getComputedStyle(blur).maskImage.includes('gradient') : false,
+        sameCurve: Boolean(blur && tint && masks[0] === masks[1]),
+        stopCount: blur ? stops(getComputedStyle(blur).maskImage) : 0,
       }
     })
 
@@ -619,6 +634,9 @@ test.describe('the overlay bars', () => {
     ])
     expect(measured.backdrop).toContain('blur')
     expect(measured.masked).toBe(true)
+    expect(measured.sameCurve).toBe(true)
+    // Eased, not the two-stop ramp that bands.
+    expect(measured.stopCount).toBeGreaterThan(2)
   })
 
   /**

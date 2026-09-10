@@ -97,6 +97,40 @@
    * unavailable. */
   --disabled-foreground: var(--color-text-disabled);
 
+  /* == Fade curve ========================================================
+   * The alpha ramp both top-bar layers fade out along, as a mask.
+   *
+   * A plain two-stop `to transparent` bands at the bottom edge. The cause is
+   * not the number of colours available — it is that a linear ramp stops
+   * dead: alpha falls at a constant rate and then simply arrives at zero, and
+   * the eye reads that corner as a line (a Mach band). Easing removes the
+   * corner by flattening the tail, so the last few percent of alpha are spent
+   * over a long distance instead of arriving all at once.
+   *
+   * The curve is smootherstep, 6t^5 - 15t^4 + 10t^3, sampled at eighths. It
+   * is symmetric, so it also holds near-full strength at the top for longer,
+   * which is what the bar wants anyway — the wordmark sits up there.
+   *
+   * Defined once because the tint and the blur have to fade along the SAME
+   * curve or they separate: the blur would still be going where the tint had
+   * finished. The mask colour is arbitrary, only its alpha matters, so it
+   * uses a token rather than a literal — the same as the stroke utilities.
+   *
+   * If banding ever survives this, the next lever is dithering (a fine noise
+   * overlay), not more stops. */
+  --fade-curve-b: linear-gradient(
+    to bottom,
+    var(--foreground) 0%,
+    color-mix(in srgb, var(--foreground) 98.4%, transparent) 12.5%,
+    color-mix(in srgb, var(--foreground) 89.7%, transparent) 25%,
+    color-mix(in srgb, var(--foreground) 72.5%, transparent) 37.5%,
+    color-mix(in srgb, var(--foreground) 50%, transparent) 50%,
+    color-mix(in srgb, var(--foreground) 27.5%, transparent) 62.5%,
+    color-mix(in srgb, var(--foreground) 10.3%, transparent) 75%,
+    color-mix(in srgb, var(--foreground) 1.6%, transparent) 87.5%,
+    transparent 100%
+  );
+
   /* The saved heart. Figma draws it with TWO gradients — a diagonal rose to
    * carnation fill, and a vertical highlight-to-shadow stroke — and the
    * export has no semantic token for any of the four stops: the icon uses
@@ -428,8 +462,22 @@
 @utility backdrop-blur-fade-b {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  mask-image: linear-gradient(to bottom, var(--foreground), transparent);
-  -webkit-mask-image: linear-gradient(to bottom, var(--foreground), transparent);
+  mask-image: var(--fade-curve-b);
+  -webkit-mask-image: var(--fade-curve-b);
+}
+
+/**
+ * The tint that sits over that blur: Surface/Base at 75%, fading out along
+ * the same curve.
+ *
+ * A FLAT fill plus a mask, rather than a gradient of nine `color-mix` colour
+ * stops. Same result, and it means the curve is written once and shared with
+ * the blur instead of being duplicated in two places that could drift apart.
+ */
+@utility bg-fade-b {
+  background-color: color-mix(in oklab, var(--background) 75%, transparent);
+  mask-image: var(--fade-curve-b);
+  -webkit-mask-image: var(--fade-curve-b);
 }
 
 @layer base {
