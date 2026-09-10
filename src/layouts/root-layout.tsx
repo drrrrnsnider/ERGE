@@ -16,7 +16,7 @@ import {
 } from '@/components/icons'
 import { NavLink, Outlet } from 'react-router'
 import { ButtonIcon } from '@/components/patterns/button'
-import { InputFieldSpecial } from '@/components/patterns/input-field-special'
+import { FieldPill } from '@/components/patterns/field-pill'
 import { cn } from '@/lib/utils'
 
 /** Every icon in src/components/icons has this shape. */
@@ -208,7 +208,7 @@ function SearchOverlay() {
         * and the gap between the field and the button would otherwise eat
         * taps meant for the cards underneath. */}
       <search className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-2 px-5 py-2">
-        {/* The hand-rolled copy of `Input Field Special` that used to live here
+        {/* The hand-rolled copy of `Field Pill` that used to live here
           * is now the component in patterns/, which the search screens share.
           * Two things it fixes on the way out: the search glyph is
           * Action/Primary, not the muted grey this had — checked against the
@@ -220,7 +220,7 @@ function SearchOverlay() {
           * flex maths out here means the component does not need to know what
           * it is sitting in. */}
         <div className="min-w-0 flex-1">
-          <InputFieldSpecial
+          <FieldPill
             className="pointer-events-auto"
             leading={<Search aria-hidden="true" />}
           >
@@ -233,7 +233,7 @@ function SearchOverlay() {
               placeholder="What's your ERGE?"
               className="h-full min-w-0 flex-1 bg-transparent text-body-md text-foreground outline-none placeholder:text-muted-foreground"
             />
-          </InputFieldSpecial>
+          </FieldPill>
         </div>
         <ButtonIcon
           label="Search near me"

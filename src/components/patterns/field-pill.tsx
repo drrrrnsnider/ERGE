@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 /**
- * `Input Field Special` — the pill that holds a search field or a filter row.
+ * `Field Pill` — the pill that holds a search field or a filter row.
  *
  * Figma 168:2541. Two sizes, and three slots:
  *
@@ -12,10 +12,27 @@ import { cn } from '@/lib/utils'
  *   Md  48px tall, 22px glyphs, gap 8, pr 14   the search field
  *   Sm  32px tall, 20px glyphs, gap 4, pr 12   a filter row
  *
- * NOT the same thing as `Input` in this folder, despite the names. `Input` is
- * the labelled form control from its own component set — label above, helper
- * beneath, error state. This is a bare pill with no label of its own, used
- * where the placeholder or the row's own text carries the meaning.
+ * NOT `Input`, which is the other pill in this folder. The two look alike and
+ * are deliberately different things:
+ *
+ *   Input       a labelled form CONTROL. Label above, helper or error
+ *               beneath, required asterisk, aria-describedby, role="alert".
+ *               Its border is a 0.5px hairline on the TOP edge only.
+ *   FieldPill   a bare ROW. No label, no helper, no validation. A full 1px
+ *               ring all the way round.
+ *
+ * They share about six utility classes, so there is nothing worth extracting
+ * between them. The borders are the reason to keep them apart rather than
+ * merging behind a flag: the border IS the focus indicator, and the two
+ * measure very differently — the hairline changes by 1.76:1 when focused
+ * against the ring's 5.62:1. That is not a value to leave to a boolean.
+ *
+ * And most of what uses this is not a field at all. Of its call sites, two
+ * hold a real <input> and three are pressable rows — a location row with a
+ * clear button, a date row that opens a picker, and the results summary bar,
+ * which is a back button and a concierge button either side of static text.
+ * A component whose API was `value` / `onChange` / `error` would be the wrong
+ * shape for three of five.
  *
  * SLOTS RATHER THAN PROPS FOR THE CONTENT, because what goes in them is not
  * one kind of thing. Across the screens that use it, `leading` is sometimes a
@@ -33,7 +50,7 @@ import { cn } from '@/lib/utils'
  * assumed — the search icon in the design is copper, not the muted grey an
  * earlier hand-rolled copy of this pill used.
  */
-export function InputFieldSpecial({
+export function FieldPill({
   size = 'Md',
   leading,
   action,

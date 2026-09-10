@@ -5,6 +5,11 @@ import { cn } from '@/lib/utils'
 /**
  * `Input` — the form field, matching the Figma component set.
  *
+ * If you want the bare pill with no label, helper or validation — a search
+ * field, or a row that opens something — that is `FieldPill` beside this,
+ * which explains why the two are separate.
+ *
+ *
  * Four states x two types, the same axes the design uses:
  *
  *   State  Empty | Filled | Error | Disabled
