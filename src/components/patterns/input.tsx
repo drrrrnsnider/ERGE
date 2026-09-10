@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils'
  * vanishes the moment you focus the field to fix it is the wrong trade. The
  * focus ring still appears in that case, so focus is never ambiguous.
  *
- * The field's ring is a 0.5px GRADIENT, full strength on the top edge and
+ * The field's ring is a 1px GRADIENT, full strength on the top edge and
  * gone by the bottom — the same light-from-above idea the whole system uses,
  * now drawn all the way round rather than on the top edge alone. It was a
  * top-only border until the design moved to a full ring.

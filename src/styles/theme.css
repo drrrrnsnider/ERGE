@@ -405,9 +405,10 @@
  * draws the ring. Four near-identical utilities would drift apart the first
  * time one of them was adjusted.
  *
- * 0.5px, not the 1px its siblings use: the design draws a field's ring finer
- * than a card's. On a 1x display that lands as a partial-alpha line, which is
- * the intent — it should read as a hairline, not a border.
+ * 1px, matching its siblings. It was 0.5px for one commit, which is what the
+ * component set showed at the time; the design then settled on 1px across
+ * every state and squared up Disabled, which had been left on a top-only
+ * edge while the rest moved to a full ring.
  *
  * Same two-layer mask as the other stroke utilities; see the block above for
  * why a gradient cannot simply be a border-color.
@@ -420,7 +421,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 0.5px;
+    padding: 1px;
     pointer-events: none;
     background: linear-gradient(
       180deg,
