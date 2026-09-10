@@ -71,12 +71,17 @@ export function FieldPill({
       data-slot="input-field"
       data-size={size}
       className={cn(
-        'flex w-full min-w-0 items-center rounded-full border border-border bg-card pl-2',
+        'flex w-full min-w-0 items-center rounded-full stroke-gradient-field bg-card pl-2',
         md ? 'h-12 gap-2 pr-3.5' : 'h-8 gap-1 pr-3',
-        /* The design's focus treatment: the ring turns Border/Focus while the
-         * field is focused. theme.css draws the focus ring for this pill too,
-         * keyed off data-slot — see its comment on why that lives there. */
-        'focus-within:border-ring',
+        /* A 1px gradient ring, full strength on top and gone by the bottom —
+         * the same stroke the Input uses, and the two sizes take different
+         * colours: Md is Border/Subtle Focus, Sm is Border/Default.
+         *
+         * `stroke-gradient-field` rather than the fixed-colour strokes,
+         * because the ring still has to turn Border/Focus while the field is
+         * focused and only the parameterised one can change colour. */
+        md ? '[--field-stroke:var(--border-subtle)]' : '[--field-stroke:var(--border)]',
+        'focus-within:[--field-stroke:var(--ring)]',
         className,
       )}
     >

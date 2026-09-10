@@ -102,18 +102,22 @@ export function RangeSlider({
               key={thumbLabel}
               index={index}
               getAriaLabel={() => thumbLabel}
-              /* The same hairline as Input's field, deliberately: a 0.5px
-               * Border/Input edge catching light on the top only, plus the
-               * lift shadow. NOT `stroke-gradient-card` — that draws
-               * Border/Default, and this node's variables name Border/Input,
-               * which is several times brighter. Border/Input is the role for
-               * a control boundary; Border/Default is decorative separation.
-               * The flattened code the MCP returns shows neither, so the
-               * variable list is the thing to read. A top-only border on a
-               * circle renders
-               * as an arc that tapers out at the sides, which is the same
-               * "lit from above" model the field pill uses. */
-              className="size-8 rounded-full border-t-[0.5px] border-t-input bg-card shadow-lift"
+              /* The same ring as Input's field, deliberately, and now the
+               * same technique too: a 1px gradient of Border/Input fading to
+               * nothing down the grabber. It was a top-only hairline until
+               * the design took every field ring all the way round.
+               *
+               * Border/Input, not Border/Default: this node's variables name
+               * it, and it is several times brighter. Border/Input is the
+               * role for a control boundary, Border/Default is decorative
+               * separation, and the flattened MCP code shows neither — the
+               * variable list is the thing to read. `stroke-gradient-field`
+               * already defaults to Border/Input, so nothing is passed.
+               *
+               * That utility sets `position: relative`, which is harmless
+               * here: Base UI positions the thumb with an INLINE style, and
+               * inline styles outrank utilities. Measured, not assumed. */
+              className="size-8 rounded-full stroke-gradient-field bg-card shadow-lift"
             />
           ))}
         </Slider.Track>

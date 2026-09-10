@@ -150,8 +150,11 @@ export function ButtonIcon({
    * currentColor, so a gradient glyph like LocationOn simply ignores it and
    * keeps its own stops. Overridable through className if a future call site
    * genuinely differs. */
+  /* The ring is a gradient of Border/Subtle Focus, not a flat border — the
+   * fixed-colour `stroke-gradient`, since nothing about this button's state
+   * changes it. The focus indicator here is the global outline, not the ring. */
   const shape = cn(
-    'grid shrink-0 place-items-center rounded-full border border-border bg-card text-primary',
+    'grid shrink-0 place-items-center rounded-full stroke-gradient bg-card text-primary',
     size === 'Md' ? 'size-12' : 'size-8',
     className,
   )
