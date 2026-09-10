@@ -109,7 +109,7 @@ export function RootLayout() {
            * Deliberately not "give the overlay z-20". That wins today and
            * loses to the first z-30 someone writes in a card; this cannot be
            * outbid, because there is no number to bid. */
-          className="isolate h-full overflow-y-auto pt-[calc(4rem+env(safe-area-inset-top))] pb-16 outline-none scroll-pt-[calc(4rem+env(safe-area-inset-top))] scroll-pb-16"
+          className="isolate h-full overflow-y-auto pt-[calc(3rem+env(safe-area-inset-top))] pb-16 outline-none scroll-pt-[calc(3rem+env(safe-area-inset-top))] scroll-pb-16"
         >
           <Outlet />
         </main>
@@ -132,8 +132,18 @@ export function RootLayout() {
  * on either side.
  */
 function TopBar() {
+  /* No bottom padding: the bar is exactly its 48px button, so the fade ends
+   * on the button's edge rather than 16px past it. `main` carries the same
+   * 3rem as pt and scroll-pt — that is the reservation for this height, and
+   * a test ties the two together, because nothing else does.
+   *
+   * `pointer-events-none` because this bar floats OVER the scroll area and is
+   * mostly transparent. Without it the whole box swallows taps: measured, a
+   * card scrolling under the empty space beside the wordmark could not be
+   * tapped at all. Interactive children opt back in; the wordmark stays
+   * inert, so taps pass through it to the content beneath. */
   return (
-    <header className="absolute inset-x-0 top-0 z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-4 pt-[env(safe-area-inset-top)] pb-4">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-4 pt-[env(safe-area-inset-top)]">
       {/* Blur first, then tint over it — the order design tools use, and the
         * order the layer names in the frame imply ("gradient + blur").
         *
@@ -156,7 +166,7 @@ function TopBar() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-background/75 to-transparent"
       />
-      <ButtonIcon label="Menu" icon={Menu} to="/menu" />
+      <ButtonIcon label="Menu" icon={Menu} to="/menu" className="pointer-events-auto" />
       <p className="text-center text-[23px] font-semibold tracking-[23px] text-foreground">
         {/* The tracking adds a trailing gap after the last letter, which
           * pushes the wordmark off-centre. The negative margin takes it back. */}
@@ -193,7 +203,10 @@ function SearchOverlay() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 bottom-0 h-26 bg-linear-to-t from-background/75 to-transparent"
       />
-      <search className="absolute inset-x-0 bottom-0 flex items-center gap-2 px-5 py-2">
+      {/* Same as the top bar: it floats over the scroll area, so its padding
+        * and the gap between the field and the button would otherwise eat
+        * taps meant for the cards underneath. */}
+      <search className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-2 px-5 py-2">
         {/* `Input Field Special` in the keyframe: a FULL Border/Default ring
           * rather than Input's top-only hairline, and it turns Border/Focus
           * while the field is focused — which is the whole time you are
@@ -203,7 +216,7 @@ function SearchOverlay() {
           * focus indicator at all. */}
         <div
           data-slot="input-field"
-          className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-card pr-3.5 pl-2 focus-within:border-ring"
+          className="pointer-events-auto flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-card pr-3.5 pl-2 focus-within:border-ring"
         >
           <span className="grid size-[30px] shrink-0 place-items-center">
             <Search className="size-[22px] text-muted-foreground" aria-hidden="true" />
@@ -218,7 +231,12 @@ function SearchOverlay() {
             className="h-full min-w-0 flex-1 bg-transparent text-body-md text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
-        <ButtonIcon label="Search near me" icon={LocationOn} to="/search?near=me" />
+        <ButtonIcon
+          label="Search near me"
+          icon={LocationOn}
+          to="/search?near=me"
+          className="pointer-events-auto"
+        />
       </search>
     </>
   )

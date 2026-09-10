@@ -531,6 +531,16 @@ test.describe('the overlay bars', () => {
    * cards scrolled straight over the wordmark. Hence an explicit z-index,
    * which cannot be outbid from inside the screen precisely because `main`
    * is a stacking context.
+   *
+   * HOW THIS IS MEASURED, because it is not obvious. `elementFromPoint`
+   * reports hit-testing, not painting. The two normally agree — hit-testing
+   * walks paint order in reverse — but they came apart the moment the bar
+   * became `pointer-events-none` to stop eating taps, and this test failed
+   * while the bar was still visibly on top. So the probe re-enables pointer
+   * events for the duration of the measurement and puts them back. That is an
+   * instrument, not a fixture: with both sides hittable, whatever comes back
+   * topmost is whatever is painted on top. The pointer behaviour itself is a
+   * separate test below, so nothing here depends on the override being right.
    */
   test('the top bar paints above the scrolling content', async ({ page }) => {
     await page.goto('/')
@@ -538,17 +548,23 @@ test.describe('the overlay bars', () => {
 
     const topmost = await page.evaluate(() => {
       const main = document.getElementById('main')!
-      const header = document.querySelector('header')!
+      const header = document.querySelector('header')! as HTMLElement
       main.scrollTop = 300
       const b = header.getBoundingClientRect()
-      // Sample across the bar: content overlaps different parts of it.
-      return [0.1, 0.5, 0.85].map((fx) => {
-        const el = document.elementsFromPoint(
-          Math.round(b.width * fx),
-          Math.round(b.top + b.height / 2),
-        )[0]
-        return header.contains(el ?? null)
-      })
+      const previous = header.style.pointerEvents
+      header.style.pointerEvents = 'auto'
+      try {
+        // Sample across the bar: content overlaps different parts of it.
+        return [0.1, 0.5, 0.85].map((fx) => {
+          const el = document.elementFromPoint(
+            Math.round(b.width * fx),
+            Math.round(b.top + b.height / 2),
+          )
+          return header.contains(el)
+        })
+      } finally {
+        header.style.pointerEvents = previous
+      }
     })
 
     expect(topmost).toEqual([true, true, true])
@@ -603,6 +619,85 @@ test.describe('the overlay bars', () => {
     ])
     expect(measured.backdrop).toContain('blur')
     expect(measured.masked).toBe(true)
+  })
+
+  /**
+   * `main`'s top reservation IS the top bar's height.
+   *
+   * They are two hand-written numbers in different files — the bar's own
+   * height comes from its padding and its button, `scroll-pt` is a literal on
+   * `main` — and nothing but this connects them. Change one and content
+   * either hides under the bar or floats below a gap, with no error. Asserted
+   * against the measured bar rather than a pinned 3rem, so restyling the bar
+   * is free and forgetting the reservation is not.
+   */
+  test('the scroll reservation matches the top bar it is reserving for', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const { barHeight, reserved, padded } = await page.evaluate(() => {
+      const main = document.getElementById('main')!
+      const cs = getComputedStyle(main)
+      return {
+        barHeight: document.querySelector('header')!.getBoundingClientRect()
+          .height,
+        reserved: parseFloat(cs.scrollPaddingTop),
+        padded: parseFloat(cs.paddingTop),
+      }
+    })
+
+    expect(reserved).toBeCloseTo(barHeight, 0)
+    expect(padded).toBeCloseTo(barHeight, 0)
+  })
+
+  /**
+   * The bars are mostly transparent, and must not eat taps where they are.
+   *
+   * Both float over the scroll area, so their padding and the space around
+   * their controls sit on top of cards. Measured before the fix: a card under
+   * the empty half of the top bar could not be tapped, and neither could one
+   * under the search row's side padding. The bars carry
+   * `pointer-events-none` and their controls opt back in.
+   *
+   * Both directions are asserted. Only checking that content is reachable
+   * would pass just as well if the whole bar went inert and its own buttons
+   * stopped working.
+   */
+  test('the bars pass taps through where they are empty, not where they are not', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await expect(page.locator(CARD).first()).toBeVisible()
+
+    const hits = await page.evaluate(() => {
+      const main = document.getElementById('main')!
+      main.scrollTop = 300
+      const header = document.querySelector('header')!
+      const search = document.querySelector('search')!
+      const menu = header.querySelector('a')!
+      const field = search.querySelector('input')!
+      const hb = header.getBoundingClientRect()
+      const sb = search.getBoundingClientRect()
+      const mb = menu.getBoundingClientRect()
+      const fb = field.getBoundingClientRect()
+      const at = (x: number, y: number) =>
+        document.elementFromPoint(Math.round(x), Math.round(y))
+
+      return {
+        // Empty space beside the wordmark, and the search row's side padding.
+        besideWordmark: header.contains(at(hb.width * 0.85, hb.height / 2)),
+        searchPadding: search.contains(at(6, sb.top + sb.height / 2)),
+        // ...and the controls themselves still take their own taps.
+        onMenu: menu.contains(at(mb.left + mb.width / 2, mb.top + mb.height / 2)),
+        onField: field.contains(at(fb.left + fb.width / 2, fb.top + fb.height / 2)),
+      }
+    })
+
+    expect(hits.besideWordmark).toBe(false)
+    expect(hits.searchPadding).toBe(false)
+    expect(hits.onMenu).toBe(true)
+    expect(hits.onField).toBe(true)
   })
 
   /** The scrim is decoration over 104px of scrollable content. If it ever
