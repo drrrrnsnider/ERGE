@@ -480,6 +480,26 @@
   -webkit-mask-image: var(--fade-curve-b);
 }
 
+/**
+ * `Radial + Card` — the active filter chip's fill.
+ *
+ * Surface/Card with a copper glow rising from the top edge. Figma draws it as
+ * a radial gradient at 15% over a flat card fill, centred on the chip's top
+ * centre, reaching about 41% of the width and roughly twice the height.
+ *
+ * Those proportions are the design's own, not a guess: the same style on a
+ * 73px chip and on a 121px one both scale to 40.8% of the width, so the
+ * percentages are what the file means rather than the pixel radii.
+ */
+@utility bg-radial-card {
+  background-color: var(--card);
+  background-image: radial-gradient(
+    ellipse 41% 192% at 50% 0%,
+    color-mix(in srgb, var(--primary) 15%, transparent),
+    transparent
+  );
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

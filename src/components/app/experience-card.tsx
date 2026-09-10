@@ -6,15 +6,15 @@ import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
 /**
- * The experience card, in the three shapes the design library defines.
+ * The experience card, in the four shapes the design library defines.
  *
- * These are three separate components in Figma — `Card / Media MD`,
- * `Card / Media SM` and `Card / Media SM Narrow` — and the variant names
- * here match them exactly, so a conversation about "media-sm" means the same
- * thing in both places. They are one component in code because they render
- * the same data through the same text block and differ only in arrangement;
- * splitting them would be three files that must be changed together every
- * time the contract moves.
+ * These are four separate components in Figma — `Card / Media MD`,
+ * `Card / Media SM`, `Card / Media SM Narrow` and `Card / Media XS` — and the
+ * variant names here match them exactly, so a conversation about "media-sm"
+ * means the same thing in both places. They are one component in code because
+ * they render the same data through the same text block and differ only in
+ * arrangement; splitting them would be four files that must be changed
+ * together every time the contract moves.
  *
  * They are NOT interchangeable, and each is used where the design uses it:
  *
@@ -23,6 +23,10 @@ import { cn } from '@/lib/utils'
  *   media-sm         320-wide horizontal row, 110x80 thumbnail, bare save
  *                    icon with no button chrome.
  *   media-sm-narrow  152-wide column, 110-tall image, NO save button.
+ *   media-xs         66x48 thumbnail beside two lines. No save button and NO
+ *                    PRICE — it is a pointer back to something you already
+ *                    looked at, in the search takeover's "Recently viewed",
+ *                    not an offer.
  *
  * The card is one link with the save button layered on top — not a link
  * wrapping a button, which is invalid and unusable by keyboard. The link's
@@ -30,7 +34,7 @@ import { cn } from '@/lib/utils'
  * itself and the thing it acts on.
  */
 
-type Variant = 'media-md' | 'media-sm' | 'media-sm-narrow'
+type Variant = 'media-md' | 'media-sm' | 'media-sm-narrow' | 'media-xs'
 
 /** Where a card goes. The PDP is not built; the route reports what it got. */
 const hrefFor = (experience: Experience) =>
@@ -231,6 +235,33 @@ export function ExperienceCard({
     )
   }
 
+  if (variant === 'media-xs') {
+    return (
+      <article
+        data-slot="experience-card"
+        data-variant={variant}
+        className="flex w-full items-center gap-3"
+      >
+        {/* 66x48. The design gives this a 12px radius, which is NOT on the
+          * Radius scale — that goes 4, 16, 24 — and Figma binds no variable
+          * to it, so it is a raw value in the file rather than a token. Using
+          * `rounded-md` (16px) rather than inventing `rounded-[12px]`, since
+          * CLAUDE.md's rule is to use the scale. Flagged: if 12 is deliberate
+          * it wants a Radius/xs variable and a `npm run tokens`. */}
+        <Media
+          experience={experience}
+          className="h-12 w-16.5 shrink-0 rounded-md stroke-gradient"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+          <Link to={hrefFor(experience)} className="text-body-md text-foreground">
+            {experience.title}
+          </Link>
+          <p className="text-body-xs text-muted-foreground">{metaLine}</p>
+        </div>
+      </article>
+    )
+  }
+
   /* media-sm-narrow — no save button, by design. */
   return (
     <article
@@ -287,6 +318,22 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
       </div>
     )
   }
+  if (variant === 'media-xs') {
+    return (
+      <div
+        data-slot="experience-card-skeleton"
+        className="flex w-full items-center gap-3"
+        aria-hidden="true"
+      >
+        <div className="h-12 w-16.5 shrink-0 rounded-md bg-muted motion-safe:animate-pulse" />
+        <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+          <div className="h-4 w-3/4 rounded-sm bg-muted motion-safe:animate-pulse" />
+          <div className="h-3 w-1/2 rounded-sm bg-muted motion-safe:animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       data-slot="experience-card-skeleton"
