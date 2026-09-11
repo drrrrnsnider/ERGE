@@ -71,7 +71,13 @@ export function FieldPill({
       data-slot="input-field"
       data-size={size}
       className={cn(
-        'flex w-full min-w-0 items-center rounded-full stroke-gradient-field bg-card pl-2',
+        /* `text-body-md` on the BOX, so anything dropped into it inherits
+         * 14px. Both sizes of this pill carry Body/Medium in the design, and
+         * a child that forgets the class does not fail — it silently
+         * inherits 16px from the page, which is close enough to look
+         * deliberate. Measured: the location row was 14px and the date row
+         * beside it was 16px for exactly that reason. */
+        'flex w-full min-w-0 items-center rounded-full stroke-gradient-field bg-card pl-2 text-body-md',
         md ? 'h-12 gap-2 pr-3.5' : 'h-8 gap-1 pr-3',
         /* A 1px gradient ring, full strength on top and gone by the bottom —
          * the same stroke the Input uses, and the two sizes take different

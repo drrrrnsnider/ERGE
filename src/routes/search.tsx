@@ -192,12 +192,18 @@ export function SearchRoute() {
           <FieldPill
             size="Sm"
             leading={<Event />}
+            /* The shortcut is only on offer while nothing is chosen. Leaving
+             * it up once a date is set reads as "Today ... Today", which is
+             * either a duplicate or a second control that appears to do
+             * nothing — it was both. */
             action={
-              <FieldAction
-                name="Set dates to today"
-                label="Today"
-                onClick={() => setDates('Today')}
-              />
+              dates === null ? (
+                <FieldAction
+                  name="Set dates to today"
+                  label="Today"
+                  onClick={() => setDates('Today')}
+                />
+              ) : undefined
             }
           >
             {/* Static for now. The picker is its own step; when it lands
