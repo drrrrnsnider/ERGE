@@ -139,6 +139,53 @@ test.describe('the search takeover', () => {
   })
 
   /**
+   * The budget track must not rescale itself as you use it.
+   *
+   * Its end used to be `Math.max(CEILING, currentMax)`, so dragging the upper
+   * thumb below the ceiling collapsed the whole track: opening search at
+   * $15,000, dragging down to $500 and dragging back to the far right gave
+   * $1,000, and the ceiling could only be recovered by typing. A control
+   * whose own range moves underneath the thing you are dragging is a trap.
+   */
+  test('the budget track keeps its range while you drag', async ({ page }) => {
+    await page.goto('/search')
+
+    const thumbs = page.locator('input[type="range"]')
+    const upper = thumbs.nth(1)
+    const maxField = page.locator('[data-slot="field-simple-compact"] input').nth(1)
+
+    await expect(upper).toHaveAttribute('max', '15000')
+    await expect(maxField).toHaveValue('$15,000')
+
+    await upper.fill('500')
+    await expect(maxField).toHaveValue('$500')
+    // The track is where it was, not shrunk to fit the new value.
+    await expect(upper).toHaveAttribute('max', '15000')
+
+    // And the far right of the track is still the ceiling it started at.
+    await upper.fill('15000')
+    await expect(maxField).toHaveValue('$15,000')
+  })
+
+  /**
+   * The fields are the escape hatch: a figure above the ceiling holds, and
+   * the thumb parks at the end rather than stretching the track. Moving the
+   * OTHER thumb must not quietly pull it back down to the ceiling.
+   */
+  test('a budget typed above the ceiling survives the other thumb moving', async ({
+    page,
+  }) => {
+    await page.goto('/search')
+    const maxField = page.locator('[data-slot="field-simple-compact"] input').nth(1)
+
+    await maxField.fill('40000')
+    await expect(maxField).toHaveValue('$40,000')
+
+    await page.locator('input[type="range"]').first().fill('300')
+    await expect(maxField).toHaveValue('$40,000')
+  })
+
+  /**
    * WCAG 2.4.11 / 2.4.13 — the focus ring on a control INSIDE the pill.
    *
    * This is the test that was owed when FieldAction was built and had no

@@ -193,7 +193,15 @@ export function SearchRoute() {
 
           <DateRangeField value={dates} onChange={setDates} />
 
-          <BudgetRange variant="compact" value={budget} onChange={setBudget} />
+          {/* The track ends where the design's does. It becomes the
+            * highest price in the results once search returns them, so that
+            * the span covers what is actually buyable. */}
+          <BudgetRange
+            variant="compact"
+            ceiling={15_000}
+            value={budget}
+            onChange={setBudget}
+          />
         </div>
 
         {/* Centred, as the design has it — the one control on this screen

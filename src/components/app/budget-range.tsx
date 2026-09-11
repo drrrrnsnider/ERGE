@@ -34,15 +34,14 @@ import { cn } from '@/lib/utils'
 
 type Budget = ExploreFilters['budget']
 
-/* Whole dollars. The slider's span, not a validation rule — see the note
- * above about the fields being the escape hatch.
+/* Whole dollars. Where the TRACK ends — not a validation rule, and not
+ * derived from the current value. See `ceiling` below.
  *
- * A thousand, because the default filter is 0-500 and nothing in the
- * catalogue costs more than $340: on a $10,000 track the default range
+ * A thousand on Explore, because its default filter is 0-500 and nothing in
+ * the catalogue costs more than $340: on a $10,000 track the default range
  * collapsed into two overlapping grabbers 14px apart, which is a slider you
- * cannot use. Half the track is the right home for the default. Revisit this
- * when flights and hotels land and the realistic totals move. */
-const BUDGET_CEILING = 1_000
+ * cannot use. The search takeover passes its own. */
+const DEFAULT_CEILING = 1_000
 const BUDGET_STEP = 25
 
 const toMinor = (major: number) => Math.max(0, Math.round(major)) * 100
@@ -55,6 +54,7 @@ export function BudgetRange({
   value,
   onChange,
   variant = 'stacked',
+  ceiling = DEFAULT_CEILING,
   className,
 }: {
   value: Budget
@@ -64,6 +64,23 @@ export function BudgetRange({
    * `compact`  two readout pills, then a bare track — the search takeover.
    */
   variant?: 'stacked' | 'compact'
+  /**
+   * Where the track ends, in whole dollars. STABLE — it must never be
+   * derived from the current value.
+   *
+   * It used to be `Math.max(CEILING, currentMax)`, which made the track
+   * rescale itself as you used it. Measured: opening search with a $15,000
+   * max and dragging the upper thumb down to $500 collapsed the track to
+   * $1,000, and dragging back to the far right then gave $1,000 — the
+   * ceiling was gone and could only be recovered by typing. A control whose
+   * own range changes underneath the thing you are dragging is a trap, not
+   * an affordance.
+   *
+   * Eventually this comes from the highest price in the results, so the
+   * track spans what is actually buyable. Until search returns prices it is
+   * passed in per screen.
+   */
+  ceiling?: number
   className?: string
 }) {
   const hintId = useId()
@@ -71,15 +88,26 @@ export function BudgetRange({
 
   const set = (patch: Partial<Budget>) => onChange({ ...value, ...patch })
 
+  /* What the thumbs show. A value typed above the ceiling parks at the end
+   * of the track rather than stretching it. */
+  const shownMin = Math.min(toMajor(value.min), ceiling)
+  const shownMax = Math.min(toMajor(value.max), ceiling)
+
   const slider = (
     <RangeSlider
       label="Budget"
-      value={[toMajor(value.min), toMajor(value.max)]}
-      onChange={([lo, hi]) => set({ min: toMinor(lo), max: toMinor(hi) })}
+      value={[shownMin, shownMax]}
+      onChange={([lo, hi]) =>
+        set({
+          min: toMinor(lo),
+          /* If the upper thumb came back where it already was, the user was
+           * dragging the LOWER one — so keep the real maximum rather than
+           * quietly pulling a typed-above-the-ceiling value down to it. */
+          max: hi === shownMax ? value.max : toMinor(hi),
+        })
+      }
       min={0}
-      /* The thumb parks at the end of the track when a field has been typed
-       * past the ceiling; it does not drag the value back down. */
-      max={Math.max(BUDGET_CEILING, toMajor(value.max))}
+      max={ceiling}
       step={BUDGET_STEP}
       format={{
         style: 'currency',
@@ -113,21 +141,26 @@ export function BudgetRange({
         <>
           {/* Fields ABOVE the track here, which is the reverse of the
             * stacked layout — the design reads the pills as the readout for
-            * the slider beneath them. */}
+            * the slider beneath them.
+            *
+            * No `aria-label` on these. They had "Minimum budget" and
+            * "Maximum budget", which the SLIDER THUMBS also carry — two
+            * different controls answering to one name — and which overrode
+            * the visible "Min." so that the accessible name no longer
+            * contained it (2.5.3 Label in Name, and with it voice control).
+            * The real <label> plus the fieldset's "Budget" legend says it. */}
           <div className="flex items-center gap-2">
             <FieldSimpleCompact
               label="Min."
               value={formatMoney({ amount: value.min, currency: value.currency })}
               onChange={(text) => set({ min: toMinor(parseAmount(text)) })}
               inputMode="numeric"
-              aria-label="Minimum budget"
             />
             <FieldSimpleCompact
               label="Max."
               value={formatMoney({ amount: value.max, currency: value.currency })}
               onChange={(text) => set({ max: toMinor(parseAmount(text)) })}
               inputMode="numeric"
-              aria-label="Maximum budget"
             />
           </div>
           {slider}
