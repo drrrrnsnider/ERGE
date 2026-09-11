@@ -20,6 +20,15 @@ import { cn } from '@/lib/utils'
  * The value is a real input rather than text, so the pair can be typed into
  * as well as dragged. `<label>` is a real label, so tapping the word focuses
  * the field — the pill is small and the label is half of it.
+ *
+ * MEASURED: on a coarse pointer the inner input takes the 44px floor while the
+ * pill stays 32px, so its tap target overhangs 6px above and below. That is
+ * invisible — the input is transparent and unbordered — and it is deliberate:
+ * CLAUDE.md names form fields as something that must never take the compact
+ * opt-out, so the field keeps a thumb-sized target even though the drawing is
+ * 32px. The cost is that whatever sits within 6px of this pill is inside its
+ * target. Leave at least that much gap below it; in the search takeover the
+ * slider is directly underneath and would otherwise lose taps near its track.
  */
 export function FieldSimpleCompact({
   label,

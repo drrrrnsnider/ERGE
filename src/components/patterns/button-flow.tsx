@@ -22,6 +22,19 @@ import { cn } from '@/lib/utils'
  *
  * The glow is `--drop-shadow-flow`, the one shadow in the system cast in
  * copper rather than in the surface — see theme.css for why.
+ *
+ * IT OPTS OUT OF THE 44px COARSE-POINTER FLOOR, so SM stays 32px on a phone
+ * and matches the design. That needs justifying, because it navigates, and
+ * CLAUDE.md reserves the opt-out for secondary controls and names navigation
+ * as a case that must keep the full 44. The call is Darrin's and the reasoning
+ * is that this is an inline promo rather than a way through the app: it is
+ * offered beside the work you were already doing, nothing depends on finding
+ * it, and every route it reaches is reachable from the tab bar. If it ever
+ * becomes the main way into the concierge, take this attribute off.
+ *
+ * The attribute is unconditional rather than tied to `size`, deliberately —
+ * CLAUDE.md's rule is that an opt-out is never inferred from a variant name.
+ * It changes nothing at Md, which is 48px and already clears the floor.
  */
 export function ButtonFlow({
   label = 'Try planning with concierge',
@@ -38,6 +51,7 @@ export function ButtonFlow({
       type="button"
       data-slot="button-flow"
       data-size={size}
+      data-target="compact"
       className={cn(
         'inline-flex shrink-0 items-center justify-center rounded-full border border-emphasis bg-background text-body-md whitespace-nowrap text-foreground drop-shadow-flow',
         md ? 'h-12 gap-1.5 pr-4 pl-3 font-semibold' : 'h-8 gap-1 pr-3 pl-2',
