@@ -105,10 +105,26 @@ export function FieldPill({
         * against an indefinite height and collapse to its line box. That is
         * exactly what happened when this markup moved out of the layout and
         * in here: the search field became 18px tall and the 24px target test
-        * caught it. */}
+        * caught it.
+        *
+        * DELIBERATELY NOT CLIPPED. This used to carry `overflow-clip`, which
+        * mangled the focus ring of anything focusable inside it. A child that
+        * fills the pill's height is flush with this box top and bottom, so
+        * the horizontal runs of a ring drawn 2px outside it fall outside the
+        * clip. Photographed both ways: unclipped gives a clean rectangle,
+        * clipped leaves only the two vertical side segments, which read as
+        * stray copper bars rather than a focus indicator. That is a 2.4.11
+        * failure, and it is invisible until something focusable goes in here
+        * — the bottom search bar never showed it because its <input> carries
+        * `outline-none` and the pill's own ring is its indicator instead.
+        *
+        * Nothing needed the clip. Overflow is each child's own business and
+        * every child already handles it: an <input> clips its text natively,
+        * and FieldAction truncates. A future child that can overflow should
+        * carry `truncate` rather than bringing this back. */}
       <div
         className={cn(
-          'flex min-w-0 flex-1 items-center self-stretch overflow-clip',
+          'flex min-w-0 flex-1 items-center self-stretch',
           md ? 'gap-2' : 'gap-1',
         )}
       >
