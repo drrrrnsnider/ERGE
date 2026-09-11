@@ -1,8 +1,10 @@
 import { useEffect, useId, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router'
-import { ArrowBack, Close, Event, History, LocationOnSm } from '@/components/icons'
+import { ArrowBack, Close, History, LocationOnSm } from '@/components/icons'
 import { BudgetRange } from '@/components/app/budget-range'
+import { DateRangeField } from '@/components/app/date-range-field'
+import type { DateRange } from '@/components/patterns/calendar'
 import { ButtonFlow } from '@/components/patterns/button-flow'
 import { ChipFilter } from '@/components/patterns/chip-filter'
 import { FieldAction } from '@/components/patterns/field-action'
@@ -75,7 +77,7 @@ export function SearchRoute() {
     if (near === null || near === 'me') return 'Current Location'
     return near
   })
-  const [dates, setDates] = useState<string | null>(null)
+  const [dates, setDates] = useState<DateRange | undefined>(undefined)
   const [budget, setBudget] = useState(DEFAULT_BUDGET)
 
   /* `null` while storage is still answering. On a phone that is a real
@@ -189,32 +191,7 @@ export function SearchRoute() {
             />
           </FieldPill>
 
-          <FieldPill
-            size="Sm"
-            leading={<Event />}
-            /* The shortcut is only on offer while nothing is chosen. Leaving
-             * it up once a date is set reads as "Today ... Today", which is
-             * either a duplicate or a second control that appears to do
-             * nothing — it was both. */
-            action={
-              dates === null ? (
-                <FieldAction
-                  name="Set dates to today"
-                  label="Today"
-                  onClick={() => setDates('Today')}
-                />
-              ) : undefined
-            }
-          >
-            {/* Static for now. The picker is its own step; when it lands
-              * this becomes the trigger that opens it, and it is left inert
-              * rather than wired to a button that does nothing. */}
-            <span
-              className={dates === null ? 'text-muted-foreground' : 'text-foreground'}
-            >
-              {dates ?? 'Set dates'}
-            </span>
-          </FieldPill>
+          <DateRangeField value={dates} onChange={setDates} />
 
           <BudgetRange variant="compact" value={budget} onChange={setBudget} />
         </div>

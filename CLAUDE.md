@@ -50,6 +50,15 @@ These are decided. Don't substitute alternatives without asking.
   for the same three weights. `src/styles/fonts.css` carries the rest of the
   reasoning. Both families are SIL Open Font License and their licences sit
   beside the woff2 files, which the licence requires.
+- **react-day-picker** for the date range calendar, composed directly in
+  `src/components/patterns/calendar.tsx` rather than through shadcn's
+  vendored `calendar`. `npx shadcn@latest add calendar` was tried and backed
+  out: it imports `cn` from an npm package instead of `@/lib/utils` (ours is
+  extended to know our type scale, so the package's would silently drop
+  `text-body-md`), it imports `lucide-react`, which is not installed and is
+  not the icon decision here, and it pulls in a vendored `ui/button.tsx` that
+  the ui/ README says is deliberately absent. `date-fns` comes along as
+  react-day-picker's own dependency, not as a direct one.
 - **TanStack Query** for server state
 - **React Hook Form + Zod** for forms and validation
 - **Vitest** for unit tests, **Playwright** for browser tests, **axe-core** for
@@ -320,7 +329,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **66 unit tests** and **109 e2e** passing, 2 e2e skipped by
+Current state: **72 unit tests** and **112 e2e** passing, 2 e2e skipped by
 design (the coarse-pointer size assertions do not apply to `desktop-chrome`).
 `npm run verify` exits 0. There are no known-failing tests — if something is
 red, you broke it.

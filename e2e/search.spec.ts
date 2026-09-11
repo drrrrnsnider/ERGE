@@ -92,6 +92,53 @@ test.describe('the search takeover', () => {
   })
 
   /**
+   * The date picker, end to end on the surface each viewport gets: a bottom
+   * sheet on a phone, an anchored popover on a desktop. Asserting WHICH
+   * surface appears matters — the branch is a media query, and getting it
+   * backwards would still open something that works.
+   */
+  test('picks a date range on the right surface for the viewport', async ({
+    page,
+  }, testInfo) => {
+    await page.goto('/search')
+
+    /* By slot and tone, not by accessible name: the shortcut beside it is
+     * named "Set dates to today", which a /Set dates/ match also picks up.
+     * `muted` is the tone the trigger wears while nothing is chosen. */
+    const row = page.locator('[data-slot="field-action"][data-tone="muted"]')
+    await expect(row).toBeVisible()
+    await row.click()
+
+    const picker = page.getByRole('dialog')
+    await expect(picker).toBeVisible()
+
+    const phone = testInfo.project.name.startsWith('mobile')
+    // The sheet has a Done button because a range needs two taps; the
+    // popover does not, because it can simply be dismissed.
+    await expect(page.getByRole('button', { name: 'Done' })).toHaveCount(
+      phone ? 1 : 0,
+    )
+
+    /* Two days that are definitely selectable: past dates are disabled, so
+     * the test picks from whatever the calendar offers rather than naming
+     * dates that will have gone stale by the time anyone reads this. */
+    const pickable = picker.locator('table button:not([disabled])')
+    const first = pickable.nth(1)
+    const second = pickable.nth(4)
+    await first.click()
+    await second.click()
+
+    /* The row now names a range, not the placeholder, and the Today
+     * shortcut is gone because something is chosen. */
+    await expect(
+      page.locator('[data-slot="field-action"][data-tone="subject"]'),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: /Set dates to today/ }),
+    ).toHaveCount(0)
+  })
+
+  /**
    * WCAG 2.4.11 / 2.4.13 — the focus ring on a control INSIDE the pill.
    *
    * This is the test that was owed when FieldAction was built and had no
