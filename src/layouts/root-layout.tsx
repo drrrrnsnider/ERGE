@@ -62,8 +62,23 @@ type IconComponent = (props: React.SVGProps<SVGSVGElement>) => React.ReactElemen
  * `env(safe-area-inset-*)` from the start. index.html carries
  * `viewport-fit=cover`, which is what makes these values non-zero.
  * Retrofitting this later means touching every screen.
+ *
+ * TWO CHROMES, ONE LAYOUT
+ * -----------------------
+ * The search takeover drops the top bar and the search row and keeps
+ * everything else — the skip link, the scroll region, the tab bar. That is a
+ * chrome difference, not a different archetype, so it is a prop here rather
+ * than a second layout that would be 80% a copy of this one and would have
+ * to be kept in step with it forever.
+ *
+ * The padding moves with it, and has to: `pt` and `scroll-pt` exist to
+ * reserve the top bar's height, and `pb` / `scroll-pb` reserve the search
+ * row's. With neither bar present those reservations would be holding space
+ * for nothing. Only the safe-area inset survives, because the notch does
+ * not care which screen you are on.
  */
-export function RootLayout() {
+export function RootLayout({ chrome = 'full' }: { chrome?: 'full' | 'takeover' }) {
+  const full = chrome === 'full'
   return (
     <div className="flex h-dvh flex-col bg-background text-foreground">
       {/* Lets keyboard and screen-reader users jump the chrome (WCAG 2.4.1). */}
@@ -83,7 +98,7 @@ export function RootLayout() {
         * the tab order, and the menu button has to come before the page
         * content, not after it. */}
       <div className="relative min-h-0 flex-1">
-        <TopBar />
+        {full ? <TopBar /> : null}
 
         {/* tabIndex={-1} makes this focusable programmatically but keeps it
           * out of the tab order. Without it the skip link does not actually
@@ -110,12 +125,17 @@ export function RootLayout() {
            * Deliberately not "give the overlay z-20". That wins today and
            * loses to the first z-30 someone writes in a card; this cannot be
            * outbid, because there is no number to bid. */
-          className="isolate h-full overflow-y-auto pt-[calc(3rem+env(safe-area-inset-top))] pb-16 outline-none scroll-pt-[calc(3rem+env(safe-area-inset-top))] scroll-pb-16"
+          className={cn(
+            'isolate h-full overflow-y-auto outline-none',
+            full
+              ? 'pt-[calc(3rem+env(safe-area-inset-top))] pb-16 scroll-pt-[calc(3rem+env(safe-area-inset-top))] scroll-pb-16'
+              : 'pt-[env(safe-area-inset-top)] scroll-pt-[env(safe-area-inset-top)]',
+          )}
         >
           <Outlet />
         </main>
 
-        <SearchOverlay />
+        {full ? <SearchOverlay /> : null}
       </div>
 
       <TabBar />

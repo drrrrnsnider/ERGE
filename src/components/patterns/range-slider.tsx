@@ -44,6 +44,7 @@ export function RangeSlider({
   format,
   minLabel,
   maxLabel,
+  readout = 'visible',
   className,
 }: {
   /** Names the group. Rendered visibly unless `hidden` is wanted upstream. */
@@ -59,6 +60,17 @@ export function RangeSlider({
   minLabel: string
   /** The upper thumb's accessible name. */
   maxLabel: string
+  /**
+   * Whether the name and the current range are drawn above the track.
+   *
+   * `hidden` keeps both in the accessibility tree and takes them off the
+   * screen — the search takeover draws a bare track under two readout pills
+   * that already say the numbers, so showing them again would be saying it
+   * twice visually while removing them entirely would leave the slider
+   * unnamed. There is no third option here: a slider with no accessible
+   * name fails 4.1.2.
+   */
+  readout?: 'visible' | 'hidden'
   className?: string
 }) {
   return (
@@ -81,7 +93,12 @@ export function RangeSlider({
       thumbAlignment="edge"
       className={cn('flex w-full flex-col gap-2', className)}
     >
-      <div className="flex items-baseline justify-between gap-4">
+      <div
+        className={cn(
+          'flex items-baseline justify-between gap-4',
+          readout === 'hidden' && 'sr-only',
+        )}
+      >
         <Slider.Label className="font-medium text-card-foreground">
           {label}
         </Slider.Label>

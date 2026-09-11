@@ -88,6 +88,10 @@ export function BudgetRange({
       }}
       minLabel="Minimum budget"
       maxLabel="Maximum budget"
+      /* The compact form puts the numbers in the two pills above the track,
+       * so the slider's own readout would be the same figures a second time.
+       * Hidden rather than removed — it still has to be named. */
+      readout={compact ? 'hidden' : 'visible'}
     />
   )
 
