@@ -30,8 +30,13 @@ import { cn } from '@/lib/utils'
  *
  * TONE
  * ----
- *   subject  Text/Primary, SemiBold  the thing being searched for
- *   action   Action/Primary, Regular the scope or filter applied to it
+ *   subject  Text/Primary, SemiBold   the thing being searched for
+ *   action   Action/Primary, Regular  the scope or filter applied to it
+ *   muted    Text/Muted, Regular      the same slot with nothing in it yet
+ *
+ * `muted` is the placeholder case — "Add location" rather than a location.
+ * It is still a button, because the whole point of it is that pressing it is
+ * how you fill it in.
  *
  * Both are 14px. The weight changes with the colour, exactly as it does on
  * `Button` — Subtle is copper at Regular, Primary is inverse at SemiBold.
@@ -70,7 +75,7 @@ export function FieldAction({
    * reader hears "Change location: Current Location".
    */
   name: string
-  tone?: 'subject' | 'action'
+  tone?: 'subject' | 'action' | 'muted'
   /** Navigates instead of acting. */
   to?: string
 }) {
@@ -84,7 +89,9 @@ export function FieldAction({
     'inline-flex h-full items-center bg-transparent text-body-md whitespace-nowrap',
     subject
       ? 'min-w-0 truncate font-semibold text-foreground'
-      : 'shrink-0 font-normal text-primary',
+      : 'shrink-0 font-normal',
+    tone === 'action' && 'text-primary',
+    tone === 'muted' && 'text-muted-foreground',
     className,
   )
 

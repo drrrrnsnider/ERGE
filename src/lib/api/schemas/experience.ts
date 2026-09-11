@@ -174,3 +174,20 @@ export const ExperienceSchema = z.object({
   elite: z.boolean().optional(),
 })
 export type Experience = z.infer<typeof ExperienceSchema>
+
+/**
+ * A plain list of experiences, for looking up ones you already know the id
+ * of — recently viewed, a saved list, a cart.
+ *
+ * No `sources` block, unlike SectionItems. That exists so a section can
+ * disclose which vendors failed to answer a SEARCH; a lookup by id either
+ * finds the thing or does not, and there is no partial answer to disclose.
+ *
+ * The list may be SHORTER than the ids asked for, and callers must cope: an
+ * experience can be delisted between being viewed and being asked for again.
+ * Order follows the request, so a caller's own ordering survives.
+ */
+export const ExperienceListSchema = z.object({
+  items: z.array(ExperienceSchema),
+})
+export type ExperienceList = z.infer<typeof ExperienceListSchema>

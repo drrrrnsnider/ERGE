@@ -1,6 +1,7 @@
 import { SaveButton } from '@/components/app/save-button'
 import { Elite as EliteIcon } from '@/components/icons'
 import { Link } from 'react-router'
+import { addRecentlyViewed } from '@/lib/recents'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
@@ -39,6 +40,39 @@ type Variant = 'media-md' | 'media-sm' | 'media-sm-narrow' | 'media-xs'
 /** Where a card goes. The PDP is not built; the route reports what it got. */
 const hrefFor = (experience: Experience) =>
   `/experience/${experience.experienceId}`
+
+/**
+ * The card's link, which also records that you looked at the thing.
+ *
+ * This is what fills "Recently viewed" in the search takeover, and it is
+ * recorded HERE rather than on the detail screen on purpose: the detail
+ * screen does not exist yet, and when it does, arriving by a shared URL is
+ * not the same as choosing something out of a list. Opening a card is the
+ * event worth remembering either way.
+ *
+ * It stores an id, never a copy — lib/recents explains why. The write is
+ * fire-and-forget: nothing about navigating should wait on storage, and a
+ * device that refuses to remember should still let you through.
+ */
+function OpenLink({
+  experience,
+  className,
+  children,
+}: {
+  experience: Experience
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      to={hrefFor(experience)}
+      onClick={() => void addRecentlyViewed(experience.experienceId)}
+      className={className}
+    >
+      {children}
+    </Link>
+  )
+}
 
 /**
  * "from $45 / couple" vs "$100 / person".
@@ -114,13 +148,19 @@ function Media({
 export function ExperienceCard({
   experience,
   variant,
-  saved,
+  saved = false,
   onToggleSave,
 }: {
   experience: Experience
   variant: Variant
-  saved: boolean
-  onToggleSave: (experienceId: string) => void
+  /**
+   * Only `media-md` and `media-sm` draw a save button — the other two have
+   * none by design, which is why these are optional rather than something
+   * every call site has to invent a value for. A list that cannot save
+   * anything should not have to pass a boolean and a no-op to say so.
+   */
+  saved?: boolean
+  onToggleSave?: (experienceId: string) => void
 }) {
   const duration = experience.details.find((d) => d.label === 'Duration')?.value
 
@@ -173,15 +213,15 @@ export function ExperienceCard({
           <SaveButton
             saved={saved}
             label={experience.title}
-            onToggle={() => onToggleSave(experience.experienceId)}
+            onToggle={() => onToggleSave?.(experience.experienceId)}
             style="Button"
             className="absolute top-2 right-2 z-10"
           />
         </div>
         <div className="flex flex-col gap-1 px-2">
-          <Link to={hrefFor(experience)} className="text-h3 font-medium text-foreground">
+          <OpenLink experience={experience} className="text-h3 font-medium text-foreground">
             {experience.title}
-          </Link>
+          </OpenLink>
           <p className="text-body-md text-muted-foreground">{metaLine}</p>
           <p className="text-h4 font-medium text-emphasis">
             <Price experience={experience} />
@@ -213,9 +253,9 @@ export function ExperienceCard({
           className="relative z-1 h-20 w-27.5 shrink-0 rounded-md stroke-gradient"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-[3px] pr-9">
-          <Link to={hrefFor(experience)} className="text-body-md text-foreground">
+          <OpenLink experience={experience} className="text-body-md text-foreground">
             {experience.title}
-          </Link>
+          </OpenLink>
           <p className="text-body-xs text-muted-foreground">{metaLine}</p>
           <p className="text-body-sm text-emphasis">
             <Price experience={experience} />
@@ -224,7 +264,7 @@ export function ExperienceCard({
         <SaveButton
           saved={saved}
           label={experience.title}
-          onToggle={() => onToggleSave(experience.experienceId)}
+          onToggle={() => onToggleSave?.(experience.experienceId)}
           style="Icon"
           /* The 20px glyph sits at 7px in the frame. The button is 32px with
            * the glyph centred, so 1px here puts the DRAWING back at 7px
@@ -253,10 +293,19 @@ export function ExperienceCard({
           className="h-12 w-16.5 shrink-0 rounded-md stroke-gradient"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-          <Link to={hrefFor(experience)} className="text-body-md text-foreground">
+          {/* One line each, clipped. This card is a fixed 48px row in a list
+            * of them, and a long title wrapping to two lines makes it 70 and
+            * breaks the rhythm of the whole list. It is a pointer back to
+            * something you have already seen, so the first few words are
+            * enough — which is not true of the cards that are an offer.
+            * `block` because truncation needs a block box and <a> is inline. */}
+          <OpenLink
+            experience={experience}
+            className="block truncate text-body-md text-foreground"
+          >
             {experience.title}
-          </Link>
-          <p className="text-body-xs text-muted-foreground">{metaLine}</p>
+          </OpenLink>
+          <p className="truncate text-body-xs text-muted-foreground">{metaLine}</p>
         </div>
       </article>
     )
@@ -274,9 +323,9 @@ export function ExperienceCard({
         className="h-27.5 w-full rounded-md stroke-gradient"
       />
       <div className="flex flex-col gap-[3px]">
-        <Link to={hrefFor(experience)} className="text-body-md text-foreground">
+        <OpenLink experience={experience} className="text-body-md text-foreground">
           {experience.title}
-        </Link>
+        </OpenLink>
         <p className="text-body-xs text-muted-foreground">{metaLine}</p>
         <p className="text-body-sm text-emphasis">
           <Price experience={experience} />

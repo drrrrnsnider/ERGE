@@ -360,6 +360,42 @@ or deleted when D9 resolves; it is deliberately small.
 
 ---
 
+## Search
+
+The search screens. The takeover at `/search` is built; the results screen is
+not yet, so only what the takeover needs is settled here.
+
+### `GET /experiences?ids=a,b,c`
+
+**Returns:** `{ items[] }` — no `sources` block, unlike a section. That block
+exists so a SEARCH can disclose which vendors failed to answer; a lookup by
+id either finds a thing or does not, and there is no partial answer to
+disclose.
+**Errors:** any normalised code. The client renders the error in place of the
+list and offers a retry when `retryable`.
+**Cache:** normal. These are whole experiences, not a filtered view of them.
+**Auth:** none. Ids come from the device, not from an account.
+
+**The response may be SHORTER than the ids asked for, and clients must cope.**
+An experience can be delisted between being viewed and being asked for again,
+and that is an ordinary outcome rather than an error — the row is dropped
+from the list. **Order follows the request**, so a caller's own ordering
+(most-recently-viewed first) survives the round trip.
+
+Recently viewed is the first caller. The device stores **ids only**, never
+copies of experiences: a stored copy goes stale the moment a price changes
+and becomes a second source of truth for the same object, which is what this
+contract exists to prevent. `src/lib/recents.ts` holds the ids;
+`src/lib/storage.ts` is the seam that will become Capacitor Preferences.
+
+### Recent searches `[LOCAL]`
+
+Not an endpoint, and deliberately so. Recent searches are about this device,
+have to work with no network, and are nobody else's business, so they never
+leave it. If they ever become account-level — synced across a user's phone
+and laptop — that is a product decision with a privacy question attached, not
+a refactor.
+
 ## Endpoint template
 
 ### `GET /path`

@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router'
 import { ArrowBack, Close, Event, History, LocationOnSm } from '@/components/icons'
 import { BudgetRange } from '@/components/app/budget-range'
@@ -6,7 +7,18 @@ import { ButtonFlow } from '@/components/patterns/button-flow'
 import { ChipFilter } from '@/components/patterns/chip-filter'
 import { FieldAction } from '@/components/patterns/field-action'
 import { FieldPill } from '@/components/patterns/field-pill'
-import { addRecentSearch, getRecentSearches } from '@/lib/recents'
+import {
+  ExperienceCard,
+  ExperienceCardSkeleton,
+} from '@/components/app/experience-card'
+import { ErrorState } from '@/components/patterns/error-state'
+import { getExperiencesByIds } from '@/lib/api/experiences'
+import { toApiError } from '@/lib/api/schemas/error'
+import {
+  addRecentSearch,
+  getRecentSearches,
+  getRecentlyViewed,
+} from '@/lib/recents'
 import type { ExploreFilters } from '@/lib/api/schemas/explore'
 
 /**
@@ -71,18 +83,33 @@ export function SearchRoute() {
    * renders nothing rather than flashing "no recent searches" and then
    * filling in. */
   const [recents, setRecents] = useState<string[] | null>(null)
+  const [viewedIds, setViewedIds] = useState<string[] | null>(null)
 
   useEffect(() => {
     let live = true
-    void getRecentSearches().then((list) => {
-      if (live) setRecents(list)
-    })
+    void Promise.all([getRecentSearches(), getRecentlyViewed()]).then(
+      ([searches, viewed]) => {
+        if (!live) return
+        setRecents(searches)
+        setViewedIds(viewed)
+      },
+    )
     /* Cleanup, so a promise that resolves after this screen has gone does
      * not set state on something that is no longer mounted. */
     return () => {
       live = false
     }
   }, [])
+
+  /* Two steps, because the ids and the experiences come from different
+   * places: storage says WHAT you looked at, the API says what those things
+   * currently are. `enabled` holds the query until storage has answered, so
+   * it never fires with an empty list and then again with the real one. */
+  const viewed = useQuery({
+    queryKey: ['experiences', 'by-ids', viewedIds],
+    queryFn: () => getExperiencesByIds(viewedIds ?? []),
+    enabled: viewedIds !== null && viewedIds.length > 0,
+  })
 
   const submit = async () => {
     const trimmed = query.trim()
@@ -149,13 +176,17 @@ export function SearchRoute() {
         {/* The further 16px inset the design draws — see the note above. */}
         <div className="flex flex-col gap-3 px-4">
           <FieldPill size="Sm" leading={<LocationOnSm />} action={clearLocation}>
-            <span
-              className={
-                location === null ? 'text-muted-foreground' : 'text-primary'
-              }
-            >
-              {location ?? 'Add location'}
-            </span>
+            {/* Tappable, because the × only CLEARS the location and there
+              * would otherwise be no way to change it to somewhere else —
+              * which is the thing the Yelp header this is modelled on lets
+              * you do. The picker is not built, so it goes to the route that
+              * reports itself rather than nowhere. */}
+            <FieldAction
+              name={location === null ? 'Add a location' : 'Change location'}
+              label={location ?? 'Add location'}
+              tone={location === null ? 'muted' : 'action'}
+              to="/search/location"
+            />
           </FieldPill>
 
           <FieldPill
@@ -206,6 +237,44 @@ export function SearchRoute() {
                 label={recent}
                 icon={History}
                 to={resultsHref(recent)}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {viewedIds !== null && viewedIds.length > 0 ? (
+        <section aria-labelledby="recently-viewed" className="flex flex-col gap-2">
+          <h2
+            id="recently-viewed"
+            className="px-4 text-h4 font-medium text-foreground"
+          >
+            Recently viewed
+          </h2>
+          <div className="flex flex-col gap-2 px-4">
+            {viewed.isPending
+              ? /* Skeletons matching the ids we know about, so the section is
+                 * the right height before the data lands and nothing below
+                 * it jumps. */
+                viewedIds.map((id) => (
+                  <ExperienceCardSkeleton key={id} variant="media-xs" />
+                ))
+              : null}
+
+            {viewed.isError ? (
+              <ErrorState
+                error={toApiError(viewed.error)}
+                onRetry={() => void viewed.refetch()}
+              />
+            ) : null}
+
+            {/* Ids whose experience has been delisted simply are not here —
+              * see the note on getExperiencesByIds. */}
+            {viewed.data?.items.map((experience) => (
+              <ExperienceCard
+                key={experience.experienceId}
+                experience={experience}
+                variant="media-xs"
               />
             ))}
           </div>

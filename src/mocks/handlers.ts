@@ -186,3 +186,17 @@ export async function getExploreCollage(_id: string): Promise<CollageItems> {
   await delay(400)
   return { items: [] }
 }
+
+/**
+ * Lookup by id, in the order asked for.
+ *
+ * Unknown ids fall out rather than erroring — that is the real behaviour
+ * being modelled, since a recently-viewed id can outlive its experience.
+ * Faster than a search because it is a lookup, not a fan-out.
+ */
+export async function getExperiencesByIds(
+  ids: readonly string[],
+): Promise<{ items: Experience[] }> {
+  await delay(200)
+  return { items: pick(...ids) }
+}
