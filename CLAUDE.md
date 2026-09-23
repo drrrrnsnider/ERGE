@@ -348,6 +348,23 @@ Vercel, connected to this repo. **Pushing to `main` deploys it.** There is no
 staging branch and no review step, so a push is a release — worth knowing
 before running one, because nothing else in this file implies that.
 
+Production is **https://erge-eta.vercel.app**. It is written down here because
+it is otherwise undiscoverable from the repo — it lives in the GitHub homepage
+field and in Vercel's dashboard, neither of which is a file anyone reads.
+
+The per-deployment URL Vercel posts back to the commit status
+(`erge-<hash>-erge2.vercel.app`) is **not** the one to share. Deployment
+protection is on, so those redirect to a Vercel login and are unreadable to
+anyone outside the team.
+
+A green check on the commit is not proof the build finished. Vercel posts
+`state=success` to GitHub about a second after creating the deployment, which
+is it registering the deployment rather than completing it. To confirm a
+release actually landed, check that production serves the build you pushed:
+asset filenames are content-hashed, so `ls dist/assets/` after a local
+`npm run build` at that commit should match the `/assets/…` names in
+production's `index.html`.
+
 None of the deployment configuration lives here. There is no `vercel.json`:
 the build command, output directory and Node version are set in Vercel's
 dashboard, so someone reading the repo alone cannot see them or reproduce the
