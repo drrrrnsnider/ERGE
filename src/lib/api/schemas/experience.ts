@@ -94,14 +94,25 @@ export const AccessTierSchema = z.enum(['full', 'authenticated', 'deeplink'])
 export type AccessTier = z.infer<typeof AccessTierSchema>
 
 /**
- * The contract lists this as open-ended ("dining | event | tour | ..."). This
- * is the set the Explore frame actually uses plus `other` as the escape
- * hatch. [ASSUMPTION] `lodging` — the "Unique Lodging" rail — is not in the
- * contract's example list.
+ * The contract lists this as open-ended ("dining | event | tour | ..."), so
+ * adding to it is not a breaking change. This is the set the Explore frame
+ * uses plus `other` as the escape hatch. [ASSUMPTION] `lodging` — the
+ * "Unique Lodging" rail — is not in the contract's example list.
+ *
+ * `drinks` and `sports` come from the SEARCH row rather than from Explore.
+ * They were added on purpose rather than being folded into `dining` and
+ * `event`: a bar and a restaurant are different things to filter for, and
+ * collapsing them would look right until the day they have to be told
+ * apart — at which point it is a migration across every surface that reads
+ * a category. `other` was not the answer either, because it is an escape
+ * hatch: pointing the Drinks tab at it would show every uncategorised thing
+ * in the catalogue, which is worse than showing nothing.
  */
 export const ExperienceCategorySchema = z.enum([
   'dining',
+  'drinks',
   'event',
+  'sports',
   'tour',
   'wellness',
   'transport',

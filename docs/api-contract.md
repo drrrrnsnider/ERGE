@@ -414,30 +414,33 @@ set instead would shrink the track to the range already chosen — the trap
 you mean", saved searches. Each changes the response shape, and inventing
 them now would mean a contract nobody agreed to and a screen depending on it.
 
-#### The category row is a second vocabulary `[UNRESOLVED]`
+#### The category row is a second vocabulary
 
-`ExperienceCategory` says what an experience **is** — dining, event, tour,
-wellness, transport, gift, lodging, other. The results row says what you can
-filter **by**, and the two do not line up:
+`ExperienceCategory` says what an experience **is**. The results row says
+what you can filter **by**. They are related but not the same list:
 
 | Row | Maps to |
 |---|---|
 | Dining | `dining` |
+| Drinks | `drinks` |
 | Gifts | `gift` |
 | Tours | `tour` |
+| Sports | `sports` |
 | Spa | `wellness` |
-| **Drinks** | **nothing** |
-| **Sports** | **nothing** |
+| — | `event`, `transport`, `lodging`, `other` |
 
-Drinks and Sports have no home in the data model. They are **not** collapsed
-onto `event` or `dining` to make the row work: that looks right until a bar
-and a restaurant have to be told apart, and then it is a migration across
-every surface that reads a category — the same mistake the status tokens
-exist to prevent. They return nothing today, and the screen says so rather
-than showing near-enough results.
+`drinks` and `sports` were **added to `ExperienceCategory`** rather than
+folded into `dining` and `event`. This field is documented as open-ended, so
+that is not a breaking change; collapsing them would have looked right until
+a bar and a restaurant had to be told apart, and then it is a migration
+across every surface that reads a category. `other` was not the answer
+either — it is an escape hatch, so pointing Drinks at it would surface every
+uncategorised thing in the catalogue.
 
-**The unblock is a product decision:** either `ExperienceCategory` grows the
-two, or the row loses them.
+The last row is deliberate, not an oversight: `event`, `transport` and
+`lodging` have no tab because a rideshare is not something you browse for on
+this screen. **Expect the two lists to keep diverging**, and keep the mapping
+in one place.
 
 ### Recent searches `[LOCAL]`
 

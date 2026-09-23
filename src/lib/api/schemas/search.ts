@@ -19,23 +19,24 @@ import { ExperienceSchema } from './experience'
 /**
  * The category row across the top of the results sheet.
  *
- * A SECOND VOCABULARY, and that needs flagging rather than hiding.
- * `ExperienceCategory` already exists — dining, event, tour, wellness,
- * transport, gift, lodging, other — and it is what an experience IS. This is
- * what the design offers to filter BY, and the two do not line up:
+ * STILL A SECOND VOCABULARY, and worth knowing about. `ExperienceCategory`
+ * says what an experience IS; this says what the design offers to filter BY.
+ * Every entry here now has a home, but the two lists are not the same list
+ * and are not guaranteed to stay parallel — `event`, `transport` and
+ * `lodging` have no tab, deliberately, because a rideshare is not something
+ * you browse for on this screen.
  *
- *     Dining  -> dining          Tours  -> tour
- *     Gifts   -> gift            Spa    -> wellness
- *     Drinks  -> NOTHING         Sports -> NOTHING
+ *     Dining -> dining    Drinks -> drinks    Gifts  -> gift
+ *     Tours  -> tour      Sports -> sports    Spa    -> wellness
  *
- * Drinks and Sports have no home in the data model. Collapsing them onto
- * `event` or `dining` to make the row work would be the same mistake the
- * status tokens exist to prevent: it looks right until a bar and a
- * restaurant need to be told apart, and then it is a migration.
+ * Drinks and Sports used to map to nothing. Rather than folding them into
+ * `dining` and `event` to make the row work, the enum grew — the API
+ * contract describes that field as open-ended, so it was not a breaking
+ * change, and collapsing them would have looked right until a bar and a
+ * restaurant had to be told apart.
  *
- * So the row keeps its own names and the mapping lives in one place, in the
- * mock. The unblock is a product decision — either `ExperienceCategory`
- * grows the two, or the row loses them.
+ * The mapping lives in exactly one place, in the mock, and moves to the
+ * backend with it.
  */
 export const SearchCategorySchema = z.enum([
   'all',

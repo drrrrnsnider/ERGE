@@ -72,17 +72,33 @@ test.describe('search results', () => {
   })
 
   /**
-   * Drinks and Sports are on the category row and have no home in
-   * `ExperienceCategory`. They render the empty state and SAY that, rather
-   * than being quietly mapped onto a near-enough category — which would look
-   * like results and be wrong. See schemas/search.ts.
+   * Every tab on the category row returns its own things.
+   *
+   * Drinks and Sports are the ones worth pinning: they had no home in
+   * `ExperienceCategory` and the enum grew to fit them rather than folding
+   * them into dining and event. The failure this guards against is someone
+   * later "tidying" that by pointing them at a near-enough category, which
+   * would show results and be wrong — so it checks WHAT comes back, not just
+   * that something does.
    */
-  test('is honest about a category the catalogue cannot serve', async ({
-    page,
-  }) => {
-    await page.goto('/search/results?category=drinks')
+  test('each category returns its own experiences', async ({ page }) => {
+    const cases = [
+      { category: 'drinks', expect: /Cocktail Flight/ },
+      { category: 'sports', expect: /Padel/ },
+      { category: 'spa', expect: /Sound Bath/ },
+    ]
+    for (const one of cases) {
+      await page.goto(`/search/results?category=${one.category}`)
+      await expect(page.locator(cards)).toHaveCount(1)
+      await expect(page.locator(cards).getByText(one.expect)).toBeVisible()
+    }
+  })
+
+  /** And a category with nothing in it still says so rather than hanging. */
+  test('shows an empty state when nothing matches', async ({ page }) => {
+    await page.goto('/search/results?q=nothingwillevermatchthis')
+    await expect(page.getByText('Nothing matched')).toBeVisible()
     await expect(page.locator(cards)).toHaveCount(0)
-    await expect(page.getByText(/not a category the catalogue has yet/)).toBeVisible()
   })
 
   /**

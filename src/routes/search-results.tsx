@@ -232,11 +232,7 @@ export function SearchResultsRoute() {
               <EmptyState
                 icon={DiscoverTune}
                 title="Nothing matched"
-                description={
-                  category === 'drinks' || category === 'sports'
-                    ? `${category === 'drinks' ? 'Drinks' : 'Sports'} is not a category the catalogue has yet.`
-                    : 'Try a different category, or widen the search.'
-                }
+                description="Try a different category, or widen the search."
               />
             ) : null}
 

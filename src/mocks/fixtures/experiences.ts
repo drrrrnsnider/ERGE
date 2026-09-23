@@ -95,6 +95,38 @@ export const experiences: readonly Experience[] = [
     availability: { status: 'available' },
     details: [{ label: 'Doors', value: '9:30pm' }],
   },
+  /* The two categories the search row added. Without these the Drinks and
+   * Sports tabs are empty for a boring reason — no such rows — rather than
+   * for the interesting one they used to be empty for, which was that the
+   * data model could not express them at all. */
+  {
+    experienceId: 'exp-rooftop-cocktails',
+    placeId: 'ChIJ-sugarcane',
+    title: 'Cocktail Flight at Sugarcane',
+    category: 'drinks',
+    vendorId: 'resy',
+    accessTier: 'authenticated',
+    location: { ...MIAMI, address: 'Midtown, Miami, FL' },
+    images: shots('A row of garnished coupes on a dark bar'),
+    summary: 'Five pours, bartender’s choice',
+    price: { kind: 'from', base: 6500, currency: 'USD', taxesIncluded: false, unit: 'person' },
+    availability: { status: 'available' },
+    details: [{ label: 'Duration', value: '1.5 hrs' }],
+  },
+  {
+    experienceId: 'exp-padel-court',
+    placeId: 'ChIJ-padel',
+    title: 'Sunset Padel, Court Hire',
+    category: 'sports',
+    vendorId: 'classpass',
+    accessTier: 'full',
+    location: { ...MIAMI, address: 'Wynwood, Miami, FL' },
+    images: shots('A floodlit padel court at dusk'),
+    summary: 'Court, rackets and balls',
+    price: { kind: 'final', total: 8800, currency: 'USD', taxesIncluded: true, unit: 'court' },
+    availability: { status: 'available' },
+    details: [{ label: 'Duration', value: '90 min' }],
+  },
   {
     experienceId: 'exp-sound-bath',
     title: 'Sound Bath on the Sand',

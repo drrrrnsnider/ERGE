@@ -216,19 +216,19 @@ export async function getExperiencesByIds(
 /**
  * The category row's names, mapped onto what an experience actually is.
  *
- * `drinks` and `sports` map to NOTHING, deliberately — the data model has no
- * such category, and picking a near-enough one here would bury a product
- * decision in a mock. They return nothing until that is settled, which is
- * visible on the screen as an empty state rather than as quietly wrong
- * results. See schemas/search.ts.
+ * Every row entry now has a home: `drinks` and `sports` were added to
+ * `ExperienceCategory` rather than being folded into `dining` and `event`,
+ * so this is a plain rename rather than a lossy one. The two vocabularies
+ * still exist — one says what a thing IS, the other what you filter BY — and
+ * this is the single place they meet.
  */
 const CATEGORY_MAP: Record<SearchCategory, readonly ExperienceCategory[]> = {
   all: [],
   dining: ['dining'],
-  drinks: [],
+  drinks: ['drinks'],
   gifts: ['gift'],
   tours: ['tour'],
-  sports: [],
+  sports: ['sports'],
   spa: ['wellness'],
 }
 
