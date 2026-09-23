@@ -329,7 +329,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **74 unit tests** and **139 e2e** passing, 2 e2e skipped by
+Current state: **74 unit tests** and **148 e2e** passing, 2 e2e skipped by
 design (the coarse-pointer size assertions do not apply to `desktop-chrome`).
 `npm run verify` exits 0. There are no known-failing tests — if something is
 red, you broke it.

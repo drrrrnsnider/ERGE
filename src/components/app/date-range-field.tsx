@@ -1,12 +1,9 @@
-import { Drawer } from '@base-ui/react/drawer'
-import { Popover } from '@base-ui/react/popover'
 import { useState } from 'react'
 import { Event } from '@/components/icons'
 import { Calendar, type DateRange } from '@/components/patterns/calendar'
 import { FieldAction } from '@/components/patterns/field-action'
 import { FieldPill } from '@/components/patterns/field-pill'
-import { Button } from '@/components/patterns/button'
-import { useMediaQuery } from '@/lib/use-media-query'
+import { PickerSurface } from '@/components/patterns/picker-surface'
 
 /**
  * The date row in the search takeover: a pill that opens a range calendar.
@@ -29,27 +26,12 @@ import { useMediaQuery } from '@/lib/use-media-query'
  * shape as `BudgetRange`, which owns budget behaviour and uses RangeSlider
  * and FieldSimpleCompact for its chrome.
  *
- * TWO SURFACES, ONE PICKER
- * ------------------------
- * A sheet from the bottom on a phone, a popover under the row on a desktop.
- * Both are Base UI, so the focus trap, the escape key, the outside press and
- * the scroll lock are the library's rather than ours.
- *
- * It is a real branch rather than one surface shown two ways, because a
- * bottom sheet and an anchored popover are different components with
- * different behaviour — and rendering both and hiding one with CSS would
- * mean two copies of the open state and two focus traps in the document.
- *
- * The `Done` button is not decoration on the sheet. A range needs two taps,
- * so there is a moment where you have picked a start and nothing else; the
- * sheet cannot close on selection the way a single-date picker would, and
- * something has to say when you are finished.
+ * WHERE THE CALENDAR APPEARS is `PickerSurface`'s problem — a sheet on a
+ * phone, a popover on a desktop. That started here and moved out the moment
+ * the filter chips needed the same thing, which is the 80%-the-same rule
+ * working as intended. `Done` is passed because a range takes two taps, so
+ * the sheet cannot close on selection the way a single-choice one can.
  */
-
-/* Deliberately not `pointer: coarse`. That asks what you are touching the
- * screen with; this asks how much room there is to put a calendar. A tablet
- * with a stylus wants the popover. */
-const DESKTOP = '(min-width: 768px)'
 
 const short = new Intl.DateTimeFormat(undefined, {
   month: 'short',
@@ -92,7 +74,6 @@ export function DateRangeField({
   onChange: (next: DateRange | undefined) => void
 }) {
   const [open, setOpen] = useState(false)
-  const desktop = useMediaQuery(DESKTOP)
 
   const label = formatRange(value)
   const trigger = (
@@ -115,52 +96,19 @@ export function DateRangeField({
       />
     ) : undefined
 
-  const calendar = <Calendar value={value} onChange={onChange} />
-
-  if (desktop) {
-    return (
-      <Popover.Root open={open} onOpenChange={setOpen}>
-        <FieldPill
-          size="Sm"
-          leading={<Event />}
-          action={shortcut}
-        >
-          <Popover.Trigger render={trigger} />
-        </FieldPill>
-        <Popover.Portal>
-          <Popover.Positioner side="bottom" align="start" sideOffset={8}>
-            <Popover.Popup className="rounded-lg border border-border bg-card p-4 shadow-lift">
-              {calendar}
-            </Popover.Popup>
-          </Popover.Positioner>
-        </Popover.Portal>
-      </Popover.Root>
-    )
-  }
-
   return (
-    <Drawer.Root open={open} onOpenChange={setOpen}>
-      <FieldPill size="Sm" leading={<Event />} action={shortcut}>
-        <Drawer.Trigger render={trigger} />
-      </FieldPill>
-      <Drawer.Portal>
-        <Drawer.Backdrop className="fixed inset-0 bg-background/60" />
-        {/* `pb` clears the home indicator; without it the Done button sits
-          * under it on a phone with no bezel. */}
-        <Drawer.Popup className="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-3 rounded-t-lg border-t border-border bg-card px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          {/* The grab bar is ours. `Drawer.Handle` is Base UI's IMPERATIVE
-            * handle — an object for opening the drawer from elsewhere — not
-            * the thing you drag, which the library leaves to the author. */}
-          <div aria-hidden="true" className="h-1 w-10 shrink-0 rounded-full bg-border" />
-          <Drawer.Title className="sr-only">Choose dates</Drawer.Title>
-          <Drawer.Viewport className="w-full overflow-y-auto">
-            <div className="flex justify-center">{calendar}</div>
-          </Drawer.Viewport>
-          <Drawer.Close
-            render={<Button label="Done" size="Md" className="w-full" />}
-          />
-        </Drawer.Popup>
-      </Drawer.Portal>
-    </Drawer.Root>
+    <FieldPill size="Sm" leading={<Event />} action={shortcut}>
+      <PickerSurface
+        trigger={trigger}
+        title="Choose dates"
+        open={open}
+        onOpenChange={setOpen}
+        doneLabel="Done"
+      >
+        <div className="flex justify-center">
+          <Calendar value={value} onChange={onChange} />
+        </div>
+      </PickerSurface>
+    </FieldPill>
   )
 }

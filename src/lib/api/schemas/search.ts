@@ -50,6 +50,28 @@ export const SearchCategorySchema = z.enum([
 export type SearchCategory = z.infer<typeof SearchCategorySchema>
 
 /**
+ * Duration as BANDS, not a number of minutes.
+ *
+ * Nobody filters for "between 73 and 145 minutes" — they filter for "an
+ * evening" or "a quick one", and a band is what a chip can say in two words.
+ * The backend is free to hold real minutes; this is the vocabulary the UI
+ * asks in.
+ *
+ * `Experience` has no structured duration today — it is a label/value pair in
+ * `details`, as free text like "90 min" or "3–4 hours". The mock parses that,
+ * which is a mock's job; a real API would send minutes and this would become
+ * a range comparison. Flagged so nobody mistakes the parser for a contract.
+ */
+export const DurationBandSchema = z.enum([
+  'any',
+  'under-1h',
+  '1-2h',
+  '2-4h',
+  '4h-plus',
+])
+export type DurationBand = z.infer<typeof DurationBandSchema>
+
+/**
  * What the takeover collects, as the results screen receives it.
  *
  * Dates are ISO calendar days (`2026-09-15`), not timestamps — a booking
@@ -73,6 +95,10 @@ export const SearchFiltersSchema = z.object({
     currency: z.string().length(3),
   }),
   category: SearchCategorySchema,
+  /** The chip row's own filters. `any` is off. */
+  duration: DurationBandSchema,
+  /** "Right Now" — only what can actually be booked. */
+  availableNow: z.boolean(),
 })
 export type SearchFilters = z.infer<typeof SearchFiltersSchema>
 

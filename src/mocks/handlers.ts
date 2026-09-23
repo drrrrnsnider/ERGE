@@ -5,6 +5,7 @@ import type {
 } from '@/lib/api/schemas/experience'
 import { priceLowBound } from '@/lib/api/schemas/experience'
 import type {
+  DurationBand,
   SearchCategory,
   SearchFilters,
   SearchResults,
@@ -232,6 +233,39 @@ const CATEGORY_MAP: Record<SearchCategory, readonly ExperienceCategory[]> = {
   spa: ['wellness'],
 }
 
+/**
+ * Minutes out of a free-text duration — "90 min", "3 hrs", "2.5 hrs",
+ * "3–4 hours". Takes the FIRST number, so a range reports its low end.
+ *
+ * A MOCK'S JOB, not a contract. `Experience` has no structured duration, so
+ * something has to turn the label/value pair into a number; a real API would
+ * send minutes and this function would not exist. See schemas/search.ts.
+ */
+function durationMinutes(e: Experience): number | null {
+  const raw = e.details.find((d) => d.label === 'Duration')?.value
+  if (raw === undefined) return null
+  const match = /(\d+(?:\.\d+)?)/.exec(raw)
+  if (match?.[1] === undefined) return null
+  const value = Number(match[1])
+  return /min/i.test(raw) ? value : value * 60
+}
+
+const BANDS: Record<DurationBand, (minutes: number) => boolean> = {
+  any: () => true,
+  'under-1h': (m) => m < 60,
+  '1-2h': (m) => m >= 60 && m < 120,
+  '2-4h': (m) => m >= 120 && m < 240,
+  '4h-plus': (m) => m >= 240,
+}
+
+function withinDuration(e: Experience, band: DurationBand) {
+  if (band === 'any') return true
+  const minutes = durationMinutes(e)
+  /* No duration means it cannot answer the question, so it drops out rather
+   * than being included on a technicality. */
+  return minutes === null ? false : BANDS[band](minutes)
+}
+
 /** Naive substring matching. A real search ranks; this only has to filter. */
 function matchesQuery(e: Experience, query: string) {
   const q = query.trim().toLowerCase()
@@ -247,7 +281,11 @@ export async function getSearchResults(
   await delay(450)
 
   const matching = experiences.filter(
-    (e) => matchesQuery(e, filters.query) && withinCategory(e, filters.category),
+    (e) =>
+      matchesQuery(e, filters.query) &&
+      withinCategory(e, filters.category) &&
+      withinDuration(e, filters.duration) &&
+      (!filters.availableNow || e.availability.status === 'available'),
   )
 
   /* The ceiling comes from what MATCHED, before the budget narrows it —

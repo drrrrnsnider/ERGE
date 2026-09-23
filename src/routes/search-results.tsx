@@ -7,12 +7,10 @@ import {
   ConciergeStar2,
   DiscoverTune,
   ForkSpoon,
-  KeyboardArrowDown,
   LocalBar,
   LocalMall,
   RewardedAds,
   Spa,
-  WatchAlert,
 } from '@/components/icons'
 import {
   ExperienceCard,
@@ -20,7 +18,7 @@ import {
 } from '@/components/app/experience-card'
 import { MapPlaceholder } from '@/components/app/map-placeholder'
 import { ButtonIcon } from '@/components/patterns/button'
-import { ChipFilter } from '@/components/patterns/chip-filter'
+import { SearchFilterRow } from '@/components/app/search-filter-row'
 import { EmptyState } from '@/components/patterns/empty-state'
 import { ErrorState } from '@/components/patterns/error-state'
 import { FieldAction } from '@/components/patterns/field-action'
@@ -46,15 +44,15 @@ import {
  * the half-open resting position turns out to matter, and cheap to add later
  * because the sheet is already its own element.
  *
- * FILTERS ARE IN THE URL, not in component state. `/search/results?q=jetski`
- * has to survive a hard refresh and a share, and the takeover navigates here
- * by building one of these links. Category lives there too, so a filtered
- * list is a link someone can send.
+ * THE SEARCH IS IN THE URL; THE SIFTING IS NOT. `?q=` and `?category=` are
+ * what you searched for, they survive a hard refresh, and the takeover gets
+ * here by building one of these links — so a category-filtered list is
+ * something you can send to someone. The chip row's budget, duration and
+ * "right now" are component state, because they are how you are picking
+ * through the answer at this moment rather than what you asked for. Move
+ * them into the URL the day a sifted list is worth sharing.
  *
- * The budget and dates the takeover collected are NOT in the URL yet. They
- * are real state on the takeover and would need encoding here; until the
- * results screen has its own budget control, sending them would mean
- * carrying values nothing on this screen can see or change.
+ * The dates the takeover collected are still not carried here at all.
  */
 
 /* The row across the top. Order and icons are the design's; `all` has no
@@ -91,12 +89,24 @@ export function SearchResultsRoute() {
 
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set())
 
+  /* The chip row's filters are component state, not URL params, unlike the
+   * query and the category. That is a deliberate split rather than an
+   * oversight: q and category are what you SEARCHED FOR and are worth
+   * sharing, while the chips are how you are sifting the answer right now.
+   * Move them into the URL if a filtered list turns out to be worth sending
+   * to someone. */
+  const [refinements, setRefinements] = useState({
+    budget: WIDE_OPEN,
+    duration: 'any' as SearchFilters['duration'],
+    availableNow: false,
+  })
+
   const filters: SearchFilters = {
     query,
     location,
     dates: null,
-    budget: WIDE_OPEN,
     category,
+    ...refinements,
   }
 
   const results = useQuery({
@@ -196,22 +206,18 @@ export function SearchResultsRoute() {
               onChange={setCategory}
             />
 
-            {/* Not RailScroller — no snapping on a row of filters. */}
-            <div className="flex gap-2 overflow-x-auto px-4 scroll-px-4 [scrollbar-width:none]">
-              <ChipFilter icon={DiscoverTune} aria-label="All filters" />
-              <ChipFilter
-                label="$300 or less"
-                icon={KeyboardArrowDown}
-                iconPosition="right"
-                active
-              />
-              <ChipFilter label="Right Now" icon={WatchAlert} />
-              <ChipFilter
-                label="Duration"
-                icon={KeyboardArrowDown}
-                iconPosition="right"
-              />
-            </div>
+            <SearchFilterRow
+              filters={filters}
+              onChange={({ budget, duration, availableNow }) =>
+                setRefinements({ budget, duration, availableNow })
+              }
+              /* The ceiling comes back with the results rather than being
+                * picked in advance, so "Any budget" means the most expensive
+                * thing actually on offer. It only moves when the underlying
+                * set does, because the API computes it BEFORE the budget
+                * narrows anything. */
+              ceiling={results.data?.ceiling ?? WIDE_OPEN.max}
+            />
           </div>
 
           <div className="flex flex-col gap-4 px-4 pt-2">

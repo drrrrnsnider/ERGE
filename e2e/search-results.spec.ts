@@ -102,6 +102,76 @@ test.describe('search results', () => {
   })
 
   /**
+   * "Right Now" is the one chip that is not a menu — no chevron in the
+   * design, nothing to choose. It carries `aria-pressed`, not
+   * `aria-haspopup`, and that difference is the point.
+   */
+  test('Right Now is a toggle, not a menu', async ({ page }) => {
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+    const all = await page.locator(cards).count()
+
+    const chip = page.getByRole('button', { name: 'Right Now' })
+    await expect(chip).toHaveAttribute('aria-pressed', 'false')
+    await expect(chip).not.toHaveAttribute('aria-haspopup', /.*/)
+
+    await chip.click()
+    await expect(chip).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator(cards)).not.toHaveCount(all)
+  })
+
+  /**
+   * Duration opens a sheet and choosing closes it — unlike the date range,
+   * one tap finishes the job, so a Done button would be a tap that does
+   * nothing.
+   *
+   * It does NOT guard the exit styling, and that is worth saying because it
+   * looks as though it should. Base UI marks a dismissed surface
+   * `data-closed` and leaves hiding it to the author; with no closed styling
+   * the sheet stayed on screen in the browser, closed but visible. This test
+   * still passes with that styling removed — Playwright tears the portal
+   * down either way — so the styling in PickerSurface is guarded by nothing
+   * but the comment on it.
+   */
+  test('a duration sheet closes when you choose', async ({ page }) => {
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+
+    await page.getByRole('button', { name: /Duration/ }).click()
+    const sheet = page.getByRole('dialog')
+    await expect(sheet).toBeVisible()
+
+    await sheet.getByRole('radio', { name: '1–2 hours' }).click()
+    await expect(sheet).not.toBeVisible()
+    // And the chip now says what it is filtering by.
+    await expect(page.getByRole('button', { name: /1–2 hours/ })).toBeVisible()
+  })
+
+  /**
+   * THE CEILING COMES FROM THE RESULTS. The budget track has to end at the
+   * most expensive thing actually on offer, not at a number chosen in
+   * advance — that is what `ceiling` in the response is for, and it is
+   * computed before the budget narrows anything so it cannot collapse onto
+   * the range already picked.
+   */
+  test('the budget track ends at the priciest result', async ({ page }) => {
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+
+    await page.getByRole('button', { name: 'Any budget' }).click()
+    const sheet = page.getByRole('dialog')
+    await expect(sheet).toBeVisible()
+
+    /* $340 is the dearest fixture. Asserted as a number rather than "not the
+     * default" so that a ceiling silently falling back to the wide-open
+     * sentinel fails here. */
+    await expect(sheet.locator('input[type="range"]').nth(1)).toHaveAttribute(
+      'max',
+      '340',
+    )
+  })
+
+  /**
    * The map is decoration standing in for a provider that has not been
    * chosen. It must stay out of the accessibility tree and out of the tab
    * order — every result it represents is real text in the list below.
