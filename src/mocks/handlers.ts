@@ -1,6 +1,14 @@
 import { ApiRequestError } from '@/lib/api/schemas/error'
-import type { Experience } from '@/lib/api/schemas/experience'
+import type {
+  Experience,
+  ExperienceCategory,
+} from '@/lib/api/schemas/experience'
 import { priceLowBound } from '@/lib/api/schemas/experience'
+import type {
+  SearchCategory,
+  SearchFilters,
+  SearchResults,
+} from '@/lib/api/schemas/search'
 import type {
   CollageItems,
   ExploreFilters,
@@ -199,4 +207,64 @@ export async function getExperiencesByIds(
 ): Promise<{ items: Experience[] }> {
   await delay(200)
   return { items: pick(...ids) }
+}
+
+/* ===================================================================== *
+ * Search
+ * ===================================================================== */
+
+/**
+ * The category row's names, mapped onto what an experience actually is.
+ *
+ * `drinks` and `sports` map to NOTHING, deliberately — the data model has no
+ * such category, and picking a near-enough one here would bury a product
+ * decision in a mock. They return nothing until that is settled, which is
+ * visible on the screen as an empty state rather than as quietly wrong
+ * results. See schemas/search.ts.
+ */
+const CATEGORY_MAP: Record<SearchCategory, readonly ExperienceCategory[]> = {
+  all: [],
+  dining: ['dining'],
+  drinks: [],
+  gifts: ['gift'],
+  tours: ['tour'],
+  sports: [],
+  spa: ['wellness'],
+}
+
+/** Naive substring matching. A real search ranks; this only has to filter. */
+function matchesQuery(e: Experience, query: string) {
+  const q = query.trim().toLowerCase()
+  if (q === '') return true
+  return [e.title, e.summary, e.location.address]
+    .filter(Boolean)
+    .some((field) => String(field).toLowerCase().includes(q))
+}
+
+export async function getSearchResults(
+  filters: SearchFilters,
+): Promise<SearchResults> {
+  await delay(450)
+
+  const matching = experiences.filter(
+    (e) => matchesQuery(e, filters.query) && withinCategory(e, filters.category),
+  )
+
+  /* The ceiling comes from what MATCHED, before the budget narrows it —
+   * otherwise the track would shrink to the range you already chose, which
+   * is the trap BudgetRange was just fixed to avoid. */
+  const ceiling = matching.reduce(
+    (high, e) => Math.max(high, priceLowBound(e.price).amount),
+    0,
+  )
+
+  const items = matching.filter((e) => withinBudget(e, filters.budget))
+  const vendors = [...new Set(matching.map((e) => e.vendorId))]
+  return { items, ceiling, sources: { answered: vendors, failed: [] } }
+}
+
+function withinCategory(e: Experience, category: SearchCategory) {
+  const allowed = CATEGORY_MAP[category]
+  if (category === 'all') return true
+  return allowed.includes(e.category)
 }

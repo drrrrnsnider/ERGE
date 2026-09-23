@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { RootLayout } from '@/layouts/root-layout'
 import { ExploreRoute } from '@/routes/explore'
 import { NotBuiltRoute } from '@/routes/not-built'
+import { SearchResultsRoute } from '@/routes/search-results'
 import { SearchRoute } from '@/routes/search'
 
 /**
@@ -30,7 +31,14 @@ export const router = createBrowserRouter([
   {
     path: '/search',
     element: <RootLayout chrome="takeover" />,
-    children: [{ index: true, Component: SearchRoute }],
+    children: [
+      { index: true, Component: SearchRoute },
+      /* Results keeps the takeover chrome too: it draws its own summary bar
+       * over the map and has no use for the wordmark or the bottom search
+       * row. Anything deeper under /search — the location picker — still
+       * falls through to NotBuilt with the full chrome. */
+      { path: 'results', Component: SearchResultsRoute },
+    ],
   },
   {
     path: '/',

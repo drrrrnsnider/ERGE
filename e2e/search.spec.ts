@@ -44,9 +44,18 @@ test.describe('the search takeover', () => {
     await expect(page.getByRole('navigation')).toBeVisible()
   })
 
-  /** And the screens that are not the takeover still have it. */
+  /**
+   * And the screens that are not the takeover still have it.
+   *
+   * This used to point at /search/results, which had no screen and so fell
+   * through to NotBuilt under the full chrome. Results is built now and
+   * keeps the takeover chrome deliberately — it draws its own summary bar
+   * over the map — so the assertion moved to a path that really is
+   * unbuilt, rather than being deleted along with the thing it was
+   * guarding.
+   */
   test('leaves the chrome alone everywhere else', async ({ page }) => {
-    await page.goto('/search/results?q=jetski')
+    await page.goto('/search/location')
     await expect(page.locator('header')).toBeVisible()
     await expect(page.locator('search')).toBeVisible()
   })

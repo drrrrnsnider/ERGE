@@ -388,6 +388,57 @@ and becomes a second source of truth for the same object, which is what this
 contract exists to prevent. `src/lib/recents.ts` holds the ids;
 `src/lib/storage.ts` is the seam that will become Capacitor Preferences.
 
+### `GET /search` `[STUB]`
+
+**Marked STUB because the shape is ours, not negotiated.** The screen was
+built first so the UI could be real; expect the filter names to move when the
+backend team arrives.
+
+**Request:** `{ query, location, dates, budget, category }`. Dates are ISO
+calendar days, not timestamps — a booking window is a day, and putting a time
+and a zone on it invites the off-by-one where a trip starting "the 15th" is
+stored as the 14th somewhere west of UTC. `location` is nullable, because
+clearing it is a real state.
+**Returns:** `{ items[], ceiling, sources: { answered[], failed[] } }`
+**Errors:** any normalised code; rendered in place of the list with a retry
+when `retryable`.
+**Auth:** none.
+
+`ceiling` is the highest price in the matched set **before** the budget
+narrows it, in minor units. It is what the budget slider's track should end
+at, so the range spans what is actually buyable. Taking it from the narrowed
+set instead would shrink the track to the range already chosen — the trap
+`BudgetRange` exists to avoid.
+
+**Deliberately absent:** ranking, pagination cursors, faceted counts, "did
+you mean", saved searches. Each changes the response shape, and inventing
+them now would mean a contract nobody agreed to and a screen depending on it.
+
+#### The category row is a second vocabulary `[UNRESOLVED]`
+
+`ExperienceCategory` says what an experience **is** — dining, event, tour,
+wellness, transport, gift, lodging, other. The results row says what you can
+filter **by**, and the two do not line up:
+
+| Row | Maps to |
+|---|---|
+| Dining | `dining` |
+| Gifts | `gift` |
+| Tours | `tour` |
+| Spa | `wellness` |
+| **Drinks** | **nothing** |
+| **Sports** | **nothing** |
+
+Drinks and Sports have no home in the data model. They are **not** collapsed
+onto `event` or `dining` to make the row work: that looks right until a bar
+and a restaurant have to be told apart, and then it is a migration across
+every surface that reads a category — the same mistake the status tokens
+exist to prevent. They return nothing today, and the screen says so rather
+than showing near-enough results.
+
+**The unblock is a product decision:** either `ExperienceCategory` grows the
+two, or the row loses them.
+
 ### Recent searches `[LOCAL]`
 
 Not an endpoint, and deliberately so. Recent searches are about this device,

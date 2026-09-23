@@ -19,6 +19,8 @@ import { cn } from '@/lib/utils'
  *
  * They are NOT interchangeable, and each is used where the design uses it:
  *
+ *   media-lg         the same thing full-bleed, 370 wide with a 250 hero.
+ *                    The results list, one per row.
  *   media-md         320x180 hero + a rail of three thumbnails. Carries the
  *                    Elite treatment and a chrome-backed save button.
  *   media-sm         320-wide horizontal row, 110x80 thumbnail, bare save
@@ -35,7 +37,12 @@ import { cn } from '@/lib/utils'
  * itself and the thing it acts on.
  */
 
-type Variant = 'media-md' | 'media-sm' | 'media-sm-narrow' | 'media-xs'
+type Variant =
+  | 'media-lg'
+  | 'media-md'
+  | 'media-sm'
+  | 'media-sm-narrow'
+  | 'media-xs'
 
 /** Where a card goes. The PDP is not built; the route reports what it got. */
 const hrefFor = (experience: Experience) =>
@@ -164,20 +171,36 @@ export function ExperienceCard({
 }) {
   const duration = experience.details.find((d) => d.label === 'Duration')?.value
 
-  /* The two sizes deliberately show different metadata — the large card
-   * leads with the descriptor, the compact one with where it is. */
-  const meta =
-    variant === 'media-md'
-      ? [experience.summary, duration]
-      : [experience.location.address, duration]
+  const big = variant === 'media-md' || variant === 'media-lg'
+
+  /* The two sizes deliberately show different metadata — the large cards
+   * lead with the descriptor, the compact ones with where it is. */
+  const meta = big
+    ? [experience.summary, duration]
+    : [experience.location.address, duration]
   const metaLine = meta.filter(Boolean).join('  •  ')
 
-  if (variant === 'media-md') {
+  if (big) {
+    /* media-lg is media-md at full width, so they share this branch rather
+     * than being two near-identical copies. Everything about them is the
+     * same — 180px of media, a 4px gap, three thumbs, the save button on the
+     * first one, the same text block — and only the widths differ: 320 with
+     * a 230 hero in a rail, 370 with a 250 hero in the results list.
+     *
+     * The wide one sizes its hero and rail by RATIO rather than in pixels,
+     * because it is full-bleed and has to hold that 250:116 split at
+     * whatever width it lands on. The fixed one keeps its pixels, because it
+     * lives in a horizontally scrolling rail where the card width is the
+     * point. */
+    const large = variant === 'media-lg'
     return (
       <article
         data-slot="experience-card"
         data-variant={variant}
-        className="relative flex w-80 flex-col gap-2"
+        className={cn(
+          'relative flex flex-col gap-2',
+          large ? 'w-full' : 'w-80',
+        )}
       >
         <div
           className={cn(
@@ -197,10 +220,18 @@ export function ExperienceCard({
           <Media
             experience={experience}
             index={0}
-            className="h-full w-57.5 shrink-0"
+            className={cn(
+              'h-full',
+              large ? 'min-w-0 flex-[250]' : 'w-57.5 shrink-0',
+            )}
           />
           {experience.elite ? <EliteBadge /> : null}
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div
+            className={cn(
+              'flex min-w-0 flex-col gap-1',
+              large ? 'flex-[116]' : 'flex-1',
+            )}
+          >
             {[1, 2, 3].map((i) => (
               <Media
                 key={i}
@@ -337,11 +368,14 @@ export function ExperienceCard({
 
 /** Skeletons match the shape they replace, so nothing shifts on load. */
 export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
-  if (variant === 'media-md') {
+  if (variant === 'media-md' || variant === 'media-lg') {
     return (
       <div
         data-slot="experience-card-skeleton"
-        className="flex w-80 flex-col gap-2"
+        className={cn(
+          'flex flex-col gap-2',
+          variant === 'media-lg' ? 'w-full' : 'w-80',
+        )}
         aria-hidden="true"
       >
         <div className="h-45 rounded-lg bg-muted motion-safe:animate-pulse" />
