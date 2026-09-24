@@ -2,6 +2,8 @@ import * as mocks from '@/mocks/handlers'
 import { ApiRequestError } from './schemas/error'
 import {
   ExperienceListSchema,
+  ExperienceSchema,
+  type Experience,
   type ExperienceList,
 } from './schemas/experience'
 
@@ -41,4 +43,19 @@ export async function getExperiencesByIds(
 
   const raw = MODE === 'mock' ? await mocks.getExperiencesByIds(ids) : live()
   return ExperienceListSchema.parse(raw)
+}
+
+/**
+ * One experience, for the detail screen.
+ *
+ * Its own call rather than `getExperiencesByIds([id])`, because the two
+ * answer different questions. A list lookup treats a missing id as an
+ * ordinary outcome and simply returns fewer rows; asking for ONE thing and
+ * not finding it is a `not_found`, and the screen has to say so rather than
+ * rendering an empty page. Collapsing them would mean every caller checking
+ * `items[0]` and inventing its own error.
+ */
+export async function getExperience(id: string): Promise<Experience> {
+  const raw = MODE === 'mock' ? await mocks.getExperience(id) : live()
+  return ExperienceSchema.parse(raw)
 }

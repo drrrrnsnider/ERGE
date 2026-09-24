@@ -41,6 +41,20 @@ export const experiences: readonly Experience[] = [
     location: MIAMI,
     images: shots('A blanket and lanterns on a rooftop at dusk'),
     summary: 'City views & candlelight',
+    /* The detail screen's two fields. Only some fixtures carry them, on
+     * purpose: the screen has to cope with an experience that has neither,
+     * and a catalogue where everything is fully written up would never
+     * exercise that. */
+    description:
+      'A curated evening on a rooftop above the city, with the blankets laid, ' +
+      'the lanterns lit and the wine already chilling. Your spot is held for ' +
+      'the night — arrive when you like and stay as long as it suits.',
+    included: [
+      'Blankets and floor cushions',
+      'Lanterns and table setting',
+      'A bottle of chilled wine',
+      'Grazing board for two',
+    ],
     price: { kind: 'from', base: 4500, currency: 'USD', taxesIncluded: false, unit: 'couple' },
     availability: { status: 'unknown' },
     details: [
@@ -67,6 +81,16 @@ export const experiences: readonly Experience[] = [
     placeId: 'ChIJ-tasting',
     // Long enough to wrap and to truncate in a compact card.
     title: 'Seven-Course Chef’s Table Tasting Menu with Wine Pairings at Marisol',
+    description:
+      'Seven courses at the pass, cooked in front of you and paired as they ' +
+      'go. The menu changes with what came in that morning, so nobody — ' +
+      'including the kitchen — knows quite how the evening ends.',
+    included: [
+      'Seven-course tasting menu',
+      'Wine pairing for each course',
+      'Welcome champagne',
+      'Dessert & petit fours',
+    ],
     category: 'dining',
     vendorId: 'opentable',
     accessTier: 'authenticated',

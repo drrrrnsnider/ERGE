@@ -306,3 +306,17 @@ function withinCategory(e: Experience, category: SearchCategory) {
   if (category === 'all') return true
   return allowed.includes(e.category)
 }
+
+/** One experience, or a not_found the detail screen can render. */
+export async function getExperience(id: string): Promise<Experience> {
+  await delay(250)
+  const found = byId.get(id)
+  if (found === undefined) {
+    throw new ApiRequestError({
+      code: 'not_found',
+      message: 'That experience is no longer listed.',
+      retryable: false,
+    })
+  }
+  return found
+}

@@ -174,6 +174,34 @@ export const ExperienceSchema = z.object({
   summary: z.string().optional(),
 
   /**
+   * The paragraph the detail screen leads with. [ASSUMPTION] Not in
+   * docs/api-contract.md.
+   *
+   * NOT `summary`, which is the four-word descriptor a card shows beside the
+   * duration — "City views & candlelight". This is the several-sentence
+   * pitch, and the two appear on the same screen, so collapsing them into
+   * one field would mean either a card showing a paragraph or a detail
+   * screen showing four words.
+   */
+  description: z.string().optional(),
+
+  /**
+   * "What's Included" — the concrete things you get. [ASSUMPTION] Not in
+   * docs/api-contract.md.
+   *
+   * Its own field rather than `details[]` entries, because details are
+   * label/value pairs answering "how long, how many, what class" and these
+   * are a flat list of inclusions with no label to give them. Squeezing them
+   * in as `{ label: 'Included', value: '...' }` repeated would make the
+   * pairing meaningless and force the screen to filter by label string.
+   *
+   * Absent and empty are the same thing: the section does not render. A
+   * rideshare includes nothing in this sense, and an empty card headed
+   * "What's Included" reads as a loading failure.
+   */
+  included: z.array(z.string()).optional(),
+
+  /**
    * The "Elite" marker — a badge plus a copper stroke on the card.
    *
    * [ASSUMPTION] Nothing in docs/api-contract.md covers it. Deliberately NOT
