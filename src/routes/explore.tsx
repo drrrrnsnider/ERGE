@@ -8,6 +8,7 @@ import {
   ExperienceCardSkeleton,
 } from '@/components/app/experience-card'
 import { BudgetGroupControls } from '@/components/app/budget-group-controls'
+import { TripCard } from '@/components/app/trip-card'
 import { Rail, RailItem, RailScroller, RailState } from '@/components/app/rail'
 import { EmptyState } from '@/components/patterns/empty-state'
 import { ErrorState } from '@/components/patterns/error-state'
@@ -246,30 +247,14 @@ function CollageSection({ id, title }: { id: string; title: string }) {
       ) : null}
 
       {query.isSuccess && query.data.items.length > 0 ? (
-        /* `Card / Trip LG` — one 180-tall band split into four equal columns
-         * with a 4px seam, caption beneath. Not a square grid: the band is a
-         * fixed height whatever the images are, so a trip with four portraits
-         * and a trip with four landscapes are the same shape on the page. */
-        <div className="flex flex-col gap-2 px-4">
-          <ul className="flex h-45 gap-1 overflow-hidden rounded-lg stroke-gradient">
-            {query.data.items.map((item) => (
-              <li key={item.experienceId} className="min-w-0 flex-1 bg-muted">
-                {item.images[0] ? (
-                  <img
-                    src={item.images[0].url}
-                    alt={item.images[0].alt}
-                    loading="lazy"
-                    className="size-full object-cover"
-                  />
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          {query.data.caption ? (
-            <p className="px-2 text-body-lg text-muted-foreground">
-              {query.data.caption}
-            </p>
-          ) : null}
+        /* `Card / Trip LG`, which the detail screen also uses — see
+         * components/app/trip-card.tsx, including why this call site passes
+         * a caption and no name or count. */
+        <div className="px-4">
+          <TripCard
+            images={query.data.items.map((item) => item.images[0])}
+            meta={query.data.caption}
+          />
         </div>
       ) : null}
     </Rail>
