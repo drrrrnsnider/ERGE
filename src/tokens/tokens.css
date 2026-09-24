@@ -307,8 +307,11 @@
   /* Radius/None */
   --radius-none: 0;
 
+  /* Radius/Xs */
+  --radius-xs: 0.25rem;
+
   /* Radius/Sm */
-  --radius-sm: 0.25rem;
+  --radius-sm: 0.75rem;
 
   /* Radius/Md */
   --radius-md: 1rem;
@@ -360,6 +363,19 @@
 
   /* Size/Focus Offset */
   --size-focus-offset: 0.125rem;
+
+  /* Motion/Duration */
+  --motion-duration-instant: 0ms;
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 200ms;
+  --motion-duration-moderate: 280ms;
+  --motion-duration-slow: 400ms;
+
+  /* Motion/Easing */
+  --motion-easing-linear: linear;
+  --motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-easing-enter: cubic-bezier(0, 0, 0.2, 1);
+  --motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
 
   /* == SEMANTIC ============================================
    * Mode: Dark

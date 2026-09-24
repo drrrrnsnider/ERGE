@@ -3372,11 +3372,21 @@
         ]
       }
     },
-    "Sm": {
+    "Xs": {
       "$type": "number",
       "$value": 4,
       "$extensions": {
         "com.figma.variableId": "VariableID:68:995",
+        "com.figma.scopes": [
+          "CORNER_RADIUS"
+        ]
+      }
+    },
+    "Sm": {
+      "$type": "number",
+      "$value": 12,
+      "$extensions": {
+        "com.figma.variableId": "VariableID:2321:6699",
         "com.figma.scopes": [
           "CORNER_RADIUS"
         ]
@@ -3558,6 +3568,106 @@
         "com.figma.scopes": [
           "ALL_SCOPES"
         ]
+      }
+    }
+  },
+  "Motion": {
+    "Duration": {
+      "Instant": {
+        "$type": "number",
+        "$value": 0,
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:313",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ]
+        }
+      },
+      "Fast": {
+        "$type": "number",
+        "$value": 120,
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:314",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ]
+        }
+      },
+      "Base": {
+        "$type": "number",
+        "$value": 200,
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:315",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ]
+        }
+      },
+      "Moderate": {
+        "$type": "number",
+        "$value": 280,
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:316",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ]
+        }
+      },
+      "Slow": {
+        "$type": "number",
+        "$value": 400,
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:317",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ]
+        }
+      }
+    },
+    "Easing": {
+      "Linear": {
+        "$type": "string",
+        "$value": "linear",
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:318",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ],
+          "com.figma.type": "string"
+        }
+      },
+      "Standard": {
+        "$type": "string",
+        "$value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:319",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ],
+          "com.figma.type": "string"
+        }
+      },
+      "Enter": {
+        "$type": "string",
+        "$value": "cubic-bezier(0, 0, 0.2, 1)",
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:320",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ],
+          "com.figma.type": "string"
+        }
+      },
+      "Exit": {
+        "$type": "string",
+        "$value": "cubic-bezier(0.4, 0, 1, 1)",
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2191:321",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ],
+          "com.figma.type": "string"
+        }
       }
     }
   },

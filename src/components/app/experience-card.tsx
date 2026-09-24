@@ -313,15 +313,13 @@ export function ExperienceCard({
         data-variant={variant}
         className="flex w-full items-center gap-3"
       >
-        {/* 66x48. The design gives this a 12px radius, which is NOT on the
-          * Radius scale — that goes 4, 16, 24 — and Figma binds no variable
-          * to it, so it is a raw value in the file rather than a token. Using
-          * `rounded-md` (16px) rather than inventing `rounded-[12px]`, since
-          * CLAUDE.md's rule is to use the scale. Flagged: if 12 is deliberate
-          * it wants a Radius/xs variable and a `npm run tokens`. */}
+        {/* 66x48, 12px radius — `rounded-sm` since Radius/Sm is 12. This ran
+          * at `rounded-md` (16) for a while because 12 was not on the scale
+          * and the rule is to use the scale rather than invent a value; the
+          * scale grew to fit it instead. */}
         <Media
           experience={experience}
-          className="h-12 w-16.5 shrink-0 rounded-md stroke-gradient"
+          className="h-12 w-16.5 shrink-0 rounded-sm stroke-gradient"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
           {/* One line each, clipped. This card is a fixed 48px row in a list
@@ -380,8 +378,8 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
       >
         <div className="h-45 rounded-lg bg-muted motion-safe:animate-pulse" />
         <div className="flex flex-col gap-1 px-2">
-          <div className="h-5 w-3/4 rounded-sm bg-muted motion-safe:animate-pulse" />
-          <div className="h-4 w-1/2 rounded-sm bg-muted motion-safe:animate-pulse" />
+          <div className="h-5 w-3/4 rounded-xs bg-muted motion-safe:animate-pulse" />
+          <div className="h-4 w-1/2 rounded-xs bg-muted motion-safe:animate-pulse" />
         </div>
       </div>
     )
@@ -395,8 +393,8 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
       >
         <div className="h-20 w-27.5 shrink-0 rounded-md bg-muted motion-safe:animate-pulse" />
         <div className="flex flex-1 flex-col gap-[3px]">
-          <div className="h-4 w-3/4 rounded-sm bg-muted motion-safe:animate-pulse" />
-          <div className="h-3 w-1/2 rounded-sm bg-muted motion-safe:animate-pulse" />
+          <div className="h-4 w-3/4 rounded-xs bg-muted motion-safe:animate-pulse" />
+          <div className="h-3 w-1/2 rounded-xs bg-muted motion-safe:animate-pulse" />
         </div>
       </div>
     )
@@ -410,8 +408,8 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
       >
         <div className="h-12 w-16.5 shrink-0 rounded-md bg-muted motion-safe:animate-pulse" />
         <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-          <div className="h-4 w-3/4 rounded-sm bg-muted motion-safe:animate-pulse" />
-          <div className="h-3 w-1/2 rounded-sm bg-muted motion-safe:animate-pulse" />
+          <div className="h-4 w-3/4 rounded-xs bg-muted motion-safe:animate-pulse" />
+          <div className="h-3 w-1/2 rounded-xs bg-muted motion-safe:animate-pulse" />
         </div>
       </div>
     )
@@ -424,7 +422,7 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
       aria-hidden="true"
     >
       <div className="h-27.5 rounded-md bg-muted motion-safe:animate-pulse" />
-      <div className="h-4 w-3/4 rounded-sm bg-muted motion-safe:animate-pulse" />
+      <div className="h-4 w-3/4 rounded-xs bg-muted motion-safe:animate-pulse" />
     </div>
   )
 }
