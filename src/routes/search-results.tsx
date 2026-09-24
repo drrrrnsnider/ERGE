@@ -28,6 +28,7 @@ import { getSearchResults } from '@/lib/api/search'
 import { toApiError } from '@/lib/api/schemas/error'
 import {
   SearchCategorySchema,
+  locationFromNear,
   type SearchCategory,
   type SearchFilters,
 } from '@/lib/api/schemas/search'
@@ -80,7 +81,7 @@ export function SearchResultsRoute() {
   const [params, setParams] = useSearchParams()
 
   const query = params.get('q') ?? ''
-  const location = params.get('near') === null ? 'Current Location' : params.get('near')
+  const location = locationFromNear(params.get('near'))
 
   /* Parsed rather than trusted: `?category=` is user-editable text, and an
    * unknown value should fall back to All rather than filtering to nothing. */

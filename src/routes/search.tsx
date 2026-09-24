@@ -22,6 +22,7 @@ import {
   getRecentlyViewed,
 } from '@/lib/recents'
 import type { ExploreFilters } from '@/lib/api/schemas/explore'
+import { locationFromNear } from '@/lib/api/schemas/search'
 
 /**
  * The search takeover (Figma 230:8121).
@@ -72,11 +73,9 @@ export function SearchRoute() {
    * `me` is what Explore's location button sends, and any other value is
    * taken as a place name for when there is more than one to arrive with. */
   const [query, setQuery] = useState(params.get('q') ?? '')
-  const [location, setLocation] = useState<string | null>(() => {
-    const near = params.get('near')
-    if (near === null || near === 'me') return 'Current Location'
-    return near
-  })
+  const [location, setLocation] = useState<string | null>(() =>
+    locationFromNear(params.get('near')),
+  )
   const [dates, setDates] = useState<DateRange | undefined>(undefined)
   const [budget, setBudget] = useState(DEFAULT_BUDGET)
 
@@ -139,7 +138,20 @@ export function SearchRoute() {
     )
 
   return (
-    <div className="flex flex-col gap-6 pb-6">
+    /* SLIDES UP ON ARRIVAL, because this is a takeover opened from the
+     * search field on Explore and it should read as covering that screen
+     * rather than replacing it. It is a mount animation on the content, not
+     * a shared-element transition: the app's top bar and search row are gone
+     * the instant the route changes, so what slides is what is new.
+     *
+     * A true cross-screen transition would need the View Transitions API
+     * (React Router can drive it with `viewTransition` on the link) — worth
+     * it if the cut between the two screens starts to feel abrupt, and more
+     * than this moment needs today.
+     *
+     * `motion-safe` so it simply appears for anyone who has asked for less
+     * movement; the animation is the flourish, arriving is the behaviour. */
+    <div className="flex flex-col gap-6 pb-6 motion-safe:animate-in motion-safe:slide-in-from-bottom-8 motion-safe:fade-in motion-safe:duration-300">
       <div className="flex flex-col gap-3 px-4 pt-2">
         <FieldPill
           leading={

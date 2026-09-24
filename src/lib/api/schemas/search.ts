@@ -103,6 +103,23 @@ export const SearchFiltersSchema = z.object({
 export type SearchFilters = z.infer<typeof SearchFiltersSchema>
 
 /**
+ * Reads the `?near=` param into `filters.location`.
+ *
+ * `me` is a token, not a place name, and both search screens arrive with it:
+ * Explore's location button links straight to the results with it set, and
+ * the takeover can be opened the same way. Without this the results bar
+ * cheerfully rendered a chip reading "me".
+ *
+ * Absent also means here — the design opens with the location applied — so
+ * only an explicit empty value means "no location at all".
+ */
+export function locationFromNear(near: string | null): string | null {
+  if (near === null || near === 'me') return 'Current Location'
+  if (near.trim() === '') return null
+  return near
+}
+
+/**
  * `sources` for the same reason every list response carries it: several
  * vendors answer a search and one of them failing is an operating condition,
  * not an error. The screen renders what arrived.

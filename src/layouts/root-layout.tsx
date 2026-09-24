@@ -1,4 +1,4 @@
-import { useId } from 'react'
+
 import {
   LocationOn,
   Menu,
@@ -14,7 +14,7 @@ import {
   TabProfile,
   TabProfileFilled,
 } from '@/components/icons'
-import { NavLink, Outlet } from 'react-router'
+import { Link, NavLink, Outlet } from 'react-router'
 import { ButtonIcon } from '@/components/patterns/button'
 import { FieldPill } from '@/components/patterns/field-pill'
 import { cn } from '@/lib/utils'
@@ -211,13 +211,19 @@ function TopBar() {
  * content and is decoration — without it, everything under it stops being
  * clickable. `aria-hidden` for the same reason.
  *
- * The search field is a real, typeable input with no submit: Search itself is
- * not built, and a field that silently swallows Enter is more honest than a
- * button that goes nowhere. It is a `<search>` landmark so it is reachable
- * directly.
+ * THE FIELD IS A LINK, NOT AN INPUT. It used to be a real typeable field
+ * with no submit, which was the honest thing while search did not exist.
+ * Now tapping it opens the takeover, so leaving it typeable would be the
+ * dishonest version: you would type a character or two here, the route would
+ * change, the takeover's own field would take focus, and those first
+ * keystrokes would vanish. A control that cannot accept text should not look
+ * like it is waiting for some.
+ *
+ * It keeps the `<search>` landmark and the pill's exact look, so nothing
+ * changes visually — but it announces as a link to "Search experiences"
+ * rather than as an empty text field.
  */
 function SearchOverlay() {
-  const searchId = useId()
   return (
     <>
       <div
@@ -244,21 +250,28 @@ function SearchOverlay() {
             className="pointer-events-auto"
             leading={<Search aria-hidden="true" />}
           >
-            <label htmlFor={searchId} className="sr-only">
-              Search experiences
-            </label>
-            <input
-              id={searchId}
-              type="search"
-              placeholder="What's your ERGE?"
-              className="h-full min-w-0 flex-1 bg-transparent text-body-md text-foreground outline-none placeholder:text-muted-foreground"
-            />
+            {/* Fills the pill so the whole thing is the target, not just the
+              * words — this is the width of a thumb's worth of screen and
+              * anything less would be a 200px strip of dead pill. */}
+            <Link
+              to="/search"
+              className="flex h-full w-full items-center text-body-md text-muted-foreground"
+            >
+              {/* The visible words are the placeholder, which says nothing
+                * about what the link does, so the accessible name says it
+                * and the phrase stays visible for everyone else. */}
+              <span className="sr-only">Search experiences: </span>
+              What&rsquo;s your ERGE?
+            </Link>
           </FieldPill>
         </div>
+        {/* Straight to the results over the map, already scoped to nearby —
+          * it is the "show me what is around me" shortcut, so stopping at
+          * the takeover to be asked what you want would be a step backwards. */}
         <ButtonIcon
           label="Search near me"
           icon={LocationOn}
-          to="/search?near=me"
+          to="/search/results?near=me"
           className="pointer-events-auto"
         />
       </search>

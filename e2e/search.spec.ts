@@ -28,6 +28,15 @@ test.describe('the search takeover', () => {
     await page.goto('/search')
     await expect(page.getByRole('heading', { name: 'Recently viewed' })).toBeVisible()
 
+    /* Wait for the entrance animation to finish before scanning. The takeover
+     * slides and fades in, and axe reads the mid-fade opacity as the text's
+     * real colour — scanning during it reported every string on the screen as
+     * a contrast failure, 163 of them. The page is fine; the snapshot was
+     * taken while it was still arriving. */
+    await page.waitForFunction(() =>
+      document.getAnimations().every((a) => a.playState !== 'running'),
+    )
+
     const results = await new AxeBuilder({ page }).withTags(WCAG22AA).analyze()
     expect(results.violations).toEqual([])
   })
@@ -58,6 +67,49 @@ test.describe('the search takeover', () => {
     await page.goto('/search/location')
     await expect(page.locator('header')).toBeVisible()
     await expect(page.locator('search')).toBeVisible()
+  })
+
+  /**
+   * The two ways into search from Explore, which are deliberately different
+   * destinations.
+   *
+   * The field opens the takeover — options, dates, budget, history. The
+   * location button skips all of that and goes straight to the results over
+   * the map, already scoped to nearby, because "show me what is around me"
+   * is a complete request on its own.
+   */
+  test('the Explore search field opens the takeover', async ({ page }) => {
+    await page.goto('/')
+    const field = page.getByRole('link', { name: /Search experiences/ })
+
+    /* A LINK, not a text field. It used to be a typeable input, and leaving
+     * it that way once it navigated would have meant the first keystrokes
+     * landing in a field that was about to be replaced. */
+    await expect(page.locator('search').getByRole('searchbox')).toHaveCount(0)
+
+    await field.click()
+    await expect(page).toHaveURL(/\/search$/)
+    // The takeover's own field takes focus, so typing continues uninterrupted.
+    await expect(
+      page.getByRole('searchbox', { name: 'Search experiences' }),
+    ).toBeFocused()
+  })
+
+  test('the Explore location button goes straight to nearby results', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await page.getByRole('link', { name: 'Search near me' }).click()
+    await expect(page).toHaveURL(/\/search\/results\?near=me/)
+
+    /* `me` is a token, not a place name. The bar has to say where you are
+     * looking, not echo the query string. */
+    await expect(
+      page.getByRole('link', { name: /Change location: Current Location/ }),
+    ).toBeVisible()
+    await expect(
+      page.locator('[data-slot="experience-card"][data-variant="media-lg"]').first(),
+    ).toBeVisible()
   })
 
   /**

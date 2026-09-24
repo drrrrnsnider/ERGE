@@ -309,6 +309,33 @@ Components must never import from `src/mocks/` directly. They go through
 `src/lib/api/`. The point is that the backend team can swap in real endpoints
 without touching the frontend.
 
+### Recents are device-local, on purpose
+
+Recently searched and recently viewed go through `src/lib/recents.ts` and
+`src/lib/storage.ts` — not `lib/api/`, not TanStack Query. They are about this
+device, they have to work with no network, and they are nobody else's
+business. That is the one sanctioned exception to the rule above.
+
+**No account, and therefore no sync.** Desktop and mobile each keep their own
+list, because without an account there is no identity to key a shared one to.
+If someone asks for "the same recents on both devices", that is not a caching
+change — it needs accounts and a server, and it should be costed as such.
+
+Two consequences worth knowing before touching this:
+
+- **An empty screen is the correct first-run state.** Both sections are
+  guarded on `length > 0`, so a fresh browser profile shows nothing below the
+  concierge button. That looks like unbuilt UI and is not. Seeding dev data
+  would hide a real state neither section has a design for yet.
+- **`localStorage` is not durable inside a Capacitor WebView.** iOS and
+  Android may evict it under pressure, so recents could vanish between
+  launches once the app is wrapped. `storage.ts` is a `Store` interface with
+  `setStore()` for exactly this — Capacitor's Preferences API satisfies it
+  as-is, so it is a one-file swap on the Capacitor setup task, not a rewrite.
+  It already falls back to an in-memory store when `localStorage` throws
+  (Safari private mode, site data switched off), so recents are forgotten
+  rather than a screen going down.
+
 **Maintain `docs/api-contract.md` as you build.** For each screen: endpoint,
 request shape, response shape, auth requirement, error cases, empty states. Write
 it continuously — reconstructing it at the end is far more work and less accurate.
@@ -329,7 +356,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **74 unit tests** and **148 e2e** passing, 2 e2e skipped by
+Current state: **74 unit tests** and **154 e2e** passing, 2 e2e skipped by
 design (the coarse-pointer size assertions do not apply to `desktop-chrome`).
 `npm run verify` exits 0. There are no known-failing tests — if something is
 red, you broke it.

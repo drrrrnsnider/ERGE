@@ -694,7 +694,10 @@ test.describe('the overlay bars', () => {
       const header = document.querySelector('header')!
       const search = document.querySelector('search')!
       const menu = header.querySelector('a')!
-      const field = search.querySelector('input')!
+      /* The field is a LINK now, not an input — tapping it opens the search
+       * takeover. The assertion is unchanged: the row's padding passes taps
+       * through while the field itself takes its own. */
+      const field = search.querySelector('[data-slot="input-field"] a')!
       const hb = header.getBoundingClientRect()
       const sb = search.getBoundingClientRect()
       const mb = menu.getBoundingClientRect()

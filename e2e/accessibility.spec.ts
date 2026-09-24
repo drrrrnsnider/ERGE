@@ -262,8 +262,13 @@ test.describe('accessibility', () => {
         control: page.getByRole('spinbutton', { name: /^min/i }),
       },
       {
-        pill: page.locator('[data-slot="input-field"]').last(),
-        control: page.getByRole('searchbox'),
+        /* The Max field, not the bottom search pill. That pill holds a LINK
+         * now rather than an input — tapping it opens the takeover — so
+         * clicking it here would navigate mid-assertion rather than focus
+         * anything. Its own focus behaviour is covered on /search, where the
+         * field is real. */
+        pill: page.locator('[data-slot="input-field"]').nth(1),
+        control: page.getByRole('spinbutton', { name: /^max/i }),
       },
     ]
 
