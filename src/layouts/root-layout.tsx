@@ -17,6 +17,7 @@ import {
 import { Link, NavLink, Outlet } from 'react-router'
 import { ButtonIcon } from '@/components/patterns/button'
 import { FieldPill } from '@/components/patterns/field-pill'
+import { TopScrim } from '@/components/patterns/top-scrim'
 import { cn } from '@/lib/utils'
 
 /** Every icon in src/components/icons has this shape. */
@@ -63,21 +64,32 @@ type IconComponent = (props: React.SVGProps<SVGSVGElement>) => React.ReactElemen
  * `viewport-fit=cover`, which is what makes these values non-zero.
  * Retrofitting this later means touching every screen.
  *
- * TWO CHROMES, ONE LAYOUT
- * -----------------------
- * The search takeover drops the top bar and the search row and keeps
- * everything else — the skip link, the scroll region, the tab bar. That is a
- * chrome difference, not a different archetype, so it is a prop here rather
- * than a second layout that would be 80% a copy of this one and would have
- * to be kept in step with it forever.
+ * THREE CHROMES, ONE LAYOUT
+ * -------------------------
+ * Screens differ in what sits at the top, not in their bones — every one of
+ * them wants the skip link, the scroll region and the tab bar. So it is a
+ * prop rather than three layouts that would be 80% copies of each other and
+ * would have to be kept in step forever.
  *
- * The padding moves with it, and has to: `pt` and `scroll-pt` exist to
- * reserve the top bar's height, and `pb` / `scroll-pb` reserve the search
- * row's. With neither bar present those reservations would be holding space
- * for nothing. Only the safe-area inset survives, because the notch does
- * not care which screen you are on.
+ * `full`      the wordmark bar and the search row. Explore.
+ * `takeover`  neither, and the notch still reserved. The search takeover,
+ *             whose content starts below the status bar like a normal page.
+ * `bleed`     neither, and NOTHING reserved. The detail screen's hero and
+ *             the results map run edge to edge, under the status bar, with
+ *             a scrim making it legible — so reserving the inset here would
+ *             leave a strip of background above a full-bleed image.
+ *
+ * The padding is what actually differs, and it has to: `pt` / `scroll-pt`
+ * reserve the top bar's height and `pb` / `scroll-pb` the search row's. With
+ * no bars those reservations hold space for nothing.
+ *
+ * A screen on `bleed` owns its own top inset. That is the honest place for
+ * it — the floating bar is the thing that must clear the notch, and it is
+ * the only thing that knows how tall it is.
  */
-export function RootLayout({ chrome = 'full' }: { chrome?: 'full' | 'takeover' }) {
+type Chrome = 'full' | 'takeover' | 'bleed'
+
+export function RootLayout({ chrome = 'full' }: { chrome?: Chrome }) {
   const full = chrome === 'full'
   return (
     <div className="flex h-dvh flex-col bg-background text-foreground">
@@ -127,9 +139,11 @@ export function RootLayout({ chrome = 'full' }: { chrome?: 'full' | 'takeover' }
            * outbid, because there is no number to bid. */
           className={cn(
             'isolate h-full overflow-y-auto outline-none',
-            full
-              ? 'pt-[calc(3rem+env(safe-area-inset-top))] pb-16 scroll-pt-[calc(3rem+env(safe-area-inset-top))] scroll-pb-16'
-              : 'pt-[env(safe-area-inset-top)] scroll-pt-[env(safe-area-inset-top)]',
+            chrome === 'full' &&
+              'pt-[calc(3rem+env(safe-area-inset-top))] pb-16 scroll-pt-[calc(3rem+env(safe-area-inset-top))] scroll-pb-16',
+            chrome === 'takeover' &&
+              'pt-[env(safe-area-inset-top)] scroll-pt-[env(safe-area-inset-top)]',
+            /* `bleed` reserves nothing on purpose — see the note above. */
           )}
         >
           <Outlet />
@@ -165,28 +179,9 @@ function TopBar() {
    * inert, so taps pass through it to the content beneath. */
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-4 pt-[env(safe-area-inset-top)]">
-      {/* Blur first, then tint over it — the order design tools use, and the
-        * order the layer names in the frame imply ("gradient + blur").
-        *
-        * Both live INSIDE the header rather than beside it so the header
-        * sizes them. They used to be a sibling with a hardcoded 104px, which
-        * had to be kept in step with the bar's height by hand; `inset-0`
-        * cannot drift. `-z-10` keeps them behind the wordmark and the menu
-        * button while staying inside the header's stacking context, so they
-        * ride its z-10 over the scroll area.
-        *
-        * `pointer-events-none` because they cover the bar's whole width and
-        * are decoration; `aria-hidden` for the same reason. The tint is
-        * `from-background/75` rather than an rgba literal so it still tracks
-        * Surface/Base. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 backdrop-blur-fade-b"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-fade-b"
-      />
+      {/* Inside the header rather than beside it, so the header sizes it —
+        * see TopScrim, which three screens now share. */}
+      <TopScrim />
       <ButtonIcon label="Menu" icon={Menu} to="/menu" className="pointer-events-auto" />
       <p className="text-center text-[23px] font-semibold tracking-[23px] text-foreground">
         {/* The tracking adds a trailing gap after the last letter, which

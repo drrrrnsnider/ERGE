@@ -1,7 +1,6 @@
 import { SaveButton } from '@/components/app/save-button'
 import { Elite as EliteIcon } from '@/components/icons'
 import { Link } from 'react-router'
-import { addRecentlyViewed } from '@/lib/recents'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
@@ -44,22 +43,21 @@ type Variant =
   | 'media-sm-narrow'
   | 'media-xs'
 
-/** Where a card goes. The PDP is not built; the route reports what it got. */
+/** Where a card goes. */
 const hrefFor = (experience: Experience) =>
   `/experience/${experience.experienceId}`
 
 /**
- * The card's link, which also records that you looked at the thing.
+ * The card's link.
  *
- * This is what fills "Recently viewed" in the search takeover, and it is
- * recorded HERE rather than on the detail screen on purpose: the detail
- * screen does not exist yet, and when it does, arriving by a shared URL is
- * not the same as choosing something out of a list. Opening a card is the
- * event worth remembering either way.
+ * It used to record "recently viewed" on click, because there was no detail
+ * screen to record it on. That has moved to where it belongs — the screen
+ * that actually shows you the thing — which fixes two things the stand-in
+ * got wrong: it counted the TAP rather than the arrival, and it never saw
+ * anyone who landed on an experience from a shared link.
  *
- * It stores an id, never a copy — lib/recents explains why. The write is
- * fire-and-forget: nothing about navigating should wait on storage, and a
- * device that refuses to remember should still let you through.
+ * Kept as a named component rather than inlining `<Link>` at four call
+ * sites, so where a card goes stays one decision.
  */
 function OpenLink({
   experience,
@@ -71,11 +69,7 @@ function OpenLink({
   children: React.ReactNode
 }) {
   return (
-    <Link
-      to={hrefFor(experience)}
-      onClick={() => void addRecentlyViewed(experience.experienceId)}
-      className={className}
-    >
+    <Link to={hrefFor(experience)} className={className}>
       {children}
     </Link>
   )

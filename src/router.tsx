@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router'
 import { RootLayout } from '@/layouts/root-layout'
+import { ExperienceDetailRoute } from '@/routes/experience-detail'
 import { ExploreRoute } from '@/routes/explore'
 import { NotBuiltRoute } from '@/routes/not-built'
 import { SearchResultsRoute } from '@/routes/search-results'
@@ -39,6 +40,11 @@ export const router = createBrowserRouter([
        * falls through to NotBuilt with the full chrome. */
       { path: 'results', Component: SearchResultsRoute },
     ],
+  },
+  {
+    path: '/experience/:experienceId',
+    element: <RootLayout chrome="bleed" />,
+    children: [{ index: true, Component: ExperienceDetailRoute }],
   },
   {
     path: '/',
