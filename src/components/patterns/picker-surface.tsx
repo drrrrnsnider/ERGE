@@ -67,7 +67,9 @@ export function PickerSurface({
                  * the exit to the author. Style nothing and it stays on
                  * screen, closed — which is exactly what happened. */
                 'transition-opacity data-closed:pointer-events-none data-closed:opacity-0',
-                'motion-safe:duration-150',
+                /* A fade, so it runs with reduced motion too: it moves
+                 * nothing. */
+                'duration-fast ease-enter data-closed:ease-exit',
                 className,
               )}
             >
@@ -87,7 +89,7 @@ export function PickerSurface({
         <Drawer.Backdrop
           className={cn(
             'fixed inset-0 bg-background/60',
-            'transition-opacity data-closed:opacity-0 motion-safe:duration-200',
+            'transition-opacity data-closed:opacity-0 duration-base ease-enter data-closed:ease-exit',
           )}
         />
         {/* VIEWPORT OUTSIDE, POPUP INSIDE — this nesting is load-bearing and
@@ -115,9 +117,13 @@ export function PickerSurface({
                *
                * With motion reduced it simply jumps off-screen, which is the
                * right outcome — the point is that it leaves, not that it
-               * slides. */
-              'transition-transform data-closed:translate-y-full',
-              'motion-safe:duration-200',
+               * slides. That needs the TRANSITION gated, not just its
+               * duration: this used to be `transition-transform` with only
+               * `motion-safe:duration-200`, so under reduced motion it fell
+               * back to the default duration and slid anyway. */
+              'data-closed:translate-y-full',
+              'motion-safe:transition-transform motion-safe:duration-base',
+              'motion-safe:ease-enter motion-safe:data-closed:ease-exit',
               className,
             )}
           >

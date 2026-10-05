@@ -152,10 +152,9 @@ export function ExperienceDetailRoute() {
 
   /* Both fades share one transition. `motion-reduce` makes them a cut for
    * anyone who has asked for less movement: the bar still changes, it just
-   * does not animate. Hardcoded duration until the Motion primitives are
-   * bridged in theme.css. */
+   * does not animate. Standard easing, because it goes both ways. */
   const fade = cn(
-    'transition-opacity duration-200 motion-reduce:transition-none',
+    'transition-opacity duration-base ease-standard motion-reduce:transition-none',
     condensed ? 'opacity-100' : 'opacity-0',
   )
 

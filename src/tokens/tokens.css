@@ -405,6 +405,7 @@
 
   /* Color/Action */
   --color-action-primary: var(--color-copper-400);
+  --color-action-secondary: var(--color-champagne-300);
   --color-action-inverse: var(--color-copper-100);
 
   /* Color/Feedback */

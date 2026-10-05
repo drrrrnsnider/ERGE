@@ -123,6 +123,12 @@
    * Not for text on a copper fill. Action/Inverse on Action/Primary is
    * 2.27:1 — that is why --primary-foreground is Text/Inverse, above. */
   --action-inverse: var(--color-action-inverse);
+  /* Action/Secondary — champagne used as ACTION colour rather than text: the
+   * flow button's glyph and the light that runs round its edge. The same
+   * champagne-300 as Text/Secondary today, and its own role for the same
+   * reason as Action/Inverse: the day the action ramp moves, the flow button
+   * moves with it, not with body copy. */
+  --action-secondary: var(--color-action-secondary);
 
   /* == Fade curve ========================================================
    * The alpha ramp both top-bar layers fade out along, as a mask.
@@ -255,6 +261,7 @@
   --color-border-subtle: var(--border-subtle);
   --color-disabled-foreground: var(--disabled-foreground);
   --color-action-inverse: var(--action-inverse);
+  --color-action-secondary: var(--action-secondary);
 
   /* == Type scale ========================================================
    * The Figma text styles, as utilities: `text-h2`, `text-body-sm`.
@@ -342,6 +349,42 @@
    * drop, so the words hold up on a bright picture as well as a dark one.
    * Cast in --background for the same reason as the shadows above. */
   --text-shadow-overlay: 0 0 8px var(--background);
+
+  /* == Motion ============================================================
+   * The Figma Motion scale as Tailwind utilities: `duration-fast`,
+   * `ease-enter`. Durations go through Tailwind's --transition-duration-*
+   * namespace and easings through --ease-*; tw-animate-css reads the same
+   * two values, so one pair of classes drives both a CSS transition and an
+   * `animate-in` entrance.
+   *
+   *   instant   0ms    fast  120ms   base  200ms   moderate  280ms
+   *   slow      400ms
+   *
+   *   standard  both ways — something that comes and goes in place
+   *   enter     decelerates — arriving on screen
+   *   exit      accelerates — leaving it
+   *
+   * Linear is not mapped: Tailwind's own `ease-linear` is already exactly
+   * that, and a second spelling would only be a choice to get wrong.
+   *
+   * The DEFAULTS are retuned too, which is what reaches the vendored shadcn
+   * components without editing them: a bare `transition-*` now runs at
+   * Motion/Duration/Fast on Motion/Easing/Standard rather than Tailwind's
+   * own 150ms. (The easing is the same curve as before; the duration moves
+   * from 150 to 120.)
+   *
+   * The numeric utilities — `duration-200` — still exist; Tailwind has no
+   * way to remove them. Use the names. */
+  --transition-duration-instant: var(--motion-duration-instant);
+  --transition-duration-fast: var(--motion-duration-fast);
+  --transition-duration-base: var(--motion-duration-base);
+  --transition-duration-moderate: var(--motion-duration-moderate);
+  --transition-duration-slow: var(--motion-duration-slow);
+  --ease-standard: var(--motion-easing-standard);
+  --ease-enter: var(--motion-easing-enter);
+  --ease-exit: var(--motion-easing-exit);
+  --default-transition-duration: var(--motion-duration-fast);
+  --default-transition-timing-function: var(--motion-easing-standard);
 
   /* Hands `leading-tight` and friends to Tailwind. These names are also
    * Tailwind's own, so its defaults are replaced rather than sitting

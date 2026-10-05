@@ -90,6 +90,15 @@ describe('non-text contrast (1.4.11, 3:1)', () => {
   )
 
   /**
+   * Action/Secondary is a GRAPHIC here, not text: the flow button's glyph
+   * and the light running round its edge. So 3:1, on every surface the
+   * button could land on.
+   */
+  it.each(SURFACES)('action-secondary on %s', (bg) => {
+    expect(contrast(token('action-secondary'), token(bg))).toBeGreaterThanOrEqual(3)
+  })
+
+  /**
    * Border/Subtle is deliberately absent, like Text/Disabled above. It is a
    * SEPARATOR — the line under the sticky results header — between things
    * that are already distinct by position and shadow, so 1.4.11 does not
@@ -137,6 +146,7 @@ describe('theme bridge', () => {
       'disabled-foreground',
       'border-subtle',
       'action-inverse',
+      'action-secondary',
       /* --border-subtle-focus is deliberately absent. It points at
        * Border/Subtle Focus, which is a color-mix() at 25% alpha, so it has
        * no flat hex and readSemantic() skips it by design — a translucent

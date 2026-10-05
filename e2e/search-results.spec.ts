@@ -256,6 +256,26 @@ test.describe('search results', () => {
   })
 
   /**
+   * Under reduced motion the sheet JUMPS rather than slides. It used to
+   * gate only the duration behind `motion-safe:`, so with reduced motion on
+   * it fell back to the default duration and slid anyway, while its comment
+   * said it jumped. Only the phone projects open a sheet — desktop gets a
+   * popover, which fades, and a fade moves nothing.
+   */
+  test('a sheet does not slide under reduced motion', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Desktop opens a popover, not a sheet.')
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+
+    await page.getByRole('button', { name: /Duration/ }).click()
+    const sheet = page.getByRole('dialog')
+    await expect(sheet).toBeVisible()
+    const moving = await sheet.evaluate((el) => getComputedStyle(el).transitionProperty)
+    expect(moving).not.toMatch(/transform|translate/)
+  })
+
+  /**
    * THE CEILING COMES FROM THE RESULTS. The budget track has to end at the
    * most expensive thing actually on offer, not at a number chosen in
    * advance — that is what `ceiling` in the response is for, and it is

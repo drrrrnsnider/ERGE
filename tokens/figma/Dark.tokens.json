@@ -452,6 +452,31 @@
           }
         }
       },
+      "Secondary": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.9215686321258545,
+            0.7686274647712708,
+            0.6039215922355652
+          ],
+          "alpha": 1,
+          "hex": "#EBC49A"
+        },
+        "$extensions": {
+          "com.figma.variableId": "VariableID:2345:4086",
+          "com.figma.scopes": [
+            "ALL_SCOPES"
+          ],
+          "com.figma.aliasData": {
+            "targetVariableId": "VariableID:0b03e730c4fe373b9172ac6895d454efd6423f31/-1:-1",
+            "targetVariableName": "Color/Champagne/300",
+            "targetVariableSetId": "VariableCollectionId:ab5230246aa095e4377e2f36d7b7c4d9e0121e03/-1:-1",
+            "targetVariableSetName": "Primitives"
+          }
+        }
+      },
       "Inverse": {
         "$type": "color",
         "$value": {

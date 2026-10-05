@@ -356,8 +356,10 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **79 unit tests** and **220 e2e** passing, 2 e2e skipped by
-design (the coarse-pointer size assertions do not apply to `desktop-chrome`).
+Current state: **82 unit tests** and **222 e2e** passing, 3 e2e skipped by
+design: the coarse-pointer size assertions do not apply to `desktop-chrome`,
+and neither does the sheet's reduced-motion test, because desktop opens a
+popover instead of a sheet.
 `npm run verify` exits 0. There are no known-failing tests — if something is
 red, you broke it.
 

@@ -151,7 +151,7 @@ export function SearchRoute() {
      *
      * `motion-safe` so it simply appears for anyone who has asked for less
      * movement; the animation is the flourish, arriving is the behaviour. */
-    <div className="flex flex-col gap-6 pb-6 motion-safe:animate-in motion-safe:slide-in-from-bottom-8 motion-safe:fade-in motion-safe:duration-300">
+    <div className="flex flex-col gap-6 pb-6 motion-safe:animate-in motion-safe:slide-in-from-bottom-8 motion-safe:fade-in motion-safe:duration-moderate motion-safe:ease-enter">
       <div className="flex flex-col gap-3 px-4 pt-2">
         <FieldPill
           leading={
