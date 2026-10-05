@@ -57,6 +57,8 @@ const TEXT_ON_FILL: ReadonlyArray<readonly [string, string]> = [
   // Text/Inverse, not Action/Inverse. Action/Inverse here would be 2.27:1.
   ['text-inverse', 'action-primary'],
   ['text-inverse', 'feedback-error'],
+  // A picked date under the pointer: the day number on Action/Secondary.
+  ['text-inverse', 'action-secondary'],
 ]
 
 describe('text contrast (1.4.3, 4.5:1)', () => {

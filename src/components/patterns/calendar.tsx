@@ -117,12 +117,19 @@ export function Calendar({
          * rather than a continuous band.
          *
          * `[&_button]:` reaches the day button from the cell, which is where
-         * the range state lands. */
+         * the range state lands.
+         *
+         * THE ENDS HAVE THEIR OWN HOVER, Action/Secondary. Without it the day
+         * button's general `hover:bg-card` won — a pseudo-class outranks the
+         * ends' plain fill — and a picked date went dark under the pointer,
+         * dark text on a dark circle, all but vanishing. `hover:` keeps
+         * Tailwind's (hover: hover) gate, so a phone does not keep the
+         * champagne lit after the tap that picked it. */
         range_start:
-          'rounded-l-full bg-primary/15 [&_button]:bg-primary [&_button]:font-semibold [&_button]:text-primary-foreground',
+          'rounded-l-full bg-primary/15 [&_button]:bg-primary [&_button]:font-semibold [&_button]:text-primary-foreground [&_button]:hover:bg-action-secondary',
         range_middle: 'bg-primary/15',
         range_end:
-          'rounded-r-full bg-primary/15 [&_button]:bg-primary [&_button]:font-semibold [&_button]:text-primary-foreground',
+          'rounded-r-full bg-primary/15 [&_button]:bg-primary [&_button]:font-semibold [&_button]:text-primary-foreground [&_button]:hover:bg-action-secondary',
         selected: '',
       }}
     />

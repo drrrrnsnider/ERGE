@@ -208,6 +208,48 @@ test.describe('the search takeover', () => {
   })
 
   /**
+   * A picked date under the pointer turns Action/Secondary. It used to turn
+   * DARK: the day button's general `hover:bg-card` outranked the range
+   * end's copper fill, leaving dark text on a dark circle. Compared against
+   * the role resolved in the page, so no colour is written here.
+   *
+   * Only where the device can hover. On the touch projects the same hover
+   * must change nothing, or the champagne would stay lit after the tap.
+   */
+  test('a picked date turns Action/Secondary under the pointer', async ({
+    page,
+  }) => {
+    await page.goto('/search')
+    await page.locator('[data-slot="field-action"][data-tone="muted"]').click()
+    const picker = page.getByRole('dialog')
+    await expect(picker).toBeVisible()
+
+    const pickable = picker.locator('table button:not([disabled])')
+    await pickable.nth(1).click()
+    await pickable.nth(4).click()
+    const start = picker.getByRole('button', { name: /, selected$/ }).first()
+    await expect(start).toBeVisible()
+
+    const fill = () =>
+      start.evaluate((el) => {
+        const probe = document.createElement('span')
+        probe.style.color = 'var(--action-secondary)'
+        document.body.appendChild(probe)
+        const champagne = getComputedStyle(probe).color
+        probe.remove()
+        return {
+          isChampagne: getComputedStyle(el).backgroundColor === champagne,
+          canHover: matchMedia('(hover: hover)').matches,
+        }
+      })
+
+    expect((await fill()).isChampagne).toBe(false)
+    await start.hover()
+    const hovered = await fill()
+    expect(hovered.isChampagne).toBe(hovered.canHover)
+  })
+
+  /**
    * The budget track must not rescale itself as you use it.
    *
    * Its end used to be `Math.max(CEILING, currentMax)`, so dragging the upper
