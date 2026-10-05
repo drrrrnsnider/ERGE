@@ -172,6 +172,83 @@ test.describe('search results', () => {
   })
 
   /**
+   * The categories and filters pin BELOW the summary bar once the sheet
+   * reaches the top. They used to pin to the top of the screen, where the
+   * bar floats over them, so the whole header vanished at exactly the moment
+   * it was meant to stay put.
+   *
+   * Hit-testing rather than comparing rectangles: what matters is that a
+   * tap on "All" reaches "All", and a rectangle can be in the right place
+   * while something else sits on top of it.
+   */
+  test('pins the filters below the summary bar, not under it', async ({
+    page,
+  }) => {
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+
+    await page
+      .locator(cards)
+      .last()
+      .evaluate((card) => card.scrollIntoView({ block: 'end' }))
+
+    const all = page.getByRole('button', { name: 'All', exact: true })
+    await expect(all).toBeInViewport()
+    const reached = await all.evaluate((button) => {
+      const r = button.getBoundingClientRect()
+      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
+      return hit !== null && button.contains(hit)
+    })
+    expect(reached).toBe(true)
+  })
+
+  /**
+   * WCAG 2.4.11 against the pinned header. Tabbing backwards up the list,
+   * the browser scrolls each control just into view — and without
+   * `scroll-padding-top` "into view" means the top edge of the scroller,
+   * which is under a 116px opaque header. Measured before the fix: 7 of 24
+   * controls fully hidden.
+   *
+   * `focus()` rather than Shift+Tab, because WebKit leaves links out of the
+   * Tab order without macOS keyboard navigation (see the skip-link test) —
+   * and the scroll-into-view this is testing is the same either way.
+   */
+  test('a control focused while tabbing backwards is not hidden under the filters', async ({
+    page,
+  }) => {
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+
+    const obscured = await page
+      .getByRole('group', { name: 'Category' })
+      .evaluate(async (group) => {
+        const header = group.parentElement!
+        const scroller = header.closest('.overflow-y-auto')!
+        scroller.scrollTop = scroller.scrollHeight
+
+        const controls = [
+          ...scroller.querySelectorAll<HTMLElement>('a[href], button'),
+        ].filter((el) => !header.contains(el))
+
+        const hidden: string[] = []
+        for (const el of controls.reverse()) {
+          el.focus()
+          await new Promise((done) =>
+            requestAnimationFrame(() => requestAnimationFrame(done)),
+          )
+          const r = el.getBoundingClientRect()
+          const h = header.getBoundingClientRect()
+          if (r.top < h.bottom && r.bottom > h.top) {
+            hidden.push(el.getAttribute('aria-label') ?? el.textContent ?? '')
+          }
+        }
+        return hidden
+      })
+
+    expect(obscured).toEqual([])
+  })
+
+  /**
    * The map is decoration standing in for a provider that has not been
    * chosen. It must stay out of the accessibility tree and out of the tab
    * order — every result it represents is real text in the list below.

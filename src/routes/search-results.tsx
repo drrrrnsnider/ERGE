@@ -24,6 +24,7 @@ import { ErrorState } from '@/components/patterns/error-state'
 import { FieldAction } from '@/components/patterns/field-action'
 import { FieldPill } from '@/components/patterns/field-pill'
 import { TabTextBar, type TabTextItem } from '@/components/patterns/tab-text-bar'
+import { TopScrim } from '@/components/patterns/top-scrim'
 import { getSearchResults } from '@/lib/api/search'
 import { toApiError } from '@/lib/api/schemas/error'
 import {
@@ -142,8 +143,20 @@ export function SearchResultsRoute() {
 
       {/* The summary bar floats over the map, above the sheet. It is the one
         * piece of chrome this screen keeps — see the takeover for why the
-        * app's own top bar is gone. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-2">
+        * app's own top bar is gone.
+        *
+        * EXACTLY 4rem TALL, and that is load-bearing: pt-2 + the pill's h-12
+        * + pb-2. The scroller below starts at `top-16` — the same 4rem — so
+        * the two have to move together, which is why they are written within
+        * sight of each other.
+        *
+        * The scrim is the design's `top bar gradient + blur`, and over a
+        * real map it is what keeps the pill and the status bar legible. It
+        * is NOT holding back scrolled content: the scroller is clipped below
+        * this bar, so nothing passes behind it. Today's map placeholder is
+        * dark enough that the scrim is hard to see doing its job. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-2 pb-2">
+        <TopScrim />
         <FieldPill
           className="pointer-events-auto"
           leading={
@@ -184,20 +197,59 @@ export function SearchResultsRoute() {
         </FieldPill>
       </div>
 
-      {/* The scroller. `inset-0` over the map, with a transparent spacer
-        * pushing the sheet down so the map shows through until you scroll. */}
-      <div className="absolute inset-0 overflow-y-auto">
-        <div aria-hidden="true" className="h-64 shrink-0" />
+      {/* The scroller. It STARTS BELOW THE SEARCH BAR rather than at the
+        * top of the screen, which is the design's shape — its scroll area is
+        * a frame beginning at y=118, just under the pill.
+        *
+        * That clip is what makes the sheet header pin correctly, and it is
+        * why the header below can say `top-0` and mean it. The alternative,
+        * leaving this `inset-0` and pushing the header down to `top-16`,
+        * was tried and photographed: it leaves an 8px band between the
+        * pill's bottom edge and the header where cards scroll past in full
+        * view, and that band is exactly where the scrim's downward fade has
+        * run out. Clipping removes the strip rather than trying to cover it.
+        *
+        * The spacer is transparent, so the map shows through until you
+        * scroll. It is 4rem shorter than the bar is tall, which keeps the
+        * sheet's resting edge where it was before the clip moved everything
+        * down — it is a view onto the map, not a measurement of anything.
+        *
+        * `scroll-pt-29` is the sheet header's height, 116px — the same as
+        * the design's `sticky` frame. Without it the browser treats the
+        * scrollport's top edge as visible, so a control focused while tabbing
+        * BACKWARDS was scrolled to exactly there and sat under the opaque
+        * header: measured, 7 of 24 were fully hidden (WCAG 2.4.11). It is a
+        * measurement of the header's contents, so it will go stale if they
+        * change — the e2e test that tabs backwards is what notices. */}
+      <div className="absolute inset-x-0 top-16 bottom-0 overflow-y-auto scroll-pt-29">
+        <div aria-hidden="true" className="h-48 shrink-0" />
 
         <div className="min-h-full rounded-t-lg bg-background pb-8">
           {/* Sticky, so the categories and filters stay reachable however
-            * far down the list you are. */}
-          <div className="sticky top-0 z-10 flex flex-col gap-2 rounded-t-lg bg-background pt-2 pb-2">
+            * far down the list you are.
+            *
+            * `top-0` is the top of the SCROLLPORT, and the scrollport now
+            * begins below the search bar — so this pins under the pill, as
+            * the design draws it. It used to be the top of the screen, where
+            * the pill floats on z-20, so the handle, the categories and the
+            * chips slid underneath it and vanished the moment the sheet
+            * reached the top. */}
+          {/* Figma 2340:3676. `shadow-lift` is the frame's 0 4 24 at 50%,
+            * and it is what lifts the header off the cards scrolling under
+            * it — the background alone is the same Surface/Base as the
+            * sheet, so without it the two read as one surface.
+            *
+            * The spacing is the frame's, and it is uneven on purpose: the
+            * handle sits directly on the categories, and the categories
+            * carry 16px under them before the chips. Still 116px in all,
+            * which is what `scroll-pt-29` on the scroller is measuring. */}
+          <div className="sticky top-0 z-10 flex flex-col rounded-t-lg bg-background py-2 shadow-lift">
             {/* Purely a handle-shaped affordance: the sheet is scrolled, not
-              * dragged, so there is nothing here to operate. */}
+              * dragged, so there is nothing here to operate. Text/Disabled at
+              * half strength, as drawn — a grip, not a separator. */}
             <span
               aria-hidden="true"
-              className="mx-auto h-1 w-10 shrink-0 rounded-full bg-border"
+              className="mx-auto h-1 w-10 shrink-0 rounded-full bg-disabled-foreground/50"
             />
 
             <TabTextBar
@@ -205,6 +257,7 @@ export function SearchResultsRoute() {
               items={CATEGORIES}
               value={category}
               onChange={setCategory}
+              className="pb-4"
             />
 
             <SearchFilterRow
