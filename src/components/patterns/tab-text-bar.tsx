@@ -3,8 +3,10 @@ import { cn } from '@/lib/utils'
 /**
  * `Tab Text Bar` — the category row across the top of the results sheet.
  *
- * Figma 177:7050. A horizontally scrolling row of 48px items: a 20px glyph
- * and a label, with a rule under the selected one. Selected is Action/Inverse
+ * Figma 177:7050, items from `.Tab Text` (177:6938). A horizontally
+ * scrolling row of 48px items: a 14px glyph 4px from its label, 6px of
+ * padding either side, and a 1px square rule under the selected one that
+ * runs the full padded width — not just under the words. Selected is Action/Inverse
  * and the rest are Text/Muted; the type is Heading/H5 throughout, so only the
  * colour and the rule change.
  *
@@ -75,24 +77,27 @@ export function TabTextBar({
              * full 44px target — `data-target="compact"` is for the chips
              * below, which are secondary to it. */
             className={cn(
-              'flex h-12 shrink-0 flex-col items-center justify-between whitespace-nowrap',
+              'flex h-12 shrink-0 items-stretch justify-center whitespace-nowrap',
               on ? 'text-foreground' : 'text-muted-foreground',
             )}
           >
-            <span className="flex flex-1 items-center gap-1.5 text-h5 font-medium">
-              {Icon ? <Icon className="size-5 shrink-0" aria-hidden="true" /> : null}
+            {/* THE RULE IS ON THIS SPAN, NOT THE BUTTON. On a phone the
+              * coarse-pointer floor widens a short item like "All" to 44px,
+              * and a rule on the button would stretch with it — 44px of
+              * underline where the design draws 31. Here the button is the
+              * target and this is the drawing, so each gets its own width.
+              *
+              * The border is always there and only coloured when selected,
+              * so the labels do not shift by 1px as you move between them. */}
+            <span
+              className={cn(
+                'flex items-center gap-1 border-b px-1.5 text-h5 font-medium',
+                on ? 'border-current' : 'border-transparent',
+              )}
+            >
+              {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden="true" /> : null}
               {item.label}
             </span>
-            {/* The rule is always in the layout and only painted when
-              * selected, so the labels do not shift by 2px as you move
-              * between them. */}
-            <span
-              aria-hidden="true"
-              className={cn(
-                'h-0.5 w-full rounded-full',
-                on ? 'bg-foreground' : 'bg-transparent',
-              )}
-            />
           </button>
         )
       })}

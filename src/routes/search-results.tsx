@@ -66,7 +66,10 @@ const CATEGORIES: readonly TabTextItem[] = [
   { id: 'gifts', label: 'Gifts', icon: LocalMall },
   { id: 'tours', label: 'Tours', icon: AccountBalance },
   { id: 'sports', label: 'Sports', icon: RewardedAds },
-  { id: 'spa', label: 'Spa', icon: Spa },
+  /* Labelled Wellness, as the design has it, while the id stays `spa`:
+   * the id is the API's category and the `?category=` value, and renaming
+   * it would break every link already made with it. */
+  { id: 'spa', label: 'Wellness', icon: Spa },
 ]
 
 /* Wide enough not to hide anything. The real ceiling comes back with the
