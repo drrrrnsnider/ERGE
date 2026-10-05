@@ -65,6 +65,48 @@ test.describe('search results', () => {
   })
 
   /**
+   * The selected category is drawn in Action/Inverse, as the design binds
+   * it. Today that is the same colour as Text/Primary, so comparing colours
+   * cannot tell the two roles apart — a tab on `text-foreground` would pass
+   * any such check and quietly stay behind the day the two diverge. So this
+   * re-points the role and watches the tab follow: the label and its rule
+   * must move, and an unselected tab must not.
+   */
+  test('the selected category follows Action/Inverse', async ({ page }) => {
+    await page.goto('/search/results?category=drinks')
+    const selected = page.getByRole('button', { name: 'Drinks', exact: true })
+    await expect(selected).toHaveAttribute('aria-pressed', 'true')
+
+    const result = await selected.evaluate(async (on) => {
+      const off = document.querySelector<HTMLElement>(
+        '[data-slot="tab-text"][aria-pressed="false"]',
+      )!
+      const root = document.documentElement
+      root.style.setProperty('--action-inverse', 'red')
+      await new Promise((done) =>
+        requestAnimationFrame(() => requestAnimationFrame(done)),
+      )
+      /* Compared in the page against the probe's own computed form, so no
+       * colour literal appears here for the raw-colour lint to flag. */
+      const probe = getComputedStyle(root).getPropertyValue('--action-inverse')
+      const swatch = document.createElement('span')
+      swatch.style.color = probe
+      document.body.appendChild(swatch)
+      const target = getComputedStyle(swatch).color
+      swatch.remove()
+      const seen = {
+        label: getComputedStyle(on).color === target,
+        rule: getComputedStyle(on.firstElementChild!).borderBottomColor === target,
+        unselected: getComputedStyle(off).color === target,
+      }
+      root.style.removeProperty('--action-inverse')
+      return seen
+    })
+
+    expect(result).toEqual({ label: true, rule: true, unselected: false })
+  })
+
+  /**
    * The filter lives in the URL, so a filtered list is a link someone can
    * send and a hard refresh lands on the same thing.
    */

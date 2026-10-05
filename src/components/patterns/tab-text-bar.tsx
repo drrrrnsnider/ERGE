@@ -78,7 +78,11 @@ export function TabTextBar({
              * below, which are secondary to it. */
             className={cn(
               'flex h-12 shrink-0 items-stretch justify-center whitespace-nowrap',
-              on ? 'text-foreground' : 'text-muted-foreground',
+              /* Action/Inverse when selected, as the design binds it — not
+               * Text/Primary, which is the same colour today but a different
+               * decision. The glyph and the rule are currentColor, so all
+               * three follow. */
+              on ? 'text-action-inverse' : 'text-muted-foreground',
             )}
           >
             {/* THE RULE IS ON THIS SPAN, NOT THE BUTTON. On a phone the

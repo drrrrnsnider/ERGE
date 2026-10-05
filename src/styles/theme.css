@@ -114,6 +114,15 @@
    * the contrast matrix by WCAG 1.4.3: inactive controls are meant to read as
    * unavailable. */
   --disabled-foreground: var(--color-text-disabled);
+  /* Action/Inverse — the selected category tab's label, glyph and rule
+   * (Figma 177:6939). The same copper-100 as Text/Primary today, which is
+   * exactly why it is its own role: the design binds the selected tab to
+   * the ACTION ramp, and the day Action/Inverse moves, the tab should move
+   * with it rather than stay behind with body text.
+   *
+   * Not for text on a copper fill. Action/Inverse on Action/Primary is
+   * 2.27:1 — that is why --primary-foreground is Text/Inverse, above. */
+  --action-inverse: var(--color-action-inverse);
 
   /* == Fade curve ========================================================
    * The alpha ramp both top-bar layers fade out along, as a mask.
@@ -245,6 +254,7 @@
   --color-border-subtle-focus: var(--border-subtle-focus);
   --color-border-subtle: var(--border-subtle);
   --color-disabled-foreground: var(--disabled-foreground);
+  --color-action-inverse: var(--action-inverse);
 
   /* == Type scale ========================================================
    * The Figma text styles, as utilities: `text-h2`, `text-body-sm`.

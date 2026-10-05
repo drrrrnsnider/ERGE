@@ -41,7 +41,15 @@ const SURFACES = ['surface-base', 'surface-card', 'surface-elevated'] as const
  * text is supposed to read as unavailable. Do not "fix" it by darkening a
  * surface or lightening the token.
  */
-const BODY_TEXT = ['text-primary', 'text-secondary', 'text-muted'] as const
+const BODY_TEXT = [
+  'text-primary',
+  'text-secondary',
+  'text-muted',
+  /* Not a Text/* token, but it is set as text: the selected category tab's
+   * label. Tested on all three surfaces like the rest, though the tab bar
+   * only ever sits on Base. */
+  'action-inverse',
+] as const
 
 /** Fills that carry text on top of them, rather than sitting on a surface. */
 const TEXT_ON_FILL: ReadonlyArray<readonly [string, string]> = [
@@ -128,6 +136,7 @@ describe('theme bridge', () => {
       'emphasis',
       'disabled-foreground',
       'border-subtle',
+      'action-inverse',
       /* --border-subtle-focus is deliberately absent. It points at
        * Border/Subtle Focus, which is a color-mix() at 25% alpha, so it has
        * no flat hex and readSemantic() skips it by design — a translucent
