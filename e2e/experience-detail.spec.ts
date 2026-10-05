@@ -290,4 +290,29 @@ test.describe('experience detail', () => {
     })
     expect(hidden).toEqual([])
   })
+
+  /**
+   * The price is set in Ovo (Display/Medium). `text-display-md` sets only
+   * the size, so it needs `font-serif` beside it — and the price shipped
+   * without, rendering in Outfit until a font audit caught it. Ovo was not
+   * even downloaded on this page.
+   *
+   * Two checks, because either alone can pass falsely: the family names Ovo,
+   * AND the face actually loaded, so a stylesheet asking for Ovo while the
+   * browser quietly falls back to a system serif fails too.
+   */
+  test('the price is set in Ovo', async ({ page }) => {
+    await page.goto(PICNIC)
+    const price = page.getByText('$45', { exact: true })
+    await expect(price).toBeVisible()
+
+    const font = await price.evaluate(async (el) => {
+      await document.fonts.ready
+      return {
+        family: getComputedStyle(el).fontFamily.split(',')[0]?.trim().replace(/['"]/g, ''),
+        loaded: [...document.fonts].some((f) => f.family.replace(/['"]/g, '') === 'Ovo' && f.status === 'loaded'),
+      }
+    })
+    expect(font).toEqual({ family: 'Ovo', loaded: true })
+  })
 })

@@ -279,6 +279,11 @@
    *   body-sm     Outfit Regular  13
    *   body-xs     Outfit Regular  12
    *
+   * display-md is the one in Ovo, and the size utility does not carry the
+   * family: it needs `font-serif` beside it. The detail screen's price
+   * shipped without it and rendered in Outfit, unnoticed, until a font
+   * audit — anything new in display-md needs both classes.
+   *
    * Use these instead of Tailwind's text-sm / text-lg, which are a different
    * scale and only coincide by accident. */
   --text-display-md: 32px;
@@ -295,6 +300,10 @@
    * is part of the style rather than the size, so it is applied alongside as
    * `uppercase tracking-[0.08em]`. */
   --text-section-xxs: 11px;
+  /* Section/XSmall — a card's section heading, "What's Included" on the
+   * detail screen. SemiBold 12, and the same uppercase and 8% tracking as
+   * XXSmall: `font-semibold uppercase tracking-[0.08em]`. */
+  --text-section-xs: 12px;
 
   /* == Elevation =========================================================
    * The design's four drop shadows, as utilities. Figma exports effects as

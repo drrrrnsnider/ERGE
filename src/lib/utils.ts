@@ -39,6 +39,7 @@ const FONT_SIZES = [
   'body-sm',
   'body-xs',
   'section-xxs',
+  'section-xs',
 ]
 
 const twMerge = extendTailwindMerge({

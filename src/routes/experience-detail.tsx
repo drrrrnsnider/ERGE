@@ -209,7 +209,10 @@ function Detail({
   titleRef: RefObject<HTMLHeadingElement | null>
 }) {
   const duration = experience.details.find((d) => d.label === 'Duration')?.value
-  const metaLine = [experience.location.address, duration].filter(Boolean).join(' • ')
+  /* Two spaces either side of the bullet, as the design sets it. The
+   * paragraph is `whitespace-pre-wrap` so the browser keeps them rather than
+   * collapsing them to one, and can still wrap a long address. */
+  const metaLine = [experience.location.address, duration].filter(Boolean).join('  •  ')
   const price = priceLowBound(experience.price)
   const hero = experience.images[0]
   /* The strip under the hero is the REST of the gallery, so it starts at 1.
@@ -291,9 +294,9 @@ function Detail({
           <h1 ref={titleRef} className="text-h2 font-semibold text-foreground">
             {experience.title}
           </h1>
-          <p className="text-body-md text-muted-foreground">{metaLine}</p>
+          <p className="text-body-md whitespace-pre-wrap text-muted-foreground">{metaLine}</p>
           {experience.description ? (
-            <p className="text-body-md text-muted-foreground">
+            <p className="text-body-lg text-emphasis">
               {experience.description}
             </p>
           ) : null}
@@ -301,11 +304,14 @@ function Detail({
 
         <div className="flex flex-col gap-4">
           <p className="flex items-baseline gap-2">
-            <span className="text-display-md text-emphasis">
+            {/* Ovo — display-md is the serif, and the size utility does not
+              * set the family, so `font-serif` has to be here too. This
+              * rendered in Outfit until the fonts were audited. */}
+            <span className="font-serif text-display-md leading-tight text-primary">
               {formatMoney(price)}
             </span>
             {experience.price.unit ? (
-              <span className="text-body-lg text-muted-foreground">
+              <span className="text-body-lg text-emphasis">
                 per {experience.price.unit}
               </span>
             ) : null}
@@ -339,7 +345,7 @@ function Detail({
           >
             <h2
               id="included"
-              className="py-2 text-section-xxs tracking-[0.08em] text-muted-foreground uppercase"
+              className="py-2 text-section-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"
             >
               What&rsquo;s Included
             </h2>
@@ -348,7 +354,7 @@ function Detail({
                 <li
                   key={item}
                   className={cn(
-                    'flex items-center gap-2 py-2 text-body-md text-foreground',
+                    'flex items-center gap-2 py-2 text-body-lg text-foreground',
                     /* Hairlines BETWEEN rows, not under every one — a rule
                      * under the last would read as the card being cut off
                      * rather than as a separator. */
@@ -399,7 +405,8 @@ function CompleteTheExperience({ experience }: { experience: Experience }) {
 
   const to = conciergeFor(experience.experienceId)
   const heading = (
-    <h2 id="complete" className="w-full text-h3 font-semibold text-foreground">
+    /* Heading/H3, which is Medium — see the type scale in theme.css. */
+    <h2 id="complete" className="w-full text-h3 font-medium text-foreground">
       Complete the Experience
     </h2>
   )
