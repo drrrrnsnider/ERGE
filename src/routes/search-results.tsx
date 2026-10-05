@@ -217,14 +217,26 @@ export function SearchResultsRoute() {
         * sheet's resting edge where it was before the clip moved everything
         * down — it is a view onto the map, not a measurement of anything.
         *
-        * `scroll-pt-29` is the sheet header's height, 116px — the same as
-        * the design's `sticky` frame. Without it the browser treats the
-        * scrollport's top edge as visible, so a control focused while tabbing
-        * BACKWARDS was scrolled to exactly there and sat under the opaque
-        * header: measured, 7 of 24 were fully hidden (WCAG 2.4.11). It is a
+        * The scroll padding is the sheet header's height: 116px, the design's
+        * `sticky` frame, plus its 1px bottom border. Figma draws that stroke
+        * inside the frame without adding height; CSS adds it, hence the
+        * `+1px`. Without the padding the browser treats the scrollport's top
+        * edge as visible, so a control focused while tabbing BACKWARDS was
+        * scrolled to exactly there and sat under the opaque header:
+        * measured, 7 of 24 were fully hidden (WCAG 2.4.11). It is a
         * measurement of the header's contents, so it will go stale if they
-        * change — the e2e test that tabs backwards is what notices. */}
-      <div className="absolute inset-x-0 top-16 bottom-0 overflow-y-auto scroll-pt-29">
+        * change — the e2e test that tabs backwards is what notices. It
+        * cannot see the border's single pixel, though: it passes with or
+        * without the `+1px`, which is there because it is the geometry,
+        * not because a test demanded it.
+        *
+        * ROUNDED, to the header's own radius. A scrolling box clips its
+        * content to its rounded edge, so cards passing under the pinned
+        * header are cropped to its corners instead of showing through the
+        * gaps beside them — the sheet keeps its shape all the way up. At
+        * rest the corners only clip the transparent window onto the map,
+        * which shows the same thing either way. */}
+      <div className="absolute inset-x-0 top-16 bottom-0 overflow-y-auto rounded-t-lg scroll-pt-[calc(--spacing(29)+1px)]">
         <div aria-hidden="true" className="h-48 shrink-0" />
 
         <div className="min-h-full rounded-t-lg bg-background pb-8">
@@ -245,8 +257,9 @@ export function SearchResultsRoute() {
             * The spacing is the frame's, and it is uneven on purpose: the
             * handle sits directly on the categories, and the categories
             * carry 16px under them before the chips. Still 116px in all,
-            * which is what `scroll-pt-29` on the scroller is measuring. */}
-          <div className="sticky top-0 z-10 flex flex-col rounded-t-lg bg-background py-2 shadow-lift">
+            * plus the 1px border, which is what the scroller's scroll padding
+            * is measuring. */}
+          <div className="sticky top-0 z-10 flex flex-col rounded-t-lg border-b border-border-subtle bg-background py-2 shadow-lift">
             {/* Purely a handle-shaped affordance: the sheet is scrolled, not
               * dragged, so there is nothing here to operate. Text/Disabled at
               * half strength, as drawn — a grip, not a separator. */}

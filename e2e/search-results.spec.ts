@@ -269,6 +269,58 @@ test.describe('search results', () => {
   })
 
   /**
+   * The pinned header keeps its rounded top corners, and what scrolls under
+   * it is cropped to them. The header was always rounded, but the cards
+   * behind it showed through the gaps beside each curve, so the corners
+   * read as notches rather than as the edge of a sheet. The scroller is now
+   * rounded to the same radius and clips its content there.
+   *
+   * PIXELS, NOT HIT-TESTING. The first version of this asked
+   * `elementFromPoint` what was in the corner, and WebKit failed it with
+   * the fix in place: it draws the curve correctly — photographed — but
+   * hit-tests as if the box were square. So this photographs a 2px square
+   * just inside the top-left corner, outside the curve, then hides the
+   * scroller and photographs it again. The two match only if the corner was
+   * already showing what is behind the sheet. Left corner only: the right
+   * one is where a scrollbar sits, and the clip is one rule for both.
+   */
+  test('the pinned header keeps its rounded corners and crops what passes under', async ({
+    page,
+  }) => {
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+
+    const scroller = page
+      .getByRole('group', { name: 'Category' })
+      .locator('xpath=ancestor::div[contains(@class, "overflow-y-auto")][1]')
+    const settle = () =>
+      page.evaluate(
+        () =>
+          new Promise((done) =>
+            requestAnimationFrame(() => requestAnimationFrame(done)),
+          ),
+      )
+
+    // Well past the pin, so cards are passing under the header.
+    await scroller.evaluate((el) => {
+      el.scrollTop = 900
+    })
+    await settle()
+
+    const box = (await scroller.boundingBox())!
+    const corner = { x: box.x + 1, y: box.y + 1, width: 2, height: 2 }
+    const shown = await page.screenshot({ clip: corner })
+
+    await scroller.evaluate((el) => {
+      el.style.visibility = 'hidden'
+    })
+    await settle()
+    const behind = await page.screenshot({ clip: corner })
+
+    expect(shown.equals(behind)).toBe(true)
+  })
+
+  /**
    * Whatever is floating on a card — the save heart, the Elite badge —
    * passes BEHIND the pinned header, not over it. Both sit at z-10 inside the
    * card, the same as the header, and they used to win because the cards come
