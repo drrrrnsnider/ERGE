@@ -396,21 +396,50 @@ export function TabProfileFilled(props: IconProps) {
 /**
  * The four-pointed star, outline — the Concierge tab at rest.
  *
- * Two paths, not one: the glyph plus a radial highlight in Text/Secondary
- * fading to nothing, which is how the file draws it.
+ * Two layers, as the file draws it: the glyph, and a radial highlight in
+ * Text/Secondary fading to nothing.
+ *
+ * THE HIGHLIGHT TURNS, once round the icon every 9s (`glint-orbit` in
+ * theme.css). A gradient's position is an SVG attribute, which CSS cannot
+ * animate, so the highlight is not painted on the outline directly any
+ * more. It fills a square larger than the icon, the square is MASKED to the
+ * star's outline so it shows only where the line is, and it is the square
+ * that rotates about the centre — the mask stays still, so the shape never
+ * moves and only the bright spot slides round it. At rest (and under
+ * reduced motion) it sits exactly where the design puts it.
+ *
+ * The square is 36 wide, centred on the 24 box, so no corner of the view
+ * comes uncovered as it turns. `fill-box` makes the rotation's centre the
+ * square's own centre, which is the icon's.
  */
+const CONCIERGE_STAR = 'M12.0186 3.75488C12.1842 4.21363 12.3841 4.67428 12.6191 5.13574V5.13672L12.623 5.14355C13.1318 6.12321 13.7775 7.05712 14.5547 7.94531C14.5595 7.95081 14.5644 7.95653 14.5693 7.96191C15.3637 8.83014 16.2496 9.61341 17.2246 10.3125L17.2285 10.3154C18.2328 11.0273 19.2636 11.5827 20.3193 11.9727C19.7263 12.1969 19.1301 12.4816 18.5322 12.8262L18.5254 12.8301C17.5867 13.3803 16.7056 14.0219 15.8828 14.7539L15.5342 15.0732C14.7278 15.8161 14.0379 16.6028 13.4717 17.4355L13.2363 17.7969C12.7223 18.6171 12.3152 19.427 12.0225 20.2236C11.7919 19.6044 11.4931 18.9749 11.126 18.3379L10.8164 17.8232C9.9221 16.3787 8.66526 15.0674 7.07715 13.8809C5.96195 13.0386 4.82584 12.3963 3.66992 11.9678C4.75661 11.5702 5.80555 11.0207 6.81445 10.3223L6.81641 10.3203C8.28337 9.29895 9.51562 8.06844 10.5059 6.62988L10.5078 6.62695C11.1566 5.6778 11.6628 4.71984 12.0186 3.75488Z'
+
 export function TabConcierge(props: IconProps) {
-  const id = useId()
+  const gradient = useId()
+  const outline = useId()
   return (
     <Svg viewBox="0 0 24 24" {...props}>
       <defs>
-        <radialGradient id={id} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12.75 2) rotate(45) scale(13.435 8.3118)">
+        <radialGradient id={gradient} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12.75 2) rotate(45) scale(13.435 8.3118)">
           <stop stopColor="var(--emphasis)" />
           <stop offset="1" stopColor="var(--emphasis)" stopOpacity="0" />
         </radialGradient>
+        <mask id={outline} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+          <path stroke="white" strokeWidth="2" d={CONCIERGE_STAR} />
+        </mask>
       </defs>
-      <path stroke="currentColor" strokeWidth="2" d="M12.0186 3.75488C12.1842 4.21363 12.3841 4.67428 12.6191 5.13574V5.13672L12.623 5.14355C13.1318 6.12321 13.7775 7.05712 14.5547 7.94531C14.5595 7.95081 14.5644 7.95653 14.5693 7.96191C15.3637 8.83014 16.2496 9.61341 17.2246 10.3125L17.2285 10.3154C18.2328 11.0273 19.2636 11.5827 20.3193 11.9727C19.7263 12.1969 19.1301 12.4816 18.5322 12.8262L18.5254 12.8301C17.5867 13.3803 16.7056 14.0219 15.8828 14.7539L15.5342 15.0732C14.7278 15.8161 14.0379 16.6028 13.4717 17.4355L13.2363 17.7969C12.7223 18.6171 12.3152 19.427 12.0225 20.2236C11.7919 19.6044 11.4931 18.9749 11.126 18.3379L10.8164 17.8232C9.9221 16.3787 8.66526 15.0674 7.07715 13.8809C5.96195 13.0386 4.82584 12.3963 3.66992 11.9678C4.75661 11.5702 5.80555 11.0207 6.81445 10.3223L6.81641 10.3203C8.28337 9.29895 9.51562 8.06844 10.5059 6.62988L10.5078 6.62695C11.1566 5.6778 11.6628 4.71984 12.0186 3.75488Z" />
-      <path stroke={`url(#${id})`} strokeWidth="2" d="M12.0186 3.75488C12.1842 4.21363 12.3841 4.67428 12.6191 5.13574V5.13672L12.623 5.14355C13.1318 6.12321 13.7775 7.05712 14.5547 7.94531C14.5595 7.95081 14.5644 7.95653 14.5693 7.96191C15.3637 8.83014 16.2496 9.61341 17.2246 10.3125L17.2285 10.3154C18.2328 11.0273 19.2636 11.5827 20.3193 11.9727C19.7263 12.1969 19.1301 12.4816 18.5322 12.8262L18.5254 12.8301C17.5867 13.3803 16.7056 14.0219 15.8828 14.7539L15.5342 15.0732C14.7278 15.8161 14.0379 16.6028 13.4717 17.4355L13.2363 17.7969C12.7223 18.6171 12.3152 19.427 12.0225 20.2236C11.7919 19.6044 11.4931 18.9749 11.126 18.3379L10.8164 17.8232C9.9221 16.3787 8.66526 15.0674 7.07715 13.8809C5.96195 13.0386 4.82584 12.3963 3.66992 11.9678C4.75661 11.5702 5.80555 11.0207 6.81445 10.3223L6.81641 10.3203C8.28337 9.29895 9.51562 8.06844 10.5059 6.62988L10.5078 6.62695C11.1566 5.6778 11.6628 4.71984 12.0186 3.75488Z" />
+      <path stroke="currentColor" strokeWidth="2" d={CONCIERGE_STAR} />
+      <g mask={`url(#${outline})`}>
+        <rect
+          data-slot="glint"
+          x="-6"
+          y="-6"
+          width="36"
+          height="36"
+          fill={`url(#${gradient})`}
+          className="origin-center [transform-box:fill-box] motion-safe:animate-glint-orbit"
+        />
+      </g>
     </Svg>
   )
 }

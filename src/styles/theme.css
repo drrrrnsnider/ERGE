@@ -429,6 +429,16 @@
     33.3333%, 100% { --flow-x: 100%; --flow-angle: 540deg; --flow-shine: transparent; }
   }
 
+  /* The Concierge tab icon's highlight, turning once round the star every
+   * 9s — the same cycle as the flow button's light, though the two are not
+   * synchronised. Much quieter: no pause, no fade, just the bright spot
+   * drifting round the outline. See TabConcierge for how a gradient is made
+   * to turn. Linear, so it moves at one speed. */
+  --animate-glint-orbit: glint-orbit 9s var(--motion-easing-linear) infinite;
+  @keyframes glint-orbit {
+    to { transform: rotate(360deg); }
+  }
+
   /* Hands `leading-tight` and friends to Tailwind. These names are also
    * Tailwind's own, so its defaults are replaced rather than sitting
    * alongside ours. */

@@ -377,6 +377,45 @@ test.describe('the tab bar', () => {
     expect(colours.icon).not.toBe(colours.label)
     await expect(page.locator('nav[aria-label="Primary"] svg')).toHaveCount(5)
   })
+
+  /**
+   * The resting Concierge star's highlight turns once round the icon every
+   * 9s. It is a gradient-filled square, masked to the star's outline, that
+   * rotates — so the check is that the square is INSIDE the mask (or the
+   * whole square would show) and that, paused a quarter of the way through,
+   * it has turned a quarter.
+   */
+  test('the Concierge highlight turns once every nine seconds', async ({ page }) => {
+    await page.goto('/')
+    const glint = page.locator('nav[aria-label="Primary"] [data-slot="glint"]')
+    await expect(glint).toHaveCount(1)
+
+    const turn = await glint.evaluate((el) => {
+      const masked = el.parentElement?.getAttribute('mask')?.startsWith('url(') ?? false
+      const orbit = el.getAnimations()[0]!
+      const timing = orbit.effect!.getComputedTiming()
+      orbit.pause()
+      orbit.currentTime = Number(timing.duration) / 4
+      const m = new DOMMatrix(getComputedStyle(el).transform)
+      return {
+        masked,
+        duration: timing.duration,
+        iterations: timing.iterations,
+        degrees: Math.round((Math.atan2(m.b, m.a) * 180) / Math.PI),
+      }
+    })
+    expect(turn).toEqual({ masked: true, duration: 9000, iterations: Infinity, degrees: 90 })
+  })
+
+  test('the Concierge highlight holds still under reduced motion', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/')
+    const glint = page.locator('nav[aria-label="Primary"] [data-slot="glint"]')
+    await expect(glint).toHaveCount(1)
+    expect(await glint.evaluate((el) => el.getAnimations().length)).toBe(0)
+  })
 })
 
 test.describe('the overlay bars', () => {
