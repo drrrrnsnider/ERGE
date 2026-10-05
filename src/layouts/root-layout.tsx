@@ -143,7 +143,21 @@ export function RootLayout({ chrome = 'full' }: { chrome?: Chrome }) {
               'pt-[calc(3rem+env(safe-area-inset-top))] pb-16 scroll-pt-[calc(3rem+env(safe-area-inset-top))] scroll-pb-16',
             chrome === 'takeover' &&
               'pt-[env(safe-area-inset-top)] scroll-pt-[env(safe-area-inset-top)]',
-            /* `bleed` reserves nothing on purpose — see the note above. */
+            /* `bleed` reserves no SPACE on purpose — see the note above —
+             * but it does reserve focus room. A bleed screen draws its own
+             * bar floating over the top, solid once you scroll, and without
+             * scroll padding the browser treats the top edge as visible: a
+             * control reached by tabbing backwards lands under the bar
+             * (WCAG 2.4.11). 4rem + inset is that bar — 0.5rem, a 3rem
+             * button, 0.5rem — on the detail screen.
+             *
+             * Padding on the scroller, not a margin on each control. A
+             * scroll-margin version was tried and failed: the browser only
+             * scrolls a control it thinks is out of view, and it judged one
+             * half under the bar as in view. Padding changes what "in view"
+             * means. */
+            chrome === 'bleed' &&
+              'scroll-pt-[calc(4rem+env(safe-area-inset-top))]',
           )}
         >
           <Outlet />

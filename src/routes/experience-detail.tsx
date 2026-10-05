@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
   ArrowBack,
@@ -50,10 +50,57 @@ const SUGGESTION = 'Pick me up in a Waymo to grab a cocktail after'
 const conciergeFor = (experienceId: string) =>
   `/concierge?anchor=${encodeURIComponent(experienceId)}`
 
+/**
+ * True once the page's own title has scrolled up under the nav bar — the
+ * moment the bar takes over: its solid background fades in and the title
+ * appears in it, the way an iOS navigation bar collapses a large title.
+ *
+ * IntersectionObserver rather than a scroll listener. The browser is asked
+ * one question — "is the title still fully below the bar?" — and calls back
+ * only when the answer changes, instead of this code measuring on every
+ * frame of a scroll. The bar's height is taken off the top of the viewport
+ * (`rootMargin`), so "fully visible" means fully visible BELOW the bar.
+ *
+ * `threshold: 1` and the top check together say which way it went: a title
+ * that is partly hidden because it scrolled UP under the bar counts; one
+ * that is partly hidden because it is still below the fold does not.
+ */
+function useTitleUnderBar(
+  title: RefObject<HTMLElement | null>,
+  bar: RefObject<HTMLElement | null>,
+  ready: boolean,
+) {
+  const [under, setUnder] = useState(false)
+
+  useEffect(() => {
+    const titleEl = title.current
+    const barEl = bar.current
+    if (!ready || titleEl === null || barEl === null) return
+
+    const barHeight = Math.round(barEl.getBoundingClientRect().height)
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry === undefined) return
+        const lineTop = entry.rootBounds?.top ?? barHeight
+        setUnder(
+          entry.intersectionRatio < 1 && entry.boundingClientRect.top < lineTop,
+        )
+      },
+      { rootMargin: `-${barHeight}px 0px 0px 0px`, threshold: 1 },
+    )
+    observer.observe(titleEl)
+    return () => observer.disconnect()
+  }, [title, bar, ready])
+
+  return under
+}
+
 export function ExperienceDetailRoute() {
   const navigate = useNavigate()
   const { experienceId = '' } = useParams()
   const [saved, setSaved] = useState(false)
+  const barRef = useRef<HTMLElement>(null)
+  const titleRef = useRef<HTMLHeadingElement>(null)
 
   const query = useQuery({
     queryKey: ['experience', experienceId],
@@ -70,28 +117,72 @@ export function ExperienceDetailRoute() {
     void addRecentlyViewed(experience.experienceId)
   }, [experience])
 
+  const condensed = useTitleUnderBar(titleRef, barRef, experience !== undefined)
+
+  /* Both fades share one transition. `motion-reduce` makes them a cut for
+   * anyone who has asked for less movement: the bar still changes, it just
+   * does not animate. Hardcoded duration until the Motion primitives are
+   * bridged in theme.css. */
+  const fade = cn(
+    'transition-opacity duration-200 motion-reduce:transition-none',
+    condensed ? 'opacity-100' : 'opacity-0',
+  )
+
   return (
+    /* Focus keeps clear of the bar through the `bleed` chrome's scroll
+     * padding, which is this bar's height — see RootLayout. */
     <div className="relative min-h-full pb-8">
-      {/* The nav bar floats over the hero. It owns its own top inset,
-        * because `bleed` reserves none and this is the thing that has to
-        * clear the notch. */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2">
-        <TopScrim />
-        <ButtonIcon
-          label="Back"
-          icon={ArrowBack}
-          onClick={() => void navigate(-1)}
-          className="pointer-events-auto"
-        />
-        <div className="pointer-events-auto flex items-center gap-3">
-          <ButtonIcon
-            label={saved ? 'Saved' : 'Save'}
-            icon={saved ? FavoriteSaved : FavoriteOutline}
-            onClick={() => setSaved((on) => !on)}
+      {/* STICKY AND ZERO HEIGHT (Figma 2343:3913). The wrapper pins to the
+        * top of the scroll area and takes up no room, so the hero still
+        * starts at the very top beneath it; the bar hangs off it,
+        * absolutely positioned. It used to be absolute on its own, which
+        * meant it scrolled away with the photo.
+        *
+        * It owns its own top inset, because `bleed` reserves none and this
+        * is the thing that has to clear the notch. */}
+      <div className="sticky top-0 z-20 h-0">
+        <header
+          ref={barRef}
+          data-condensed={condensed}
+          className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-4 px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2"
+        >
+          {/* Always: the gradient and blur, so the buttons read over the
+            * photo. Once condensed: Surface/Base at 90% over them, the
+            * design's `Rectangle 40`, so the bar reads over text. */}
+          <TopScrim />
+          <div
+            aria-hidden="true"
+            className={cn('pointer-events-none absolute inset-0 -z-10 bg-background/90', fade)}
           />
-          <ButtonIcon label="More options" icon={MoreHoriz} onClick={() => {}} />
-        </div>
-      </header>
+
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <ButtonIcon
+              label="Back"
+              icon={ArrowBack}
+              onClick={() => void navigate(-1)}
+              className="pointer-events-auto"
+            />
+            {/* The title, once the page's own has scrolled under the bar.
+              * One line, cut with an ellipsis. Hidden from screen readers:
+              * the h1 is the title, and this is a second drawing of it. */}
+            <p
+              aria-hidden="true"
+              className={cn('min-w-0 truncate text-h2 font-semibold text-foreground', fade)}
+            >
+              {experience?.title}
+            </p>
+          </div>
+
+          <div className="pointer-events-auto flex shrink-0 items-center gap-3">
+            <ButtonIcon
+              label={saved ? 'Saved' : 'Save'}
+              icon={saved ? FavoriteSaved : FavoriteOutline}
+              onClick={() => setSaved((on) => !on)}
+            />
+            <ButtonIcon label="More options" icon={MoreHoriz} onClick={() => {}} />
+          </div>
+        </header>
+      </div>
 
       {query.isPending ? <DetailSkeleton /> : null}
 
@@ -104,12 +195,19 @@ export function ExperienceDetailRoute() {
         </div>
       ) : null}
 
-      {experience ? <Detail experience={experience} /> : null}
+      {experience ? <Detail experience={experience} titleRef={titleRef} /> : null}
     </div>
   )
 }
 
-function Detail({ experience }: { experience: Experience }) {
+function Detail({
+  experience,
+  titleRef,
+}: {
+  experience: Experience
+  /** The h1, watched to know when the bar should take over the title. */
+  titleRef: RefObject<HTMLHeadingElement | null>
+}) {
   const duration = experience.details.find((d) => d.label === 'Duration')?.value
   const metaLine = [experience.location.address, duration].filter(Boolean).join(' • ')
   const price = priceLowBound(experience.price)
@@ -190,7 +288,9 @@ function Detail({ experience }: { experience: Experience }) {
 
       <div className="flex flex-col gap-6 px-4 pt-2">
         <div className="flex flex-col gap-2">
-          <h1 className="text-h2 font-semibold text-foreground">{experience.title}</h1>
+          <h1 ref={titleRef} className="text-h2 font-semibold text-foreground">
+            {experience.title}
+          </h1>
           <p className="text-body-md text-muted-foreground">{metaLine}</p>
           {experience.description ? (
             <p className="text-body-md text-muted-foreground">

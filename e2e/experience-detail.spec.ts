@@ -200,4 +200,94 @@ test.describe('experience detail', () => {
     await expect(page.locator('[data-slot="photo-strip"] > li')).toHaveCount(3)
     await expect(page.getByRole('link', { name: /See all/ })).toHaveCount(0)
   })
+
+  /**
+   * The nav bar is sticky (Figma 2343:3913). It stays at the top however far
+   * you scroll, and once the page's title scrolls up under it, it takes the
+   * title over: a solid background and the title in one line fade in. Back
+   * up past that point, they fade out again.
+   *
+   * Driven by scrolling to exact offsets either side of the bar's bottom
+   * edge, measured in the page, rather than a fixed number of pixels — the
+   * hero, the strip and the inset all move the title.
+   */
+  test('the nav bar stays put and takes over the title', async ({ page }) => {
+    await page.goto(PICNIC)
+    const h1 = page.getByRole('heading', { level: 1, name: 'Rooftop Picnic Night' })
+    await expect(h1).toBeVisible()
+    const bar = page.locator('header[data-condensed]')
+    await expect(bar).toHaveAttribute('data-condensed', 'false')
+
+    /** Scroll so the title's top sits `gap` px below the bar's bottom. */
+    const placeTitle = (gap: number) =>
+      page.evaluate((gap) => {
+        const main = document.querySelector('main')!
+        const title = document.querySelector('h1')!
+        const barBottom = document
+          .querySelector('header[data-condensed]')!
+          .getBoundingClientRect().bottom
+        main.scrollTop += title.getBoundingClientRect().top - barBottom - gap
+      }, gap)
+
+    await placeTitle(10)
+    await expect(bar).toHaveAttribute('data-condensed', 'false')
+
+    await placeTitle(-10)
+    await expect(bar).toHaveAttribute('data-condensed', 'true')
+    // Still pinned to the top, not scrolled away with the photo.
+    expect((await bar.boundingBox())?.y).toBe(0)
+    // The bar's copy of the title is a drawing, not a second heading.
+    const copy = bar.getByText('Rooftop Picnic Night')
+    await expect(copy).toBeVisible()
+    await expect(copy).toHaveAttribute('aria-hidden', 'true')
+
+    await placeTitle(10)
+    await expect(bar).toHaveAttribute('data-condensed', 'false')
+  })
+
+  /**
+   * WCAG 2.4.11 against the pinned bar. Tabbing backwards up the page, the
+   * browser scrolls each control just into view; without a scroll margin
+   * that means the top edge of the screen, underneath a bar that is solid
+   * by then. The `bleed` chrome's scroll padding reserves the bar's height.
+   *
+   * A first fix put `scroll-margin-top` on every control instead, and this
+   * test failed it: Reserve, its overflow and the first flow button still
+   * landed under the bar, because the browser judged them already in view.
+   *
+   * ONE PIXEL OF TOLERANCE, for rounding. The mobile-chrome device has a
+   * pixel ratio of 2.75, scroll positions snap to device pixels, and a
+   * control aligned to the bar's 64px edge measured 63.5 — half a pixel into
+   * the bar's own bottom padding, covering nothing. Without the padding the
+   * failures are whole controls, tens of pixels deep.
+   */
+  test('a control focused while tabbing backwards is not hidden under the bar', async ({
+    page,
+  }) => {
+    await page.goto(PICNIC)
+    // Wait for the pairings too: they add the last controls on the page.
+    await expect(page.getByRole('link', { name: /^Build this evening/ })).toBeVisible()
+
+    const hidden = await page.evaluate(async () => {
+      const main = document.querySelector('main')!
+      const bar = document.querySelector('header[data-condensed]')!
+      main.scrollTop = main.scrollHeight
+      const controls = [
+        ...main.querySelectorAll<HTMLElement>('a[href], button'),
+      ].filter((el) => !bar.contains(el))
+      const under: string[] = []
+      for (const el of controls.reverse()) {
+        el.focus()
+        await new Promise((done) =>
+          requestAnimationFrame(() => requestAnimationFrame(done)),
+        )
+        const r = el.getBoundingClientRect()
+        if (r.top < bar.getBoundingClientRect().bottom - 1) {
+          under.push(el.getAttribute('aria-label') ?? el.textContent ?? '')
+        }
+      }
+      return under
+    })
+    expect(hidden).toEqual([])
+  })
 })
