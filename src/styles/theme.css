@@ -328,6 +328,7 @@
    *   tile       a promo category tile
    *   card       the Promo Tiles card itself
    *   flow       the concierge flow button — the ONE exception below
+   *   flow-hover the same glow, brighter and spread, under a pointer
    *
    * `flow` is cast in COPPER rather than the surface, which is why it does
    * not follow the rule above. It is not depth: it is a faint glow marking
@@ -341,8 +342,13 @@
     color-mix(in oklch, var(--background) 40%, transparent);
   --drop-shadow-lift-sm: 0 4px 12px
     color-mix(in oklch, var(--background) 50%, transparent);
-  --drop-shadow-flow: 0 2px 11.5px
+  /* `box-shadow` rather than a drop-shadow filter, which was what this was:
+   * on a pill the two look identical at rest, but a filter cannot SPREAD,
+   * and the hover state is the same glow at 25% with 3px of spread. */
+  --shadow-flow: 0 2px 11.5px
     color-mix(in oklch, var(--primary) 10%, transparent);
+  --shadow-flow-hover: 0 2px 11.5px 3px
+    color-mix(in oklch, var(--primary) 25%, transparent);
 
   /* Text over a photo — "See all 14 photos" on the detail screen's last
    * thumbnail (Figma 230:9335: 0 0 8px black). A soft halo rather than a
@@ -385,6 +391,43 @@
   --ease-exit: var(--motion-easing-exit);
   --default-transition-duration: var(--motion-duration-fast);
   --default-transition-timing-function: var(--motion-easing-standard);
+
+  /* The flow button's light: once round its edge, then a rest. See
+   * `flow-ring` below for what moves and why.
+   *
+   * NINE SECONDS = 3s TRAVELLING + 6s RESTING. The rest is twice the run,
+   * so the keyframes spend the first third moving and hold still for the
+   * other two. Keep that 1:2 split and only this duration needs changing:
+   * a 4s run would be 12s here. This is the effect's own tempo, not a step
+   * on the Motion scale, which is for things arriving and leaving and tops
+   * out at 400ms. Linear, because a light running round a track should not
+   * speed up and slow down at the corners.
+   *
+   * ONE FULL CIRCUIT, THEN NOTHING. The light starts and ends with the
+   * gradient's centre on the very end of the pill (x 100%), where it runs
+   * along the curved end cap and cannot be seen. From there: along the
+   * bottom, round the left end, along the top, round the right end, and
+   * back to where it started. The angle ends at 540deg, the same direction
+   * as 180deg, so the next cycle starts without a jump.
+   *
+   * And it is OFF for the rest, not just parked out of sight: --flow-shine,
+   * the light's own colour, fades in over the first quarter-second of the
+   * run, out over the last, and is transparent for all six seconds of the
+   * pause. An earlier version rested the light on the bottom edge at the
+   * lower right, where the Figma glint sits — which read as the loop
+   * overshooting and stopping, rather than finishing.
+   *
+   * Runs and turns are timed by distance, so the light keeps one speed. */
+  --animate-flow-orbit: flow-orbit 9s var(--motion-easing-linear) infinite;
+  @keyframes flow-orbit {
+    0% { --flow-x: 100%; --flow-angle: 180deg; --flow-shine: transparent; }
+    2.7778% { --flow-shine: var(--action-secondary); }
+    10.9409% { --flow-x: 10%; --flow-angle: 180deg; }
+    16.6667% { --flow-x: 10%; --flow-angle: 360deg; }
+    27.6076% { --flow-x: 100%; --flow-angle: 360deg; }
+    30.5556% { --flow-shine: var(--action-secondary); }
+    33.3333%, 100% { --flow-x: 100%; --flow-angle: 540deg; --flow-shine: transparent; }
+  }
 
   /* Hands `leading-tight` and friends to Tailwind. These names are also
    * Tailwind's own, so its defaults are replaced rather than sitting
@@ -435,6 +478,91 @@
  * rather than a literal, which keeps the no-raw-colour rule satisfied
  * without pretending the choice is meaningful.
  * -------------------------------------------------------------------------- */
+/* == The flow button's light ===============================================
+ * Modelled on Raycast's hero buttons. The button is two boxes: this outer
+ * one, with 1px of padding, and a solid inner one holding the glyph and the
+ * words. Everything drawn here shows only through that 1px gap, so it reads
+ * as the BORDER.
+ *
+ * The border is two layers. Underneath, a flat ring — Border/Subtle Focus
+ * at rest, Border/Focus under a pointer. On top, a conic gradient that is
+ * transparent except for a narrow wedge of Action/Secondary: a sliver of
+ * light. Moving the gradient's centre along the pill (--flow-x) and turning
+ * it at each end (--flow-angle) sends that light along the top edge, round
+ * the end, back along the bottom and round again — see `flow-orbit`.
+ * It replaces the static champagne glint the Figma component draws.
+ *
+ * @property is what lets those custom properties ANIMATE: an unregistered
+ * one is a string, and strings cannot be interpolated, so the light would
+ * jump from end to end. Supported in Safari 16.4+, so iOS 16.4+ in the
+ * wrapped app. --flow-ring is registered as a colour so the hover change
+ * fades rather than switching.
+ *
+ * --flow-x is a PERCENTAGE of the button's width, where Raycast's is pixels
+ * fitted to one button; ours come in two sizes and any label.
+ *
+ * Reduced motion: no orbit. The light is held still at the lower right
+ * (x 90%, pointing down), which is the Figma component's own static glint.
+ * --flow-shine sits at Action/Secondary there, since the keyframes that
+ * fade it are not running. */
+@property --flow-x {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 90%;
+}
+@property --flow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 180deg;
+}
+@property --flow-ring {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+@property --flow-shine {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@utility flow-ring {
+  --flow-ring: var(--border-subtle-focus);
+  --flow-shine: var(--action-secondary);
+  padding: 1px;
+  border-radius: calc(infinity * 1px);
+  background:
+    conic-gradient(
+      from calc(var(--flow-angle) - 80deg) at var(--flow-x) 50%,
+      transparent 0%,
+      var(--flow-shine) 20%,
+      transparent 25%
+    ),
+    var(--flow-ring);
+  box-shadow: var(--shadow-flow);
+  transition-property: --flow-ring, box-shadow;
+  transition-duration: var(--motion-duration-base);
+  transition-timing-function: var(--motion-easing-standard);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: var(--animate-flow-orbit);
+  }
+
+  /* Brighter under a pointer and on keyboard focus; on a phone, which has
+   * no hover, while pressed. */
+  @media (hover: hover) {
+    &:hover {
+      --flow-ring: var(--ring);
+      box-shadow: var(--shadow-flow-hover);
+    }
+  }
+  &:focus-visible,
+  &:active {
+    --flow-ring: var(--ring);
+    box-shadow: var(--shadow-flow-hover);
+  }
+}
+
 @utility stroke-gradient {
   position: relative;
 

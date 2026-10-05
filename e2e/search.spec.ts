@@ -32,9 +32,17 @@ test.describe('the search takeover', () => {
      * slides and fades in, and axe reads the mid-fade opacity as the text's
      * real colour — scanning during it reported every string on the screen as
      * a contrast failure, 163 of them. The page is fine; the snapshot was
-     * taken while it was still arriving. */
+     * taken while it was still arriving.
+     *
+     * FINITE animations only. The flow button's light orbits forever, and
+     * an infinite animation is always running, so waiting for "nothing
+     * running" never returned once it shipped — the same trap the skeleton
+     * pulse set for the scan in accessibility.spec.ts. */
     await page.waitForFunction(() =>
-      document.getAnimations().every((a) => a.playState !== 'running'),
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+        .every((a) => a.playState !== 'running'),
     )
 
     const results = await new AxeBuilder({ page }).withTags(WCAG22AA).analyze()

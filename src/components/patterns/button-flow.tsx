@@ -15,14 +15,19 @@ import { cn } from '@/lib/utils'
  * being applied per call site.
  *
  * IT LOOKS UNLIKE EVERY OTHER BUTTON ON PURPOSE. Base surface rather than
- * card, a flat champagne ring rather than the gradient the rest of the system
- * moved to, and a copper glow instead of a depth shadow. It is the one
- * control that stops you doing the work yourself and asks the concierge
- * instead, so it is meant to read as a different kind of offer. Do not
- * "correct" it into a Subtle Button.
+ * card, a light that runs round its edge, and a copper glow instead of a
+ * depth shadow. It is the one control that stops you doing the work
+ * yourself and asks the concierge instead, so it is meant to read as a
+ * different kind of offer. Do not "correct" it into a Subtle Button.
  *
- * The glow is `--drop-shadow-flow`, the one shadow in the system cast in
- * copper rather than in the surface — see theme.css for why.
+ * TWO BOXES. The element itself is the RING — `flow-ring` in theme.css,
+ * 1px of padding showing a Border/Subtle Focus edge with a sliver of
+ * Action/Secondary light orbiting it, the copper glow, and the brighter
+ * hover. The inner span is the solid face that holds the glyph and the
+ * words, and is what turns that 1px into a border. Sizes are on the outer
+ * box, so the button is exactly as tall as before; the padding is on the
+ * inner one, and comes out the same because the 1px ring replaces what was
+ * a 1px border.
  *
  * IT OPTS OUT OF THE 44px COARSE-POINTER FLOOR, so SM stays 32px on a phone
  * and matches the design. That needs justifying, because it navigates, and
@@ -55,18 +60,25 @@ export function ButtonFlow({
 }) {
   const md = size === 'Md'
   const shape = cn(
-    'inline-flex shrink-0 items-center justify-center rounded-full border border-emphasis bg-background text-body-md whitespace-nowrap text-foreground drop-shadow-flow',
-    md ? 'h-12 gap-1.5 pr-4 pl-3 font-semibold' : 'h-8 gap-1 pr-3 pl-2',
+    'inline-flex shrink-0 flow-ring text-body-md whitespace-nowrap text-foreground',
+    md ? 'h-12 font-semibold' : 'h-8',
     className,
   )
   const content = (
-    <>
+    <span
+      className={cn(
+        'flex h-full items-center justify-center rounded-full bg-background',
+        md ? 'gap-1.5 pr-4 pl-3' : 'gap-1 pr-3 pl-2',
+      )}
+    >
+      {/* Action/Secondary, as the design colours the glyph — the same
+        * champagne as the light running round the edge. */}
       <ConciergeStar2
-        className={cn('shrink-0', md ? 'size-[22px]' : 'size-5')}
+        className={cn('shrink-0 text-action-secondary', md ? 'size-[22px]' : 'size-5')}
         aria-hidden="true"
       />
       {label}
-    </>
+    </span>
   )
 
   if (to) {

@@ -336,4 +336,117 @@ test.describe('experience detail', () => {
     await expect(page.getByText('$32', { exact: true })).toBeVisible()
     await expect(badge).toHaveCount(0)
   })
+
+  /**
+   * The flow button's edge (`flow-ring` in theme.css): a Border/Subtle
+   * Focus ring with a sliver of Action/Secondary light running round it,
+   * and a copper glow. The light moves only because its two custom
+   * properties are registered with @property — unregistered, they are
+   * strings, and the light would jump instead of travelling. A jumping
+   * light still CHANGES position, so "it moved" proves nothing; this waits
+   * for a position BETWEEN the keyframes' 10% and 100%, which only
+   * interpolation can produce.
+   *
+   * Under a pointer, the ring and the glow brighten. Only where the device
+   * HAS a pointer: the mobile projects emulate touch, where (hover: hover)
+   * is false and nothing may stick on after a tap — so there, the same
+   * hover must change nothing.
+   */
+  test('the flow button orbits a light, and brightens under a pointer', async ({
+    page,
+  }) => {
+    await page.goto(PICNIC)
+    const flow = page.locator('[data-slot="button-flow"]').first()
+    await expect(flow).toBeVisible()
+
+    const read = () =>
+      flow.evaluate((el) => {
+        const s = getComputedStyle(el)
+        return {
+          x: s.getPropertyValue('--flow-x'),
+          ring: s.getPropertyValue('--flow-ring'),
+          shadow: s.boxShadow,
+        }
+      })
+
+    const first = await read()
+    /* Up to a full 9s cycle: the light travels for 3s and then rests for
+     * 6s, and the test may land anywhere in that. */
+    await expect
+      .poll(
+        async () => {
+          const x = parseFloat((await read()).x)
+          return x > 10 && x < 100
+        },
+        { timeout: 10_000 },
+      )
+      .toBe(true)
+
+    const canHover = await page.evaluate(() => matchMedia('(hover: hover)').matches)
+    await flow.hover()
+    if (canHover) {
+      await expect.poll(async () => (await read()).ring).not.toBe(first.ring)
+      expect((await read()).shadow).not.toBe(first.shadow)
+    } else {
+      await page.waitForTimeout(300)
+      expect((await read()).ring).toBe(first.ring)
+    }
+  })
+
+  /**
+   * Between runs the light is OFF, not parked. Each 9s cycle is a 3s
+   * circuit and a 6s pause, and --flow-shine — the light's colour — is
+   * transparent for the whole pause. An earlier version left it lit at the
+   * lower right, which read as the loop overshooting and stopping.
+   *
+   * The animation is paused and moved to exact moments rather than waited
+   * for: mid-run it must be lit, and at two points in the pause dark.
+   */
+  test('the flow light is off between runs', async ({ page }) => {
+    await page.goto(PICNIC)
+    const flow = page.locator('[data-slot="button-flow"]').first()
+    await expect(flow).toBeVisible()
+
+    const alphaAt = (ms: number) =>
+      flow.evaluate((el, ms) => {
+        const orbit = el
+          .getAnimations()
+          .find((a) => (a as CSSAnimation).animationName === 'flow-orbit')!
+        orbit.pause()
+        orbit.currentTime = ms
+        const shine = getComputedStyle(el).getPropertyValue('--flow-shine')
+        const probe = document.createElement('span')
+        probe.style.color = shine
+        document.body.appendChild(probe)
+        const rgba = getComputedStyle(probe).color
+        probe.remove()
+        const parts = rgba.match(/[\d.]+/g)?.map(Number) ?? []
+        return parts.length > 3 ? parts[3]! : 1
+      }, ms)
+
+    expect(await alphaAt(1500)).toBe(1)
+    expect(await alphaAt(4000)).toBe(0)
+    expect(await alphaAt(8500)).toBe(0)
+  })
+
+  /**
+   * For anyone who has asked their device for less motion, the light holds
+   * still — at the lower right, where the design's own glint sits.
+   */
+  test('the flow button holds its light still under reduced motion', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(PICNIC)
+    const flow = page.locator('[data-slot="button-flow"]').first()
+    await expect(flow).toBeVisible()
+
+    const still = await flow.evaluate(async (el) => {
+      const x = () => getComputedStyle(el).getPropertyValue('--flow-x')
+      const before = x()
+      await new Promise((done) => setTimeout(done, 400))
+      return { animation: getComputedStyle(el).animationName, before, after: x() }
+    })
+    expect(still).toEqual({ animation: 'none', before: '90%', after: '90%' })
+  })
 })
