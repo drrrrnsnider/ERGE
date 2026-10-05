@@ -28,10 +28,22 @@ function scaleFromTheme(): string[] {
     .filter((name): name is string => typeof name === 'string')
     // `--text-body-lg--line-height` is a modifier on body-lg, not a size.
     .filter((name) => !name.includes('--'))
+    // `--text-shadow-*` is Tailwind's text-shadow namespace, which happens
+    // to share the prefix. Not a size; tailwind-merge already knows it.
+    .filter((name) => !name.startsWith('shadow-'))
   return [...new Set(names)]
 }
 
 describe('cn', () => {
+  /* The overlay caption carries a size, a colour AND a text shadow, all
+   * spelled `text-*`. Any one of them being mistaken for another would drop
+   * it silently, which is the failure this file exists for. */
+  it('keeps a text shadow beside a size and a colour', () => {
+    expect(cn('text-body-xs', 'text-emphasis', 'text-shadow-overlay').split(' ').sort()).toEqual(
+      ['text-body-xs', 'text-emphasis', 'text-shadow-overlay'].sort(),
+    )
+  })
+
   it('knows every font size theme.css defines', () => {
     expect([...FONT_SIZES].sort()).toEqual(scaleFromTheme().sort())
   })

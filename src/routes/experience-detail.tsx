@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import {
   ArrowBack,
   FavoriteOutline,
@@ -133,40 +133,58 @@ function Detail({ experience }: { experience: Experience }) {
         </div>
 
         {strip.length > 0 ? (
-          <ul className="flex gap-1 px-4 py-2">
-            {strip.map((image, index) => {
-              const last = index === strip.length - 1
-              const remaining = experience.images.length - 1 - strip.length
-              return (
-                <li
-                  /* Index in the key, because a URL is not unique here —
-                   * every fixture points at the same placeholder, and React
-                   * warned about it. Two experiences legitimately sharing a
-                   * photo would do the same in production. */
-                  key={`${image.url}-${index}`}
-                  className="relative h-16 min-w-0 flex-1 overflow-hidden rounded-xs bg-muted"
-                >
-                  <img
-                    src={image.url}
-                    alt={image.alt}
-                    loading="lazy"
-                    className="size-full object-cover"
-                  />
-                  {last && remaining > 0 ? (
-                    /* A button over the last thumbnail, not a caption: it
-                      * opens the gallery, which does not exist yet, so it
-                      * goes to the route that says so. */
-                    <button
-                      type="button"
-                      className="absolute inset-0 grid place-items-center bg-background/70 px-1 text-body-xs text-emphasis"
-                    >
-                      See all {experience.images.length} photos
-                    </button>
-                  ) : null}
-                </li>
-              )
-            })}
-          </ul>
+          /* ONE BAND, NOT FOUR TILES (Figma 230:9329). The photos are
+           * columns inside a single 24px-rounded frame, 4px apart, so only
+           * the outer corners round — the same construction as
+           * `Card / Trip LG`, at 64px rather than 180, and the same frame:
+           * Border/Subtle Focus fading to nothing ("Border Brighter -> 0"),
+           * which is `stroke-gradient`. */
+          <div className="px-4 py-2">
+            <ul
+              data-slot="photo-strip"
+              className="flex h-16 gap-1 overflow-hidden rounded-lg stroke-gradient"
+            >
+              {strip.map((image, index) => {
+                const last = index === strip.length - 1
+                const remaining = experience.images.length - 1 - strip.length
+                return (
+                  <li
+                    /* Index in the key, because a URL is not unique here —
+                     * every fixture points at the same placeholder, and React
+                     * warned about it. Two experiences legitimately sharing a
+                     * photo would do the same in production. */
+                    key={`${image.url}-${index}`}
+                    className="relative min-w-0 flex-1 bg-muted"
+                  >
+                    <img
+                      src={image.url}
+                      alt={image.alt}
+                      loading="lazy"
+                      className="size-full object-cover"
+                    />
+                    {last && remaining > 0 ? (
+                      /* Over the last thumbnail when there are photos the
+                       * strip cannot show: the background at half strength
+                       * (the design's black at 50%, cast in the surface as
+                       * the shadows are), and the count in champagne with a
+                       * halo so it reads on any picture.
+                       *
+                       * A LINK, to the gallery's own address. The gallery is
+                       * not built, so it lands on the not-built route — an
+                       * honest dead end rather than a button that does
+                       * nothing, which is what this was. */
+                      <Link
+                        to={`/experience/${encodeURIComponent(experience.experienceId)}/photos`}
+                        className="absolute inset-0 grid place-items-center bg-background/50 px-3 py-2 text-center text-body-xs font-medium text-emphasis text-shadow-overlay"
+                      >
+                        See all {experience.images.length} photos
+                      </Link>
+                    ) : null}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
         ) : null}
       </div>
 

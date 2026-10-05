@@ -24,8 +24,11 @@ const MIAMI = {
  * experience needs FOUR images to fill it. Real photos come from partner
  * APIs; this stands in for all of them.
  */
-const shots = (alt: string) =>
-  [alt, 'Detail', 'Detail', 'Detail'].map((a) => ({
+/* `count` defaults to four, which is all a card ever shows. The detail
+ * screen shows five — a hero and a strip of four — so anything with more
+ * than five is what puts "See all N photos" on the strip. */
+const shots = (alt: string, count = 4) =>
+  [alt, ...Array<string>(count - 1).fill('Detail')].map((a) => ({
     url: '/placeholder.svg',
     alt: a === alt ? a : '',
   }))
@@ -39,7 +42,9 @@ export const experiences: readonly Experience[] = [
     vendorId: 'viator',
     accessTier: 'full',
     location: MIAMI,
-    images: shots('A blanket and lanterns on a rooftop at dusk'),
+    /* Fourteen, the number the detail screen's design shows, so the
+     * "See all 14 photos" overlay renders against real data. */
+    images: shots('A blanket and lanterns on a rooftop at dusk', 14),
     summary: 'City views & candlelight',
     /* The detail screen's two fields. Only some fixtures carry them, on
      * purpose: the screen has to cope with an experience that has neither,

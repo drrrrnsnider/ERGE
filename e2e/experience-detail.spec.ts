@@ -158,4 +158,46 @@ test.describe('experience detail', () => {
     // The concierge is still offered, by the flow button under Reserve.
     await expect(page.getByRole('link', { name: 'Build a trip with concierge' })).toHaveCount(1)
   })
+
+  /**
+   * The thumbnail strip (Figma 230:9329): four photos as columns in ONE
+   * rounded band, and, when the gallery holds more than the screen shows,
+   * the last one dimmed under "See all N photos". The picnic has fourteen.
+   *
+   * The count link goes to the gallery's own address. It used to be a
+   * button with no handler — present, pressable, and doing nothing.
+   */
+  test('the strip is one band, and offers the rest of the photos', async ({
+    page,
+  }) => {
+    await page.goto(PICNIC)
+    const seeAll = page.getByRole('link', { name: 'See all 14 photos' })
+    await expect(seeAll).toBeVisible()
+    await expect(seeAll).toHaveAttribute('href', '/experience/exp-rooftop-picnic/photos')
+
+    const band = page.locator('[data-slot="photo-strip"]')
+    await expect(band.locator(seeAll)).toBeVisible()
+    await expect(band.locator('> li')).toHaveCount(4)
+    // One frame: the band is rounded and clips, and its columns are not.
+    const shape = await band.evaluate((ul) => ({
+      bandRadius: getComputedStyle(ul).borderTopLeftRadius,
+      clips: getComputedStyle(ul).overflow,
+      columnRadius: getComputedStyle(ul.firstElementChild!).borderTopLeftRadius,
+    }))
+    expect(shape).toEqual({ bandRadius: '24px', clips: 'hidden', columnRadius: '0px' })
+  })
+
+  /**
+   * The sail has four photos: a hero and three on the strip, so nothing is
+   * hidden and there is nothing to offer. The strip is checked FIRST — an
+   * earlier draft used the tasting menu, which has no photos and so no
+   * strip, and passed with the overlay forced on.
+   */
+  test('offers no "See all" when every photo is already on screen', async ({
+    page,
+  }) => {
+    await page.goto('/experience/exp-sunset-sail')
+    await expect(page.locator('[data-slot="photo-strip"] > li')).toHaveCount(3)
+    await expect(page.getByRole('link', { name: /See all/ })).toHaveCount(0)
+  })
 })

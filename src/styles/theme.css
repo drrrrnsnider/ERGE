@@ -328,6 +328,12 @@
   --drop-shadow-flow: 0 2px 11.5px
     color-mix(in oklch, var(--primary) 10%, transparent);
 
+  /* Text over a photo — "See all 14 photos" on the detail screen's last
+   * thumbnail (Figma 230:9335: 0 0 8px black). A soft halo rather than a
+   * drop, so the words hold up on a bright picture as well as a dark one.
+   * Cast in --background for the same reason as the shadows above. */
+  --text-shadow-overlay: 0 0 8px var(--background);
+
   /* Hands `leading-tight` and friends to Tailwind. These names are also
    * Tailwind's own, so its defaults are replaced rather than sitting
    * alongside ours. */
