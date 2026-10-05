@@ -385,7 +385,7 @@ test.describe('search results', () => {
         const scroller = header.closest<HTMLElement>('.overflow-y-auto')!
         const floating = [
           ...document.querySelectorAll<HTMLElement>(
-            `${cardSelector} [data-slot="save-button"], ${cardSelector} [data-slot="elite-badge"]`,
+            `${cardSelector} [data-slot="save-button"], ${cardSelector} [data-slot="badge"][data-variant="elite"]`,
           ),
         ]
         const settle = () =>
@@ -406,7 +406,7 @@ test.describe('search results', () => {
         const kinds = new Set<string>()
         const escaped: string[] = []
         for (const el of floating) {
-          const kind = el.dataset.slot ?? ''
+          const kind = el.dataset.variant === 'elite' ? 'elite-badge' : (el.dataset.slot ?? '')
           if (kinds.has(kind)) continue
           kinds.add(kind)
 

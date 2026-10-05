@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { Badge } from '@/components/patterns/badge'
 import type { Editorial } from '@/lib/api/schemas/editorial'
 
 /**
@@ -17,15 +18,6 @@ import type { Editorial } from '@/lib/api/schemas/editorial'
  * full-bleed.
  */
 
-/** `Badge Text` — a copper pill with inverse text. */
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="self-start rounded-full bg-primary px-2.5 py-1 text-body-xs font-semibold text-primary-foreground">
-      {children}
-    </p>
-  )
-}
-
 export function EditorialCard({ content }: { content: Editorial }) {
   const headingId = `${content.id}-heading`
 
@@ -40,7 +32,7 @@ export function EditorialCard({ content }: { content: Editorial }) {
         className="mx-4 flex flex-col gap-2.5 overflow-hidden rounded-lg stroke-gradient bg-card bg-[linear-gradient(180deg,color-mix(in_oklch,var(--primary)_10%,transparent)_0%,transparent_63%)] py-4 shadow-card"
       >
         <div className="flex flex-col gap-4 px-4">
-          <Badge>{content.badge}</Badge>
+          <Badge variant="text">{content.badge}</Badge>
           <h2 id={headingId} className="font-serif text-display-md leading-tight text-foreground">
             {content.headline}
           </h2>
@@ -85,7 +77,7 @@ export function EditorialCard({ content }: { content: Editorial }) {
       data-kind="promotion"
       className="mx-4 flex flex-col gap-6 rounded-lg border border-ring bg-background p-4"
     >
-      <Badge>{content.badge}</Badge>
+      <Badge variant="text">{content.badge}</Badge>
       <h2 id={headingId} className="font-serif text-display-md leading-tight text-foreground">
         {content.headline}
       </h2>

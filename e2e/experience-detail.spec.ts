@@ -315,4 +315,25 @@ test.describe('experience detail', () => {
     })
     expect(font).toEqual({ family: 'Ovo', loaded: true })
   })
+
+  /**
+   * The category badge beside the price (`Badge Icon`): the results row's
+   * word and glyph for what the experience is. Only categories with a glyph
+   * in the design get one; the jazz club is an `event`, which has none, so
+   * it has no badge rather than an invented icon.
+   */
+  test('shows the category beside the price, when it has a glyph', async ({
+    page,
+  }) => {
+    await page.goto(PICNIC)
+    const badge = page.locator('[data-slot="badge"][data-variant="icon"]')
+    await expect(badge).toHaveText('Dining')
+    // In the price row, not floating somewhere else on the screen.
+    await expect(badge.locator('..')).toContainText('$45')
+
+    await page.goto('/experience/exp-jazz-club')
+    await expect(page.getByRole('heading', { level: 1, name: 'Late Set at the Blue Door' })).toBeVisible()
+    await expect(page.getByText('$32', { exact: true })).toBeVisible()
+    await expect(badge).toHaveCount(0)
+  })
 })

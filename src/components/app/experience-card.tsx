@@ -1,5 +1,5 @@
 import { SaveButton } from '@/components/app/save-button'
-import { Elite as EliteIcon } from '@/components/icons'
+import { Badge } from '@/components/patterns/badge'
 import { Link } from 'react-router'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
@@ -100,28 +100,6 @@ function Price({ experience }: { experience: Experience }) {
       {amount}
       {price.unit ? ` / ${price.unit}` : null}
     </>
-  )
-}
-
-/**
- * `Badge Icon/Elite` — 32px pill, icon plus label, on the hero image.
- *
- * Its stroke is the same Elite gradient as the card's, so the badge and the
- * frame around it are visibly one treatment. Note there is no `relative`
- * here: the badge is already `absolute`, which is the containing block the
- * gradient's ::after needs, and `stroke-gradient-elite` deliberately does not
- * set position for exactly this reason.
- */
-function EliteBadge() {
-  return (
-    <p
-      /* A hook for tests. The class is not one: `stroke-gradient-elite` is
-       * also the frame round an Elite card's photo, which comes first. */
-      data-slot="elite-badge"
-      className="absolute top-2 left-2 z-10 flex h-8 items-center gap-1 rounded-full stroke-gradient-elite bg-card/90 pr-3 pl-2 text-body-md text-emphasis shadow-lift">
-      <EliteIcon className="size-5" />
-      Elite
-    </p>
   )
 }
 
@@ -231,7 +209,15 @@ export function ExperienceCard({
               large ? 'min-w-0 flex-[250]' : 'w-57.5 shrink-0',
             )}
           />
-          {experience.elite ? <EliteBadge /> : null}
+          {experience.elite ? (
+            /* `Badge Icon/Elite`, over the photo. The positioning and the
+             * lift are this card's — see Badge. `data-slot` stays "badge";
+             * tests find it by `data-variant="elite"`, since the class
+             * `stroke-gradient-elite` is also the photo's own frame. */
+            <Badge variant="elite" className="absolute top-2 left-2 z-10 shadow-lift">
+              Elite
+            </Badge>
+          ) : null}
           <div
             className={cn(
               'flex min-w-0 flex-col gap-1',

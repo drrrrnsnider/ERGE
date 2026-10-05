@@ -2,13 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
+  AccountBalance,
   ArrowBack,
   FavoriteOutline,
   FavoriteSaved,
+  ForkSpoon,
+  LocalBar,
+  LocalMall,
   MoreHoriz,
+  RewardedAds,
   Check,
+  Spa,
 } from '@/components/icons'
 import { TripCard } from '@/components/app/trip-card'
+import { Badge } from '@/components/patterns/badge'
 import { Button, ButtonIcon } from '@/components/patterns/button'
 import { ButtonFlow } from '@/components/patterns/button-flow'
 import { ErrorState } from '@/components/patterns/error-state'
@@ -16,7 +23,11 @@ import { Skeleton } from '@/components/patterns/skeleton'
 import { TopScrim } from '@/components/patterns/top-scrim'
 import { getExperience, getPairings } from '@/lib/api/experiences'
 import { toApiError } from '@/lib/api/schemas/error'
-import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
+import {
+  priceLowBound,
+  type Experience,
+  type ExperienceCategory,
+} from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
 import { addRecentlyViewed } from '@/lib/recents'
 import { cn } from '@/lib/utils'
@@ -42,6 +53,26 @@ import { cn } from '@/lib/utils'
  * fixed copy, so it is written as a per-experience line with a stand-in
  * until the concierge can produce one. */
 const SUGGESTION = 'Pick me up in a Waymo to grab a cocktail after'
+
+/**
+ * The category badge beside the price (`Badge Icon`, Figma 168:2895).
+ *
+ * Words and glyphs are the results screen's category row, so a category
+ * reads the same in both places — "Wellness", not "Spa". Only categories
+ * with a glyph in the design are here. Event, transport, lodging and other
+ * have none, and get no badge rather than an invented icon: `Badge Icon`
+ * without its icon would be a different component.
+ */
+const CATEGORY_BADGE: Partial<
+  Record<ExperienceCategory, { label: string; icon: typeof ForkSpoon }>
+> = {
+  dining: { label: 'Dining', icon: ForkSpoon },
+  drinks: { label: 'Drinks', icon: LocalBar },
+  gift: { label: 'Gifts', icon: LocalMall },
+  tour: { label: 'Tours', icon: AccountBalance },
+  sports: { label: 'Sports', icon: RewardedAds },
+  wellness: { label: 'Wellness', icon: Spa },
+}
 
 /* Where both flow buttons and the pairings band go: the concierge, handed
  * this experience as the thing to build around. The concierge is not built,
@@ -214,6 +245,7 @@ function Detail({
    * collapsing them to one, and can still wrap a long address. */
   const metaLine = [experience.location.address, duration].filter(Boolean).join('  •  ')
   const price = priceLowBound(experience.price)
+  const category = CATEGORY_BADGE[experience.category]
   const hero = experience.images[0]
   /* The strip under the hero is the REST of the gallery, so it starts at 1.
    * Four slots, and the last carries the count when there are more. */
@@ -303,19 +335,28 @@ function Detail({
         </div>
 
         <div className="flex flex-col gap-4">
-          <p className="flex items-baseline gap-2">
-            {/* Ovo — display-md is the serif, and the size utility does not
-              * set the family, so `font-serif` has to be here too. This
-              * rendered in Outfit until the fonts were audited. */}
-            <span className="font-serif text-display-md leading-tight text-primary">
-              {formatMoney(price)}
-            </span>
-            {experience.price.unit ? (
-              <span className="text-body-lg text-emphasis">
-                per {experience.price.unit}
+          {/* The price, and the category at the far end of the same row —
+            * both top-aligned, as drawn (230:9343, 230:9351). */}
+          <div className="flex items-start justify-between gap-4">
+            <p className="flex items-baseline gap-2">
+              {/* Ovo — display-md is the serif, and the size utility does not
+                * set the family, so `font-serif` has to be here too. This
+                * rendered in Outfit until the fonts were audited. */}
+              <span className="font-serif text-display-md leading-tight text-primary">
+                {formatMoney(price)}
               </span>
+              {experience.price.unit ? (
+                <span className="text-body-lg text-emphasis">
+                  per {experience.price.unit}
+                </span>
+              ) : null}
+            </p>
+            {category ? (
+              <Badge variant="icon" icon={category.icon}>
+                {category.label}
+              </Badge>
             ) : null}
-          </p>
+          </div>
 
           {/* Split: the commitment and its overflow, which is what
             * `Type=Split` exists for — two hit areas, not one button with a
