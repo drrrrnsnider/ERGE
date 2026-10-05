@@ -69,7 +69,7 @@ export function ChipFilter({
         ? 'pr-3 pl-2'
         : 'pr-2 pl-3',
     on
-      ? 'border-border-subtle bg-radial-card text-foreground'
+      ? 'border-border-subtle-focus bg-radial-card text-foreground'
       : 'border-border text-primary',
     className,
   )

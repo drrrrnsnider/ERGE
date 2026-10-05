@@ -81,6 +81,15 @@ describe('non-text contrast (1.4.11, 3:1)', () => {
     },
   )
 
+  /**
+   * Border/Subtle is deliberately absent, like Text/Disabled above. It is a
+   * SEPARATOR — the line under the sticky results header — between things
+   * that are already distinct by position and shadow, so 1.4.11 does not
+   * reach it. It measures 1.09 / 1.00 / 1.17 against Base, Card and
+   * Elevated; on Card it is the same colour exactly. That is why it may
+   * never be the only edge of a control: anything that needs to be found by
+   * its outline uses Border/Input, which is asserted above.
+   */
   it.each(SURFACES)('border-focus on %s', (bg) => {
     expect(contrast(token('border-focus'), token(bg))).toBeGreaterThanOrEqual(3)
   })
@@ -118,7 +127,8 @@ describe('theme bridge', () => {
       'ring',
       'emphasis',
       'disabled-foreground',
-      /* --border-subtle is deliberately absent. It points at
+      'border-subtle',
+      /* --border-subtle-focus is deliberately absent. It points at
        * Border/Subtle Focus, which is a color-mix() at 25% alpha, so it has
        * no flat hex and readSemantic() skips it by design — a translucent
        * colour has no fixed contrast ratio until you know what is behind it.

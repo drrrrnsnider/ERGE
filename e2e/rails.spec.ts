@@ -739,9 +739,10 @@ test.describe('card strokes', () => {
    * Border/Brighter gradient, which the flattened Figma code implies and the
    * variable list contradicts. Then it became a flat Border/Subtle Focus
    * border, which had the colour right and dropped the fade. In between, a
-   * fix used `border-subtle`, which is not a class at all — the colour is
-   * NAMED border-subtle, so with the `border-` prefix it is
-   * `border-border-subtle` — and Tailwind dropped the unknown class silently,
+   * fix used `border-subtle`, which was not a class at all — the colour was
+   * NAMED border-subtle (it is `border-subtle-focus` now; `border-subtle`
+   * has since become Figma's opaque Border/Subtle), so with the `border-`
+   * prefix it was `border-border-subtle` — and Tailwind dropped the unknown class silently,
    * leaving the opaque neutral, which on a dark UI looks close enough to ship.
    *
    * So this asserts the properties that separate the real thing from all

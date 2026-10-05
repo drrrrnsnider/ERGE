@@ -396,6 +396,7 @@
 
   /* Color/Border */
   --color-border-default: var(--color-umber-800);
+  --color-border-subtle: var(--color-umber-900);
   --color-border-brighter: var(--color-umber-700);
   --color-border-input: var(--color-umber-500);
   --color-border-subtle-focus: color-mix(in srgb, var(--color-copper-400) 25%, transparent);
@@ -411,4 +412,21 @@
   --color-feedback-success: var(--color-grass-400);
   --color-feedback-warning: var(--color-poppy-400);
   --color-feedback-info: var(--color-iris-400);
+
+  /* Color/Icons */
+  --color-icons-orange-light: var(--color-poppy-300);
+  --color-icons-orange-medium: var(--color-poppy-400);
+  --color-icons-orange-full: var(--color-poppy-500);
+  --color-icons-green-light: var(--color-grass-300);
+  --color-icons-green-medium: var(--color-grass-400);
+  --color-icons-green-full: var(--color-grass-500);
+  --color-icons-red-light: var(--color-carnation-300);
+  --color-icons-red-medium: var(--color-carnation-400);
+  --color-icons-red-full: var(--color-carnation-500);
+  --color-icons-pink-light: var(--color-orchid-300);
+  --color-icons-pink-medium: var(--color-orchid-400);
+  --color-icons-pink-full: var(--color-orchid-500);
+  --color-icons-purple-light: var(--color-lilac-300);
+  --color-icons-purple-medium: var(--color-lilac-400);
+  --color-icons-purple-full: var(--color-lilac-600);
 }

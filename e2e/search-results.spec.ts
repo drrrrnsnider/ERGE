@@ -130,6 +130,44 @@ test.describe('search results', () => {
   })
 
   /**
+   * The copper hairline — Border/Subtle Focus — on the two things that use
+   * it here: a selected chip's edge and the search pill's ring. Both were
+   * `border-subtle` until Figma gained an opaque Border/Subtle and that name
+   * moved to it. A call site that missed the rename would not error; it
+   * would quietly draw a near-black line instead, which on this UI looks
+   * close enough to ship. So: warm, and translucent.
+   */
+  test('a selected chip and the search pill keep the copper hairline', async ({
+    page,
+  }) => {
+    await page.goto('/search/results?near=me')
+    const chip = page.getByRole('button', { name: 'Right Now' })
+    await chip.click()
+    await expect(chip).toHaveAttribute('aria-pressed', 'true')
+
+    const colours = await page.evaluate(() => {
+      const chipEl = [...document.querySelectorAll('button')].find(
+        (b) => b.textContent?.trim() === 'Right Now',
+      )!
+      const pill = document.querySelector('[data-slot="input-field"]')!
+      /* The ring is a gradient fed by --field-stroke, so resolve the
+       * variable through a probe rather than reading a border colour. */
+      const probe = document.createElement('div')
+      probe.style.color = 'var(--field-stroke)'
+      pill.appendChild(probe)
+      const ring = getComputedStyle(probe).color
+      probe.remove()
+      return [getComputedStyle(chipEl).borderTopColor, ring]
+    })
+
+    for (const colour of colours) {
+      const [r = 0, , b = 0, alpha = 1] = (colour.match(/[\d.]+/g) ?? []).map(Number)
+      expect(r, colour).toBeGreaterThan(b)
+      expect(alpha, colour).toBeLessThan(1)
+    }
+  })
+
+  /**
    * "Right Now" is the one chip that is not a menu — no chevron in the
    * design, nothing to choose. It carries `aria-pressed`, not
    * `aria-haspopup`, and that difference is the point.

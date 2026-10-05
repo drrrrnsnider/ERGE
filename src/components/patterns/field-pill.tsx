@@ -86,7 +86,7 @@ export function FieldPill({
          * `stroke-gradient-field` rather than the fixed-colour strokes,
          * because the ring still has to turn Border/Focus while the field is
          * focused and only the parameterised one can change colour. */
-        md ? '[--field-stroke:var(--border-subtle)]' : '[--field-stroke:var(--border)]',
+        md ? '[--field-stroke:var(--border-subtle-focus)]' : '[--field-stroke:var(--border)]',
         'focus-within:[--field-stroke:var(--ring)]',
         className,
       )}

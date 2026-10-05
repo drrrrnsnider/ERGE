@@ -85,11 +85,29 @@
    *                 the promo call to action. Not `secondary-foreground`,
    *                 which shadcn already spends on text sitting ON the
    *                 secondary surface.
-   * --border-subtle Border/Subtle Focus — a translucent copper hairline that
-   *                 frames media. Distinct from --border, which is the opaque
-   *                 separator, and from --ring, which is focus. */
+   * --border-subtle-focus
+   *                 Border/Subtle Focus — a translucent copper hairline: the
+   *                 search pill's ring and a selected chip's edge. Distinct
+   *                 from --border, the opaque separator, and from --ring,
+   *                 which is focus.
+   * --border-subtle Border/Subtle — the quietest opaque line, a shade above
+   *                 Surface/Base. Separates a sticky header from what
+   *                 scrolls under it.
+   *
+   * NAMED AS FIGMA NAMES THEM. Until the 2026-10-05 export there was no
+   * Border/Subtle, and `--border-subtle` meant the copper one. When Figma
+   * gained the real Border/Subtle that became backwards — the token file
+   * said umber and every component said copper under the same name — so the
+   * copper role moved to `-focus` and `border-subtle` now means what it
+   * says in the design file. Every call site was renamed in the same commit.
+   *
+   * Border/Subtle is NOT a control boundary. It measures 1.09:1 on
+   * Surface/Base and 1.00:1 on Surface/Card, nowhere near the 3:1 of WCAG
+   * 1.4.11, so it may separate things that are already distinct but must
+   * never be the only edge of a control. tokens.test.ts says the same. */
   --emphasis: var(--color-text-secondary);
-  --border-subtle: var(--color-border-subtle-focus);
+  --border-subtle-focus: var(--color-border-subtle-focus);
+  --border-subtle: var(--color-border-subtle);
   /* Text/Disabled. shadcn has no role for it — its own disabled treatment is
    * `opacity-50` on the whole control, which is a different idea. This is a
    * colour the design names, used by the Input's disabled state. Exempt from
@@ -224,6 +242,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-emphasis: var(--emphasis);
+  --color-border-subtle-focus: var(--border-subtle-focus);
   --color-border-subtle: var(--border-subtle);
   --color-disabled-foreground: var(--disabled-foreground);
 
