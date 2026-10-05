@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { EditorialSchema } from './editorial'
-import { ExperienceSchema } from './experience'
+import { ExperienceBandSchema, ExperienceSchema } from './experience'
 
 /**
  * The Explore feed.
@@ -89,11 +89,7 @@ export const SectionItemsSchema = z.object({
 })
 export type SectionItems = z.infer<typeof SectionItemsSchema>
 
-/** A collage's tiles are a subset of experience fields — id, title, image. */
-export const CollageItemsSchema = z.object({
-  caption: z.string().optional(),
-  items: z.array(
-    ExperienceSchema.pick({ experienceId: true, title: true, images: true }),
-  ),
-})
+/** A collage's tiles are a subset of experience fields — id, title, image.
+ * The shape is shared with an experience's pairings; see ExperienceBand. */
+export const CollageItemsSchema = ExperienceBandSchema
 export type CollageItems = z.infer<typeof CollageItemsSchema>

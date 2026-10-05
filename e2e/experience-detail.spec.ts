@@ -91,4 +91,71 @@ test.describe('experience detail', () => {
     await expect(page.getByRole('heading', { name: 'Ride to Dinner' })).toBeVisible()
     await expect(page.getByRole('heading', { name: /What’s Included/ })).toHaveCount(0)
   })
+
+  /**
+   * "Complete the Experience": this experience and its pairings as one
+   * band, the anchor in the first column, and both the band and the flow
+   * button handing the evening to the concierge.
+   *
+   * The anchor is put first by the screen, not the API — the pairings call
+   * returns companions only — so this is the test that holds that line. The
+   * band is photos, so its link carries the titles as its name; scanned with
+   * axe once it has rendered, since the page-level scan above can finish
+   * before the pairings arrive.
+   */
+  test('completes the experience with this one first', async ({ page }) => {
+    await page.goto(PICNIC)
+    const section = page.getByRole('region', { name: 'Complete the Experience' })
+    const band = section.getByRole('link', { name: /^Build this evening with the concierge/ })
+    await expect(band).toBeVisible()
+
+    await expect(band).toHaveAccessibleName(
+      'Build this evening with the concierge: Rooftop Picnic Night, Cocktail Flight at Sugarcane, Late Set at the Blue Door, Ride to Dinner',
+    )
+    await expect(band.locator('li')).toHaveCount(4)
+    await expect(band.locator('li').first().locator('img')).toHaveAttribute(
+      'alt',
+      'A blanket and lanterns on a rooftop at dusk',
+    )
+    // Ride to Dinner has no photo, and still holds its column.
+    await expect(band.locator('li').last().locator('img')).toHaveCount(0)
+
+    const concierge = '/concierge?anchor=exp-rooftop-picnic'
+    await expect(band).toHaveAttribute('href', concierge)
+    await expect(
+      section.getByRole('link', { name: 'Build a trip with concierge' }),
+    ).toHaveAttribute('href', concierge)
+
+    const results = await new AxeBuilder({ page }).withTags(WCAG22AA).analyze()
+    expect(results.violations).toEqual([])
+  })
+
+  /**
+   * The pairings are their own call with their own failure, and the
+   * houseboat's mock fails on purpose. The section says so and offers a
+   * retry; the experience above it is untouched.
+   */
+  test('a failed suggestion stays inside its section', async ({ page }) => {
+    await page.goto('/experience/exp-houseboat')
+    const section = page.getByRole('region', { name: 'Complete the Experience' })
+    await expect(section.getByText(/took too long/)).toBeVisible({ timeout: 15_000 })
+    await expect(section.getByRole('button', { name: /try again/i })).toBeVisible()
+
+    await expect(page.getByRole('heading', { level: 1, name: 'A Night on a Houseboat' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Reserve Now' })).toBeVisible()
+  })
+
+  /**
+   * Nothing pairs with the glass cabin, and that is an answer: no heading,
+   * no empty state, no section. The section is on screen while the call is
+   * in flight, so this waits for it to go rather than catching the moment
+   * before it arrives.
+   */
+  test('leaves the section out when nothing pairs', async ({ page }) => {
+    await page.goto('/experience/exp-glass-cabin')
+    await expect(page.getByRole('heading', { level: 1, name: 'Glass Cabin in the Keys' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Complete the Experience' })).toHaveCount(0)
+    // The concierge is still offered, by the flow button under Reserve.
+    await expect(page.getByRole('link', { name: 'Build a trip with concierge' })).toHaveCount(1)
+  })
 })

@@ -339,7 +339,10 @@ Filtered by `{ budget: { min, max, currency }, groupSize }`. Budget is a
 
 ### `GET /explore/collage/:id`
 
-**Returns:** `{ caption?, items[] }`, items being a subset of `Experience`.
+**Returns:** `{ caption?, items[] }`, items being a subset of `Experience`
+(`experienceId`, `title`, `images`). The same shape as an experience's
+pairings — `ExperienceBand` in `schemas/experience.ts` — because both are
+drawn as one `Card / Trip LG` band.
 Empty for any user with no collections, which is the cold-start default and a
 designed empty state rather than a failure.
 
@@ -449,6 +452,46 @@ have to work with no network, and are nobody else's business, so they never
 leave it. If they ever become account-level — synced across a user's phone
 and laptop — that is a product decision with a privacy question attached, not
 a refactor.
+
+## Experience detail
+
+### `GET /experiences/:id`
+
+**Returns:** one `Experience`, including `description` (the paragraph) and
+`included` (the "What's Included" rows), which the cards never show.
+**Errors:** `not_found` when the experience is delisted, and the screen
+says so rather than rendering an empty page. **Not retried**: a missing
+experience is an answer, and retrying it only delays saying so. Anything
+else is retried twice, then shows the error state with a retry.
+**Side effect, client-side:** arriving records the id in recently viewed
+(`lib/recents`), including arrivals from a shared link.
+
+### `GET /experiences/:id/pairings` `[STUB]`
+
+The detail screen's "Complete the Experience": what the concierge would
+pair with this experience, the brief's anchor pattern — dinner here, then
+cocktails nearby, then a ride.
+
+**Returns:** `{ caption?, items[] }` — `ExperienceBand`, the collage's shape.
+Items are the **companions only**; the anchor is not included. The client
+puts the anchor in the first column itself, since it already has it, so the
+band always leads with the thing being viewed.
+**Not a `Collection`.** Nobody owns a suggestion: it has no id, no `active`
+flag and no per-item state. Saving one would create a `trip` collection
+from it — not designed yet.
+**Empty:** `items: []` means nothing pairs well yet. The section is
+omitted entirely rather than showing an empty state; the flow button under
+Reserve still offers the concierge.
+**Errors:** its own, inside its own section; the experience above is
+unaffected. The mock fails the houseboat's pairings with a retryable
+`timeout` on purpose, so that path is exercised.
+**Tap:** the band and its flow button both go to
+`/concierge?anchor=<experienceId>`. The concierge is not built, so that
+lands on the not-built route, which shows the parameter.
+`[DECIDE — DEV]` Ranking and freshness: whether pairings depend on the
+date, the party and the user's budget, or are the same for everyone.
+
+---
 
 ## Endpoint template
 

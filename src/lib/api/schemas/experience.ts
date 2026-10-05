@@ -230,3 +230,23 @@ export const ExperienceListSchema = z.object({
   items: z.array(ExperienceSchema),
 })
 export type ExperienceList = z.infer<typeof ExperienceListSchema>
+
+/**
+ * A band's worth of experiences: what `Card / Trip LG` draws. A caption, and
+ * tiles carrying only what a tile shows — id, title, pictures — so nothing
+ * here can go stale the way a price would.
+ *
+ * Two responses have this shape, and that is the reason it lives here rather
+ * than in either of them: Explore's "Ideas for Your Trip" collage, and an
+ * experience's pairings on the detail screen. Same picture, different source
+ * — one is drawn from the user's collections, the other is suggested around
+ * a single anchor. Neither is a `Collection`: nobody owns a suggestion, and
+ * it has no `active` flag or per-item state.
+ */
+export const ExperienceBandSchema = z.object({
+  caption: z.string().optional(),
+  items: z.array(
+    ExperienceSchema.pick({ experienceId: true, title: true, images: true }),
+  ),
+})
+export type ExperienceBand = z.infer<typeof ExperienceBandSchema>

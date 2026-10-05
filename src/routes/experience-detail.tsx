@@ -8,12 +8,13 @@ import {
   MoreHoriz,
   Check,
 } from '@/components/icons'
+import { TripCard } from '@/components/app/trip-card'
 import { Button, ButtonIcon } from '@/components/patterns/button'
 import { ButtonFlow } from '@/components/patterns/button-flow'
 import { ErrorState } from '@/components/patterns/error-state'
 import { Skeleton } from '@/components/patterns/skeleton'
 import { TopScrim } from '@/components/patterns/top-scrim'
-import { getExperience } from '@/lib/api/experiences'
+import { getExperience, getPairings } from '@/lib/api/experiences'
 import { toApiError } from '@/lib/api/schemas/error'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
@@ -41,6 +42,13 @@ import { cn } from '@/lib/utils'
  * fixed copy, so it is written as a per-experience line with a stand-in
  * until the concierge can produce one. */
 const SUGGESTION = 'Pick me up in a Waymo to grab a cocktail after'
+
+/* Where both flow buttons and the pairings band go: the concierge, handed
+ * this experience as the thing to build around. The concierge is not built,
+ * so today this lands on the not-built route, which shows the parameter —
+ * the same as every other link to a screen that does not exist yet. */
+const conciergeFor = (experienceId: string) =>
+  `/concierge?anchor=${encodeURIComponent(experienceId)}`
 
 export function ExperienceDetailRoute() {
   const navigate = useNavigate()
@@ -196,7 +204,10 @@ function Detail({ experience }: { experience: Experience }) {
           />
 
           <div className="flex flex-col items-center gap-2">
-            <ButtonFlow label="Build a trip with concierge" />
+            <ButtonFlow
+              label="Build a trip with concierge"
+              to={conciergeFor(experience.experienceId)}
+            />
             <p className="text-center text-body-xs text-muted-foreground">
               {SUGGESTION}
             </p>
@@ -233,8 +244,83 @@ function Detail({ experience }: { experience: Experience }) {
             </ul>
           </section>
         ) : null}
+
+        <CompleteTheExperience experience={experience} />
       </div>
     </>
+  )
+}
+
+/**
+ * "Complete the Experience" (Figma 230:9383): this experience and what the
+ * concierge would pair with it, as one `Card / Trip LG` band, then the flow
+ * button.
+ *
+ * THE ANCHOR IS THE FIRST COLUMN, and it is put there here rather than by
+ * the API. The band reads as "here is your evening", and it only reads that
+ * way if the thing you are looking at leads it.
+ *
+ * ITS OWN STATES, as every section's are. The pairings are a separate call,
+ * so a slow or failed suggestion never holds up the experience itself:
+ *
+ *   loading  the heading over a band-shaped skeleton
+ *   error    the heading over an ErrorState with retry; the rest of the
+ *            screen is untouched (the houseboat's mock fails on purpose)
+ *   empty    NO SECTION AT ALL. Nothing pairs well yet is an answer, and an
+ *            empty state saying so would be a heading announcing nothing on
+ *            a screen that is about something else. The flow button above
+ *            still offers the concierge.
+ */
+function CompleteTheExperience({ experience }: { experience: Experience }) {
+  const pairings = useQuery({
+    queryKey: ['experience', experience.experienceId, 'pairings'],
+    queryFn: () => getPairings(experience.experienceId),
+  })
+
+  if (pairings.isSuccess && pairings.data.items.length === 0) return null
+
+  const to = conciergeFor(experience.experienceId)
+  const heading = (
+    <h2 id="complete" className="w-full text-h3 font-semibold text-foreground">
+      Complete the Experience
+    </h2>
+  )
+
+  return (
+    <section aria-labelledby="complete" className="flex flex-col items-center gap-4">
+      {heading}
+
+      {pairings.isPending ? (
+        <Skeleton className="h-45 w-full rounded-lg" />
+      ) : null}
+
+      {pairings.isError ? (
+        <ErrorState
+          error={toApiError(pairings.error)}
+          onRetry={() => void pairings.refetch()}
+        />
+      ) : null}
+
+      {pairings.isSuccess ? (
+        <>
+          <TripCard
+            images={[
+              experience.images[0],
+              ...pairings.data.items.map((item) => item.images[0]),
+            ]}
+            to={to}
+            /* The titles, because the band is photos and the link has no
+             * words of its own — this is the only way someone not seeing it
+             * learns what the evening is. */
+            label={`Build this evening with the concierge: ${[
+              experience.title,
+              ...pairings.data.items.map((item) => item.title),
+            ].join(', ')}`}
+          />
+          <ButtonFlow label="Build a trip with concierge" to={to} />
+        </>
+      ) : null}
+    </section>
   )
 }
 

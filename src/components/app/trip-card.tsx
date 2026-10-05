@@ -33,6 +33,7 @@ export function TripCard({
   meta,
   experienceCount,
   to,
+  label,
   className,
 }: {
   /**
@@ -50,6 +51,16 @@ export function TripCard({
   experienceCount?: number
   /** Where the collection opens, when there is somewhere to go. */
   to?: string
+  /**
+   * The link's accessible name when there is no `name` to carry it.
+   *
+   * With a name, the name is the link and the band is a picture beside it.
+   * Without one — the detail screen's pairings are just the band — the band
+   * itself has to be the link, and a band of photos has no words of its own:
+   * left alone, a screen reader would read out four alt texts in a row and
+   * never say what tapping does. So the caller says it.
+   */
+  label?: string
   className?: string
 }) {
   const band = (
@@ -80,7 +91,15 @@ export function TripCard({
       data-slot="trip-card"
       className={cn('flex w-full flex-col gap-2', className)}
     >
-      {band}
+      {to !== undefined && name === undefined ? (
+        /* `block rounded-lg` so the focus outline follows the band's
+         * corners rather than drawing a square round them. */
+        <Link to={to} aria-label={label} className="block rounded-lg">
+          {band}
+        </Link>
+      ) : (
+        band
+      )}
 
       {name === undefined && meta === undefined && experienceCount === undefined ? null : (
         <div className="flex flex-col gap-1 px-2">

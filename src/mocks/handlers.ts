@@ -1,6 +1,7 @@
 import { ApiRequestError } from '@/lib/api/schemas/error'
 import type {
   Experience,
+  ExperienceBand,
   ExperienceCategory,
 } from '@/lib/api/schemas/experience'
 import { priceLowBound } from '@/lib/api/schemas/experience'
@@ -319,4 +320,44 @@ export async function getExperience(id: string): Promise<Experience> {
     })
   }
   return found
+}
+
+/* ===================================================================== *
+ * Pairings
+ * ===================================================================== */
+
+/**
+ * Hand-picked companions for a few anchors. Everything else pairs with
+ * nothing, which is a real answer and leaves the section off the screen.
+ *
+ * The picnic's set includes Ride to Dinner, which has no photo, on purpose:
+ * the band has to hold an empty column rather than close the gap.
+ */
+const PAIRINGS: Record<string, readonly string[]> = {
+  'exp-rooftop-picnic': ['exp-rooftop-cocktails', 'exp-jazz-club', 'exp-ride-to-dinner'],
+  'exp-tasting-menu': ['exp-ride-to-dinner', 'exp-rooftop-cocktails', 'exp-jazz-club'],
+  'exp-sunset-sail': ['exp-tasting-menu', 'exp-rooftop-cocktails', 'exp-bouquet'],
+}
+
+/**
+ * FAILS ON PURPOSE for the houseboat, so the section's own error state is
+ * exercised rather than theoretical — the same reason Unique Lodging fails
+ * on Explore. The rest of the detail screen must stay up when it does.
+ */
+export async function getPairings(id: string): Promise<ExperienceBand> {
+  await delay(350)
+  if (id === 'exp-houseboat') {
+    throw new ApiRequestError({
+      code: 'timeout',
+      message: 'Suggestions took too long to come back.',
+      retryable: true,
+    })
+  }
+  return {
+    items: pick(...(PAIRINGS[id] ?? [])).map(({ experienceId, title, images }) => ({
+      experienceId,
+      title,
+      images,
+    })),
+  }
 }

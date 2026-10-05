@@ -1,9 +1,11 @@
 import * as mocks from '@/mocks/handlers'
 import { ApiRequestError } from './schemas/error'
 import {
+  ExperienceBandSchema,
   ExperienceListSchema,
   ExperienceSchema,
   type Experience,
+  type ExperienceBand,
   type ExperienceList,
 } from './schemas/experience'
 
@@ -58,4 +60,22 @@ export async function getExperiencesByIds(
 export async function getExperience(id: string): Promise<Experience> {
   const raw = MODE === 'mock' ? await mocks.getExperience(id) : live()
   return ExperienceSchema.parse(raw)
+}
+
+/**
+ * What goes with this experience — the detail screen's "Complete the
+ * Experience" band. Suggested around one anchor, the brief's anchor pattern:
+ * dinner here, then cocktails nearby, then a ride home.
+ *
+ * THE ANCHOR IS NOT IN THE RESULT. These are its companions only; the screen
+ * puts the anchor first itself, since it already has it. Asking the server
+ * to include it would mean trusting it to put it first, every time, and the
+ * band reading wrong whenever it did not.
+ *
+ * Empty is an answer — nothing pairs well yet — and the screen leaves the
+ * section out rather than showing an empty state for it.
+ */
+export async function getPairings(id: string): Promise<ExperienceBand> {
+  const raw = MODE === 'mock' ? await mocks.getPairings(id) : live()
+  return ExperienceBandSchema.parse(raw)
 }

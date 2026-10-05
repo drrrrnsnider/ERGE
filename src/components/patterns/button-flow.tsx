@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { ConciergeStar2 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
@@ -39,31 +40,58 @@ import { cn } from '@/lib/utils'
 export function ButtonFlow({
   label = 'Try planning with concierge',
   size = 'SM',
+  to,
   className,
   ...props
 }: React.ComponentProps<'button'> & {
   label?: string
   size?: 'SM' | 'Md'
+  /**
+   * Navigates instead of acting — a link, not a button that calls
+   * navigate(), so it can be opened in a new tab and announces as a link.
+   * The same split ButtonIcon makes.
+   */
+  to?: string
 }) {
   const md = size === 'Md'
+  const shape = cn(
+    'inline-flex shrink-0 items-center justify-center rounded-full border border-emphasis bg-background text-body-md whitespace-nowrap text-foreground drop-shadow-flow',
+    md ? 'h-12 gap-1.5 pr-4 pl-3 font-semibold' : 'h-8 gap-1 pr-3 pl-2',
+    className,
+  )
+  const content = (
+    <>
+      <ConciergeStar2
+        className={cn('shrink-0', md ? 'size-[22px]' : 'size-5')}
+        aria-hidden="true"
+      />
+      {label}
+    </>
+  )
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        data-slot="button-flow"
+        data-size={size}
+        data-target="compact"
+        className={shape}
+      >
+        {content}
+      </Link>
+    )
+  }
   return (
     <button
       type="button"
       data-slot="button-flow"
       data-size={size}
       data-target="compact"
-      className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full border border-emphasis bg-background text-body-md whitespace-nowrap text-foreground drop-shadow-flow',
-        md ? 'h-12 gap-1.5 pr-4 pl-3 font-semibold' : 'h-8 gap-1 pr-3 pl-2',
-        className,
-      )}
+      className={shape}
       {...props}
     >
-      <ConciergeStar2
-        className={cn('shrink-0', md ? 'size-[22px]' : 'size-5')}
-        aria-hidden="true"
-      />
-      {label}
+      {content}
     </button>
   )
 }
