@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import type { ReactElement, SVGProps } from 'react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -33,6 +34,12 @@ import { cn } from '@/lib/utils'
  *   subject  Text/Primary, SemiBold   the thing being searched for
  *   action   Action/Primary, Regular  the scope or filter applied to it
  *   muted    Text/Muted, Regular      the same slot with nothing in it yet
+ *   scope    Text/Secondary, Regular  the location a RESULT set is scoped to
+ *
+ * `scope` is champagne where `action` is copper, and the difference is the
+ * results bar's own — sampled from the rendered design (2340:3681), where
+ * "Current Location" renders as Text/Secondary. The takeover's location row and "Today"
+ * keep `action`; recolouring that tone would have changed both of them.
  *
  * `muted` is the placeholder case — "Add location" rather than a location.
  * It is still a button, because the whole point of it is that pressing it is
@@ -75,7 +82,7 @@ export function FieldAction({
    * reader hears "Change location: Current Location".
    */
   name: string
-  tone?: 'subject' | 'action' | 'muted'
+  tone?: 'subject' | 'action' | 'muted' | 'scope'
   /** Navigates instead of acting. */
   to?: string
 }) {
@@ -92,6 +99,7 @@ export function FieldAction({
       : 'shrink-0 font-normal',
     tone === 'action' && 'text-primary',
     tone === 'muted' && 'text-muted-foreground',
+    tone === 'scope' && 'text-emphasis',
     className,
   )
 
@@ -122,5 +130,60 @@ export function FieldAction({
     >
       {content}
     </button>
+  )
+}
+
+/**
+ * A bare glyph control inside a `FieldPill` — the back arrow, the concierge
+ * star. The glyph is what you see; there is no ring, fill or circle, which is
+ * what the pill draws (Figma 168:2519).
+ *
+ * THE TAP AREA IS BIGGER THAN THE DRAWING, AND DOES NOT MOVE IT. The box in
+ * the layout is only as big as the glyph, so the glyph lands exactly where
+ * the design puts it — flush against the pill's padding. The control itself
+ * is a 44px circle absolutely centred on that box, so a thumb gets the full
+ * coarse-pointer target without the glyph being pushed 11px inward to make
+ * room for it. That push is what the ringed ButtonIcon was doing here.
+ *
+ * It overhangs its slot on purpose, so whatever holds it must not clip. That
+ * is why FieldPill's leading box no longer carries `overflow-clip`: it was
+ * cutting the back button's 44px down to the 30px box it sat in.
+ *
+ * `label` is the whole accessible name. Unlike FieldAction there are no
+ * visible words to keep in it — a glyph has none.
+ */
+export function FieldIconAction({
+  label,
+  icon: Icon,
+  to,
+  onClick,
+  className,
+}: {
+  label: string
+  icon: (props: SVGProps<SVGSVGElement>) => ReactElement
+  /** Navigates instead of acting. Mutually exclusive with onClick. */
+  to?: string
+  onClick?: () => void
+  /** On the footprint, so a colour set here is inherited by the glyph. */
+  className?: string
+}) {
+  const hit =
+    'absolute top-1/2 left-1/2 grid size-11 -translate-1/2 place-items-center rounded-full'
+  const glyph = <Icon aria-hidden="true" />
+  return (
+    <span
+      data-slot="field-icon-action"
+      className={cn('relative block size-[22px] shrink-0', className)}
+    >
+      {to ? (
+        <Link to={to} aria-label={label} className={hit}>
+          {glyph}
+        </Link>
+      ) : (
+        <button type="button" onClick={onClick} aria-label={label} className={hit}>
+          {glyph}
+        </button>
+      )}
+    </span>
   )
 }

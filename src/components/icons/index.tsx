@@ -526,6 +526,26 @@ export function License(props: IconProps) {
   )
 }
 
+/** `concierge_star` — the results bar's handoff to the concierge (Figma
+ * 168:2539). NOT `concierge_star_2` below: a different, slightly larger
+ * drawing, and it carries the champagne-to-copper gradient where that one is
+ * flat. Same stops as LocationOn, pointed at the roles rather than the hexes
+ * the export carries. */
+export function ConciergeStar(props: IconProps) {
+  const id = useId()
+  return (
+    <Svg viewBox="0 0 22 22" {...props}>
+      <defs>
+        <linearGradient id={id} x1="20" y1="11" x2="2" y2="11" gradientUnits="userSpaceOnUse">
+          <stop stopColor="var(--emphasis)" />
+          <stop offset="1" stopColor="var(--primary)" />
+        </linearGradient>
+      </defs>
+      <path fill={`url(#${id})`} d="M10.5313 20C10.3594 18.9844 9.90625 17.8906 9.17188 16.7187C8.4375 15.5312 7.39062 14.4297 6.03125 13.4141C4.6875 12.3984 3.34375 11.75 2 11.4687V10.4844C3.32813 10.1719 4.60156 9.59375 5.82031 8.75C7.05469 7.89062 8.08594 6.85937 8.91406 5.65625C9.75781 4.42187 10.2969 3.20312 10.5313 2H11.5156C11.6562 2.78125 11.9375 3.58594 12.3594 4.41406C12.7812 5.22656 13.3203 6.00781 13.9766 6.75781C14.6484 7.49219 15.3984 8.15625 16.2266 8.75C17.4609 9.625 18.7188 10.2031 20 10.4844V11.4687C19.1406 11.6406 18.25 11.9922 17.3281 12.5234C16.4219 13.0547 15.5781 13.6875 14.7969 14.4219C14.0156 15.1406 13.375 15.8984 12.875 16.6953C12.1406 17.8672 11.6875 18.9687 11.5156 20H10.5313Z" />
+    </Svg>
+  )
+}
+
 /** `concierge_star_2` — Figma's name, and a different drawing from the
  * tab bar's star. Used on the "Try planning with concierge" flow button. */
 export function ConciergeStar2(props: IconProps) {

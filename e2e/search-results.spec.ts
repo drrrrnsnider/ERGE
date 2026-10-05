@@ -37,6 +37,34 @@ test.describe('search results', () => {
   })
 
   /**
+   * The summary bar's two glyphs are drawn at 22px but tap at 44px — and the
+   * WHOLE 44 has to be live, not just reported. The back arrow's button used
+   * to measure 44px while sitting in a 30px box that clipped it, so a box
+   * test passed and a thumb 20px off-centre hit nothing. Hit-testing at
+   * that offset is the only check that sees the difference.
+   */
+  test('the summary bar glyphs answer a tap across their full 44px', async ({
+    page,
+  }) => {
+    await page.goto('/search/results?near=me')
+    for (const control of [
+      page.getByRole('button', { name: 'Back to search' }),
+      page.getByRole('link', { name: 'Ask the concierge' }),
+    ]) {
+      await expect(control).toBeVisible()
+      const reached = await control.evaluate((el) => {
+        const r = el.getBoundingClientRect()
+        const y = r.top + r.height / 2
+        return [-20, 20].map((dx) => {
+          const hit = document.elementFromPoint(r.left + r.width / 2 + dx, y)
+          return hit !== null && el.contains(hit)
+        })
+      })
+      expect(reached).toEqual([true, true])
+    }
+  })
+
+  /**
    * The filter lives in the URL, so a filtered list is a link someone can
    * send and a hard refresh lands on the same thing.
    */

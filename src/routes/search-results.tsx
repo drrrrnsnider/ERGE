@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import {
   AccountBalance,
   ArrowBack,
-  ConciergeStar2,
+  ConciergeStar,
   DiscoverTune,
   ForkSpoon,
   LocalBar,
@@ -17,11 +17,10 @@ import {
   ExperienceCardSkeleton,
 } from '@/components/app/experience-card'
 import { MapPlaceholder } from '@/components/app/map-placeholder'
-import { ButtonIcon } from '@/components/patterns/button'
 import { SearchFilterRow } from '@/components/app/search-filter-row'
 import { EmptyState } from '@/components/patterns/empty-state'
 import { ErrorState } from '@/components/patterns/error-state'
-import { FieldAction } from '@/components/patterns/field-action'
+import { FieldAction, FieldIconAction } from '@/components/patterns/field-action'
 import { FieldPill } from '@/components/patterns/field-pill'
 import { TabTextBar, type TabTextItem } from '@/components/patterns/tab-text-bar'
 import { TopScrim } from '@/components/patterns/top-scrim'
@@ -162,22 +161,22 @@ export function SearchResultsRoute() {
         <TopScrim />
         <FieldPill
           className="pointer-events-auto"
+          /* Both ends are bare glyphs, as drawn (168:2519): no ring, no
+           * fill. The back arrow is Text/Primary here, not the slot's
+           * copper — sampled from the rendered design. */
           leading={
-            <button
-              type="button"
-              aria-label="Back to search"
+            <FieldIconAction
+              label="Back to search"
+              icon={ArrowBack}
               onClick={() => void navigate(-1)}
-            >
-              <ArrowBack />
-            </button>
+              className="text-foreground"
+            />
           }
           action={
-            <ButtonIcon
+            <FieldIconAction
               label="Ask the concierge"
-              icon={ConciergeStar2}
-              size="Sm"
+              icon={ConciergeStar}
               to="/concierge"
-              className="bg-transparent"
             />
           }
         >
@@ -192,6 +191,7 @@ export function SearchResultsRoute() {
           />
           {location === null ? null : (
             <FieldAction
+              tone="scope"
               name="Change location"
               label={location}
               to="/search/location"

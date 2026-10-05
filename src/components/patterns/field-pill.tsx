@@ -94,7 +94,11 @@ export function FieldPill({
       {leading !== undefined ? (
         <span
           className={cn(
-            'grid size-[30px] shrink-0 place-items-center overflow-clip rounded-full text-primary',
+            /* Not clipped. It used to carry `overflow-clip`, which cut a
+             * back button's 44px tap area down to this 30px box and would
+             * have cut its focus ring too — the same fault the content box
+             * below had. See FieldIconAction. */
+            'grid size-[30px] shrink-0 place-items-center rounded-full text-primary',
             md ? '[&_svg]:size-[22px]' : '[&_svg]:size-5',
           )}
         >

@@ -7,7 +7,7 @@ import { DateRangeField } from '@/components/app/date-range-field'
 import type { DateRange } from '@/components/patterns/calendar'
 import { ButtonFlow } from '@/components/patterns/button-flow'
 import { ChipFilter } from '@/components/patterns/chip-filter'
-import { FieldAction } from '@/components/patterns/field-action'
+import { FieldAction, FieldIconAction } from '@/components/patterns/field-action'
 import { FieldPill } from '@/components/patterns/field-pill'
 import {
   ExperienceCard,
@@ -155,16 +155,15 @@ export function SearchRoute() {
       <div className="flex flex-col gap-3 px-4 pt-2">
         <FieldPill
           leading={
-            <button
-              type="button"
-              aria-label="Close search"
-              /* -1 rather than a route, so it returns wherever you came
-               * from. Someone who opened search from Library should land
-               * back in Library, not on Explore. */
+            /* -1 rather than a route, so it returns wherever you came from.
+             * Someone who opened search from Library should land back in
+             * Library, not on Explore. FieldIconAction so its 44px tap area
+             * is not clipped to the 30px box it sits in. */
+            <FieldIconAction
+              label="Close search"
+              icon={ArrowBack}
               onClick={() => void navigate(-1)}
-            >
-              <ArrowBack />
-            </button>
+            />
           }
         >
           <label htmlFor={queryId} className="sr-only">
