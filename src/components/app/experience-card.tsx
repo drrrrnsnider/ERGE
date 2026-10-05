@@ -114,7 +114,11 @@ function Price({ experience }: { experience: Experience }) {
  */
 function EliteBadge() {
   return (
-    <p className="absolute top-2 left-2 z-10 flex h-8 items-center gap-1 rounded-full stroke-gradient-elite bg-card/90 pr-3 pl-2 text-body-md text-emphasis shadow-lift">
+    <p
+      /* A hook for tests. The class is not one: `stroke-gradient-elite` is
+       * also the frame round an Elite card's photo, which comes first. */
+      data-slot="elite-badge"
+      className="absolute top-2 left-2 z-10 flex h-8 items-center gap-1 rounded-full stroke-gradient-elite bg-card/90 pr-3 pl-2 text-body-md text-emphasis shadow-lift">
       <EliteIcon className="size-5" />
       Elite
     </p>
@@ -191,8 +195,16 @@ export function ExperienceCard({
       <article
         data-slot="experience-card"
         data-variant={variant}
+        /* `isolate` keeps the Elite badge's and the save button's z-10 INSIDE
+         * the card. Without it they competed with whatever the card sits
+         * under — on the results screen that is the sticky filter header,
+         * also z-10, and the cards won because they come later in the page:
+         * badges and hearts scrolled OVER the categories. Raising the header
+         * would only win until someone wrote a z-20 in a card. This cannot
+         * be outbid — the same fix, for the same reason, as `main` in
+         * RootLayout. */
         className={cn(
-          'relative flex flex-col gap-2',
+          'relative isolate flex flex-col gap-2',
           large ? 'w-full' : 'w-80',
         )}
       >

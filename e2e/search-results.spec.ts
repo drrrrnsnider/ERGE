@@ -203,6 +203,75 @@ test.describe('search results', () => {
   })
 
   /**
+   * Whatever is floating on a card — the save heart, the Elite badge —
+   * passes BEHIND the pinned header, not over it. Both sit at z-10 inside the
+   * card, the same as the header, and they used to win because the cards come
+   * later in the page; the card's `isolate` keeps them inside it.
+   *
+   * Each one is scrolled to sit dead centre behind the header and then
+   * hit-tested there. The pin test above could not catch this: it probes the
+   * middle of "All", and nothing happened to be under that one point.
+   */
+  test('card badges and hearts pass behind the pinned filters', async ({
+    page,
+  }) => {
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+
+    const onTop = await page
+      .getByRole('group', { name: 'Category' })
+      .evaluate(async (group, cardSelector) => {
+        const header = group.parentElement!
+        const scroller = header.closest<HTMLElement>('.overflow-y-auto')!
+        const floating = [
+          ...document.querySelectorAll<HTMLElement>(
+            `${cardSelector} [data-slot="save-button"], ${cardSelector} [data-slot="elite-badge"]`,
+          ),
+        ]
+        const settle = () =>
+          new Promise((done) =>
+            requestAnimationFrame(() => requestAnimationFrame(done)),
+          )
+
+        /* Pin the header FIRST. At rest it rides along with the sheet, so
+         * scrolling a heart up moves the header by the same amount and the
+         * two never meet — the first draft of this test did exactly that and
+         * failed with the fix in place. Scrolling the header to the top of
+         * the scroller is what makes it stop moving. */
+        scroller.scrollTop +=
+          header.getBoundingClientRect().top -
+          scroller.getBoundingClientRect().top
+        await settle()
+
+        const kinds = new Set<string>()
+        const escaped: string[] = []
+        for (const el of floating) {
+          const kind = el.dataset.slot ?? ''
+          if (kinds.has(kind)) continue
+          kinds.add(kind)
+
+          /* Put its centre on the header's centre, then see who is on top. */
+          const h = header.getBoundingClientRect()
+          const r = el.getBoundingClientRect()
+          scroller.scrollTop +=
+            r.top + r.height / 2 - (h.top + h.height / 2)
+          await settle()
+          const now = el.getBoundingClientRect()
+          const hit = document.elementFromPoint(
+            now.x + now.width / 2,
+            now.y + now.height / 2,
+          )
+          if (hit === null || !header.contains(hit)) escaped.push(kind)
+        }
+        return { checked: [...kinds], escaped }
+      }, cards)
+
+    // Both kinds have to be on the page, or this tested nothing.
+    expect(onTop.checked.sort()).toEqual(['elite-badge', 'save-button'])
+    expect(onTop.escaped).toEqual([])
+  })
+
+  /**
    * WCAG 2.4.11 against the pinned header. Tabbing backwards up the list,
    * the browser scrolls each control just into view — and without
    * `scroll-padding-top` "into view" means the top edge of the scroller,
