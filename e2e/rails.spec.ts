@@ -187,6 +187,30 @@ test.describe('rails', () => {
   })
 
   /**
+   * THE GUIDES TILES SNAP 16px IN, not flush to the card's edge. Without
+   * scroll padding, `snap-start` lines a tile up with the scroller's own
+   * edge, so a small swipe pulled Date Night out of its inset and against
+   * the card's border. Measured as an outcome: nudge the row, let it
+   * settle, and the first tile is back where it started.
+   */
+  test('the guides tiles snap to the card inset, not its edge', async ({ page }) => {
+    await page.setViewportSize({ width: 402, height: 874 })
+    await page.goto('/')
+    const row = page.getByRole('link', { name: 'Date Night' }).locator('xpath=ancestor::ul[1]')
+    await expect(row).toBeVisible()
+
+    const fromEdge = await row.evaluate(async (ul) => {
+      ul.style.scrollBehavior = 'auto'
+      ul.scrollTo({ left: 10 })
+      await new Promise((r) => setTimeout(r, 600))
+      return Math.round(
+        ul.firstElementChild!.getBoundingClientRect().left - ul.getBoundingClientRect().left,
+      )
+    })
+    expect(fromEdge).toBe(16)
+  })
+
+  /**
    * The scroller must be reachable by keyboard. It is not focusable itself —
    * every card inside it is a link, which is what satisfies this — so axe's
    * `scrollable-region-focusable` should stay quiet. If a rail ever holds
