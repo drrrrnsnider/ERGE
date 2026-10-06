@@ -240,6 +240,52 @@ test.describe('library', () => {
     expect(await countdown(page)).toBe('none')
   })
 
+  /**
+   * EVERY LINE IS ONE LINE (option A). On the narrowest phone the tasting
+   * menu's title and its "Wynwood, Miami, FL  •  2.5 hrs" both overflow. The
+   * title is cut with "…", the PLACE gives way, and the duration stays whole
+   * — and the tile stays the frame's 80px however long the words are.
+   */
+  test('a long title and meta stay one line each, and the duration survives', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 640 })
+    await page.goto('/')
+    await page.evaluate(() =>
+      localStorage.setItem(
+        'erge.mock.saved.v1',
+        JSON.stringify({
+          collectionId: 'saved-this-device',
+          kind: 'saved',
+          active: true,
+          items: [{ experienceId: 'exp-tasting-menu', addedAt: '2026-10-01T10:00:00.000Z' }],
+        }),
+      ),
+    )
+    await page.goto('/library')
+    const card = page.locator('[data-slot="experience-card"]').first()
+    await expect(card).toBeVisible()
+
+    const shape = await card.evaluate((el) => {
+      const title = el.querySelector('a')!
+      const [place, duration] = el.querySelector('p')!.children as unknown as HTMLElement[]
+      return {
+        height: el.getBoundingClientRect().height,
+        titleCut: title.scrollWidth > title.clientWidth,
+        placeCut: place!.scrollWidth > place!.clientWidth,
+        durationWhole: duration!.scrollWidth <= duration!.clientWidth,
+        duration: duration!.textContent,
+      }
+    })
+    expect(shape).toEqual({
+      height: 80,
+      titleCut: true,
+      placeCut: true,
+      durationWhole: true,
+      duration: expect.stringMatching(/2\.5 hrs$/),
+    })
+  })
+
   /** The message lasts only as long as the visit. */
   test('a removed experience is gone on the next visit', async ({ page }) => {
     await seedSaved(page)

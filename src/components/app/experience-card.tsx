@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
 import { tabState, useCurrentTab } from '@/lib/tabs'
-import { cn, joinMeta } from '@/lib/utils'
+import { cn, joinMeta, META_SEPARATOR } from '@/lib/utils'
 
 /**
  * The experience card, in the four shapes the design library defines.
@@ -77,6 +77,43 @@ function OpenLink({
     <Link to={hrefFor(experience)} state={tabState(tab)} className={className}>
       {children}
     </Link>
+  )
+}
+
+/**
+ * The meta line — "Wynwood, Miami, FL  •  2.5 hrs" — on ONE line, always.
+ *
+ * Every card keeps every line to one (Darrin's option A): a long title or
+ * a long place wrapping made the row crowded and uneven. When it does not
+ * fit, the FIRST piece gives way and the last one stays whole — "Wynwood,
+ * Mia…  •  2.5 hrs" — because the duration is short and is the part you
+ * compare between cards, while the place is still recognisable cut short.
+ *
+ * The separator travels with the piece that stays, so it is never the
+ * thing that gets cut. The text in the page is the whole line either way —
+ * the "…" is drawn by CSS — so a screen reader still reads all of it.
+ */
+function MetaLine({
+  parts,
+  className,
+}: {
+  parts: ReadonlyArray<string | null | undefined | false>
+  className?: string
+}) {
+  const present = parts.filter((part): part is string => Boolean(part))
+  const kept = present.length > 1 ? present.at(-1) : undefined
+  const giving = joinMeta(kept === undefined ? present : present.slice(0, -1))
+  return (
+    <p className={cn('flex min-w-0 whitespace-nowrap', className)}>
+      {/* min-w-0 so a flex item may shrink below its text and truncate. */}
+      <span className="min-w-0 truncate">{giving}</span>
+      {kept !== undefined ? (
+        <span className="shrink-0">
+          {META_SEPARATOR}
+          {kept}
+        </span>
+      ) : null}
+    </p>
   )
 }
 
@@ -167,7 +204,6 @@ export function ExperienceCard({
   const meta = big
     ? [experience.summary, duration]
     : [experience.location.address, duration]
-  const metaLine = joinMeta(meta)
 
   if (big) {
     /* media-lg is media-md at full width, so they share this branch rather
@@ -256,10 +292,15 @@ export function ExperienceCard({
           />
         </div>
         <div className="flex flex-col gap-1 px-2">
-          <OpenLink experience={experience} className="text-h3 font-medium text-foreground">
+          {/* One line, cut with "…" — see MetaLine. `block` because
+            * truncation needs a block box and <a> is inline. */}
+          <OpenLink
+            experience={experience}
+            className="block truncate text-h3 font-medium text-foreground"
+          >
             {experience.title}
           </OpenLink>
-          <p className="text-body-md text-muted-foreground">{metaLine}</p>
+          <MetaLine parts={meta} className="text-body-md text-muted-foreground" />
           <p className="text-h4 font-medium text-emphasis">
             <Price experience={experience} />
           </p>
@@ -288,15 +329,24 @@ export function ExperienceCard({
           * stroke on top of the copper one — the wrong way round. `z-1` lifts
           * the image and its stroke above it: positive z-index descendants
           * paint after z-auto ones. The save button clears both at z-10. */}
+        {/* Pinned to the top. With every line kept to one the card is 80px
+          * and this changes nothing — but text enlarged by the reader can
+          * still make it taller, and then the picture stays put at the top
+          * rather than floating in the middle. */}
         <Media
           experience={experience}
-          className="relative z-1 h-20 w-27.5 shrink-0 rounded-md stroke-gradient"
+          className="relative z-1 h-20 w-27.5 shrink-0 self-start rounded-md stroke-gradient"
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-[3px] pr-9">
-          <OpenLink experience={experience} className="text-body-md text-foreground">
+        {/* py-2: the text never touches the tile's top or bottom edge, even
+          * when enlarged text makes the card grow around it. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-[3px] py-2 pr-9">
+          <OpenLink
+            experience={experience}
+            className="block truncate text-body-md text-foreground"
+          >
             {experience.title}
           </OpenLink>
-          <p className="text-body-xs text-muted-foreground">{metaLine}</p>
+          <MetaLine parts={meta} className="text-body-xs text-muted-foreground" />
           <p className="text-body-sm text-emphasis">
             <Price experience={experience} />
           </p>
@@ -331,11 +381,8 @@ export function ExperienceCard({
           className="h-12 w-16.5 shrink-0 rounded-sm stroke-gradient"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-          {/* One line each, clipped. This card is a fixed 48px row in a list
-            * of them, and a long title wrapping to two lines makes it 70 and
-            * breaks the rhythm of the whole list. It is a pointer back to
-            * something you have already seen, so the first few words are
-            * enough — which is not true of the cards that are an offer.
+          {/* One line each, clipped, like every card — a long title wrapping
+            * would make this 48px row 70 and break the list's rhythm.
             * `block` because truncation needs a block box and <a> is inline. */}
           <OpenLink
             experience={experience}
@@ -343,7 +390,7 @@ export function ExperienceCard({
           >
             {experience.title}
           </OpenLink>
-          <p className="truncate text-body-xs text-muted-foreground">{metaLine}</p>
+          <MetaLine parts={meta} className="text-body-xs text-muted-foreground" />
         </div>
       </article>
     )
@@ -360,11 +407,14 @@ export function ExperienceCard({
         experience={experience}
         className="h-27.5 w-full rounded-md stroke-gradient"
       />
-      <div className="flex flex-col gap-[3px]">
-        <OpenLink experience={experience} className="text-body-md text-foreground">
+      <div className="flex min-w-0 flex-col gap-[3px]">
+        <OpenLink
+          experience={experience}
+          className="block truncate text-body-md text-foreground"
+        >
           {experience.title}
         </OpenLink>
-        <p className="text-body-xs text-muted-foreground">{metaLine}</p>
+        <MetaLine parts={meta} className="text-body-xs text-muted-foreground" />
         <p className="text-body-sm text-emphasis">
           <Price experience={experience} />
         </p>

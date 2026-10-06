@@ -402,7 +402,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **94 unit tests** and **292 e2e** passing, 5 e2e skipped by
+Current state: **94 unit tests** and **295 e2e** passing, 5 e2e skipped by
 design: the coarse-pointer size assertions do not apply to `desktop-chrome`,
 and neither does the sheet's reduced-motion test, because desktop opens a
 popover instead of a sheet; and Library's hover-pause test runs on
@@ -466,6 +466,12 @@ screen yet renders the not-built route instead of erroring.
   repeated ordinary spaces to one, so two typed spaces render as one unless
   the element happens to carry `white-space: pre`. The helper uses
   non-breaking spaces, which need no CSS, and breaks only after the bullet.
+
+- **Every experience card keeps every line to one** — title and meta line,
+  cut with "…" (Darrin's option A, 2026-10-05). The meta line gives way from
+  the front: the place truncates and the duration stays whole, through
+  `MetaLine` in `src/components/app/experience-card.tsx`. So cards in a list
+  or rail are always the same height, however long the words.
 
 ## Working practice
 
