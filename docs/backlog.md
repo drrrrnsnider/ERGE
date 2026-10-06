@@ -27,10 +27,6 @@ tokens.
 
 ## Data
 
-- **Saving forgets on navigation.** Explore, the results screen and the
-  detail screen each hold `saved` in component state. Needs a saved-items
-  store behind `src/lib/api/` — probably the `Collection` shape in
-  `docs/api-contract.md`.
 - **The dates the search takeover collects are not carried to results.** See
   the header comment in `src/routes/search-results.tsx`.
 - **Explore's collage has no name or count.** `CollageItems` carries a

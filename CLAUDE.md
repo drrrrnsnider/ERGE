@@ -337,6 +337,15 @@ a Zod error rather than as `undefined` three components deep. And one mock
 section — Unique Lodging — **fails on purpose**, so the per-section error path
 is exercised on every run instead of being theoretical.
 
+**Saved is the second example, and the first that writes.**
+`src/lib/api/collections.ts` reads and changes a `Collection`;
+`src/lib/use-saved.ts` is the one hook every heart uses, so a save anywhere
+shows everywhere, and it updates the screen before the request lands and
+rolls back if it fails. Its mock is the only one that remembers. It writes
+through `lib/storage`, because a save that forgets on reload is not a save.
+That is the mock's behaviour, not the design's: the contract keeps
+collections server-side.
+
 Components must never import from `src/mocks/` directly. They go through
 `src/lib/api/`. The point is that the backend team can swap in real endpoints
 without touching the frontend.
@@ -388,7 +397,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **85 unit tests** and **249 e2e** passing, 3 e2e skipped by
+Current state: **94 unit tests** and **252 e2e** passing, 3 e2e skipped by
 design: the coarse-pointer size assertions do not apply to `desktop-chrome`,
 and neither does the sheet's reduced-motion test, because desktop opens a
 popover instead of a sheet.

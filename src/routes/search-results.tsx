@@ -26,6 +26,7 @@ import { TabTextBar, type TabTextItem } from '@/components/patterns/tab-text-bar
 import { TopScrim } from '@/components/patterns/top-scrim'
 import { getSearchResults } from '@/lib/api/search'
 import { toApiError } from '@/lib/api/schemas/error'
+import { useSaved } from '@/lib/use-saved'
 import {
   SearchCategorySchema,
   locationFromNear,
@@ -94,7 +95,7 @@ export function SearchResultsRoute() {
   const category: SearchCategory =
     SearchCategorySchema.safeParse(params.get('category')).data ?? 'all'
 
-  const [saved, setSaved] = useState<ReadonlySet<string>>(new Set())
+  const saved = useSaved()
 
   /* The chip row's filters are component state, not URL params, unlike the
    * query and the category. That is a deliberate split rather than an
@@ -130,13 +131,6 @@ export function SearchResultsRoute() {
     setParams(copy, { replace: true })
   }
 
-  const toggleSave = (id: string) =>
-    setSaved((current) => {
-      const next = new Set(current)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
 
   const items = results.data?.items ?? []
 
@@ -373,8 +367,8 @@ export function SearchResultsRoute() {
                 key={experience.experienceId}
                 experience={experience}
                 variant="media-lg"
-                saved={saved.has(experience.experienceId)}
-                onToggleSave={toggleSave}
+                saved={saved.isSaved(experience.experienceId)}
+                onToggleSave={saved.toggle}
               />
             ))}
           </div>

@@ -1,0 +1,103 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import { setStore, type Store } from '@/lib/storage'
+import {
+  deleteCollectionItem,
+  getActiveCollection,
+  putCollectionItem,
+} from './collections'
+
+/**
+ * Saved, through the API layer and the mock behind it. The mock is the one
+ * that remembers, so what is worth testing is what only shows up over time:
+ * a save surviving a "reload", the same save twice, Undo putting something
+ * back where it was, and two taps landing at once.
+ */
+
+/** `latency` makes each call take real time, as a bridge to native storage
+ * does. Without it every read and write finishes before the next request's
+ * timer fires, and a race between two requests can never happen. */
+function fakeStore(seed: Record<string, string> = {}, latency = 0) {
+  const map = new Map(Object.entries(seed))
+  const wait = () => new Promise((r) => setTimeout(r, latency))
+  const store: Store = {
+    get: async (key) => (await wait(), map.get(key) ?? null),
+    set: async (key, value) => (await wait(), void map.set(key, value)),
+    remove: async (key) => void map.delete(key),
+  }
+  return { store, map }
+}
+
+const ids = async () =>
+  (await getActiveCollection('saved')).items.map((i) => i.experienceId)
+
+let collectionId: string
+
+beforeEach(async () => {
+  setStore(fakeStore().store)
+  collectionId = (await getActiveCollection('saved')).collectionId
+})
+
+describe('the saved collection', () => {
+  it('starts empty', async () => {
+    await expect(ids()).resolves.toEqual([])
+  })
+
+  it('remembers a save on the next read — what a reload does', async () => {
+    await putCollectionItem(collectionId, { experienceId: 'exp-sunset-sail' })
+    await expect(ids()).resolves.toEqual(['exp-sunset-sail'])
+  })
+
+  it('lists newest first', async () => {
+    await putCollectionItem(collectionId, { experienceId: 'a', addedAt: '2026-10-01T10:00:00Z' })
+    await putCollectionItem(collectionId, { experienceId: 'b', addedAt: '2026-10-03T10:00:00Z' })
+    await putCollectionItem(collectionId, { experienceId: 'c', addedAt: '2026-10-02T10:00:00Z' })
+    await expect(ids()).resolves.toEqual(['b', 'c', 'a'])
+  })
+
+  it('treats saving twice as saving once, without moving it', async () => {
+    await putCollectionItem(collectionId, { experienceId: 'a', addedAt: '2026-10-01T10:00:00Z' })
+    await putCollectionItem(collectionId, { experienceId: 'b', addedAt: '2026-10-02T10:00:00Z' })
+    await putCollectionItem(collectionId, { experienceId: 'a' })
+    await expect(ids()).resolves.toEqual(['b', 'a'])
+  })
+
+  it('puts a restored item back where it was, not at the top', async () => {
+    for (const [id, day] of [['a', '01'], ['b', '02'], ['c', '03']] as const) {
+      await putCollectionItem(collectionId, { experienceId: id, addedAt: `2026-10-${day}T10:00:00Z` })
+    }
+    const removed = (await getActiveCollection('saved')).items.find(
+      (i) => i.experienceId === 'b',
+    )
+    await deleteCollectionItem(collectionId, 'b')
+    await expect(ids()).resolves.toEqual(['c', 'a'])
+
+    await putCollectionItem(collectionId, removed!)
+    await expect(ids()).resolves.toEqual(['c', 'b', 'a'])
+  })
+
+  it('loses neither of two saves sent at once', async () => {
+    setStore(fakeStore({}, 20).store)
+    await Promise.all([
+      putCollectionItem(collectionId, { experienceId: 'a' }),
+      putCollectionItem(collectionId, { experienceId: 'b' }),
+    ])
+    await expect(ids()).resolves.toHaveLength(2)
+  })
+
+  it('does not mind removing something that is not there', async () => {
+    await expect(deleteCollectionItem(collectionId, 'nope')).resolves.toMatchObject({
+      items: [],
+    })
+  })
+
+  it('starts empty again rather than failing on a value it cannot read', async () => {
+    setStore(fakeStore({ 'erge.mock.saved.v1': '{"items":"not a list"}' }).store)
+    await expect(ids()).resolves.toEqual([])
+  })
+
+  it('rejects a collection id it does not know', async () => {
+    await expect(
+      putCollectionItem('someone-elses', { experienceId: 'a' }),
+    ).rejects.toMatchObject({ detail: { code: 'not_found' } })
+  })
+})

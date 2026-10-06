@@ -17,6 +17,13 @@ import type {
   ExploreLayout,
   SectionItems,
 } from '@/lib/api/schemas/explore'
+import {
+  CollectionSchema,
+  type Collection,
+  type CollectionItem,
+  type CollectionKind,
+} from '@/lib/api/schemas/collection'
+import { readJSON, writeJSON } from '@/lib/storage'
 import { experiences } from './fixtures/experiences'
 
 /**
@@ -360,4 +367,129 @@ export async function getPairings(id: string): Promise<ExperienceBand> {
       images,
     })),
   }
+}
+
+/* ===================================================================== *
+ * Collections — Saved
+ * ===================================================================== */
+
+/**
+ * The saved collection, kept on this device.
+ *
+ * THE ONE MOCK THAT REMEMBERS. Everything else in this file is fixed data;
+ * saving has to survive a reload or it is not saving, so this writes through
+ * lib/storage. That is a property of the MOCK, not of the design: the
+ * contract puts collections server-side (api-contract.md, Anonymous carts),
+ * and when the real endpoint arrives this block is deleted and nothing above
+ * lib/api notices. Until then saves are per-device, like recents.
+ *
+ * Its own storage key, prefixed `mock`, so a real build never reads what a
+ * mock one wrote and mistakes it for server data.
+ */
+const SAVED_KEY = 'erge.mock.saved.v1'
+const SAVED_ID = 'saved-this-device'
+
+const emptySaved = (): Collection => ({
+  collectionId: SAVED_ID,
+  kind: 'saved',
+  active: true,
+  items: [],
+})
+
+async function readSaved(): Promise<Collection> {
+  return (await readJSON(SAVED_KEY, CollectionSchema)) ?? emptySaved()
+}
+
+/**
+ * One write at a time. Every change is read, modify, write — and storage is
+ * async — so two quick taps could both read the same list and the second
+ * write would quietly undo the first. A real server serialises for us; this
+ * stands in for that.
+ */
+let writes: Promise<unknown> = Promise.resolve()
+function serially<T>(change: () => Promise<T>): Promise<T> {
+  const next = writes.then(change, change)
+  writes = next.catch(() => undefined)
+  return next
+}
+
+function checkId(collectionId: string) {
+  if (collectionId !== SAVED_ID) {
+    throw new ApiRequestError({
+      code: 'not_found',
+      message: 'That collection does not exist.',
+      retryable: false,
+    })
+  }
+}
+
+/** Newest first — the order every collection list draws in. */
+const newestFirst = (items: CollectionItem[]) =>
+  [...items].sort((a, b) => b.addedAt.localeCompare(a.addedAt))
+
+export async function getActiveCollection(
+  kind: CollectionKind,
+): Promise<Collection> {
+  await delay(150)
+  if (kind !== 'saved') {
+    throw new ApiRequestError({
+      code: 'not_found',
+      message: `No ${kind} collections are mocked yet.`,
+      retryable: false,
+    })
+  }
+  return readSaved()
+}
+
+/**
+ * Put an experience in. Idempotent: saving something already saved changes
+ * nothing, including when it was saved — so a double tap cannot reorder the
+ * list.
+ *
+ * `addedAt` is honoured when sent. That is Undo: it hands back the item as it
+ * was, so it returns to its old place rather than jumping to the top.
+ */
+export async function putCollectionItem(
+  collectionId: string,
+  item: { experienceId: string; addedAt?: string },
+): Promise<Collection> {
+  await delay(150)
+  checkId(collectionId)
+  return serially(async () => {
+    const current = await readSaved()
+    if (current.items.some((i) => i.experienceId === item.experienceId)) {
+      return current
+    }
+    const next: Collection = {
+      ...current,
+      items: newestFirst([
+        ...current.items,
+        {
+          experienceId: item.experienceId,
+          addedAt: item.addedAt ?? new Date().toISOString(),
+          selected: false,
+        },
+      ]),
+    }
+    await writeJSON(SAVED_KEY, next)
+    return next
+  })
+}
+
+/** Take one out. Removing something that is not there is not an error. */
+export async function deleteCollectionItem(
+  collectionId: string,
+  experienceId: string,
+): Promise<Collection> {
+  await delay(150)
+  checkId(collectionId)
+  return serially(async () => {
+    const current = await readSaved()
+    const next: Collection = {
+      ...current,
+      items: current.items.filter((i) => i.experienceId !== experienceId),
+    }
+    await writeJSON(SAVED_KEY, next)
+    return next
+  })
 }

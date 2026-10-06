@@ -19,6 +19,7 @@ import {
   getExploreSection,
 } from '@/lib/api/explore'
 import { toApiError } from '@/lib/api/schemas/error'
+import { useSaved } from '@/lib/use-saved'
 import type {
   ExploreFilters,
   ExploreSection,
@@ -136,19 +137,11 @@ function RailSection({
   href?: string
   filters: ExploreFilters
 }) {
-  const [saved, setSaved] = useState<ReadonlySet<string>>(new Set())
+  const saved = useSaved()
   const query = useQuery({
     queryKey: queryKeys.section(id, filters),
     queryFn: () => getExploreSection(id, filters),
   })
-
-  const toggleSave = (experienceId: string) =>
-    setSaved((current) => {
-      const next = new Set(current)
-      if (next.has(experienceId)) next.delete(experienceId)
-      else next.add(experienceId)
-      return next
-    })
 
   return (
     <Rail id={id} title={title} href={href}>
@@ -197,8 +190,8 @@ function RailSection({
               <ExperienceCard
                 experience={experience}
                 variant={variant}
-                saved={saved.has(experience.experienceId)}
-                onToggleSave={toggleSave}
+                saved={saved.isSaved(experience.experienceId)}
+                onToggleSave={saved.toggle}
               />
             </RailItem>
           ))}

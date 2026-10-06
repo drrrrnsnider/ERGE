@@ -30,6 +30,7 @@ import {
 } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
 import { addRecentlyViewed } from '@/lib/recents'
+import { useSaved } from '@/lib/use-saved'
 import { cn, joinMeta } from '@/lib/utils'
 
 /**
@@ -129,7 +130,10 @@ function useTitleUnderBar(
 export function ExperienceDetailRoute() {
   const navigate = useNavigate()
   const { experienceId = '' } = useParams()
-  const [saved, setSaved] = useState(false)
+  const saved = useSaved()
+  /* From the URL rather than the loaded experience, so the heart works
+   * before the page has finished arriving. */
+  const isSaved = saved.isSaved(experienceId)
   const barRef = useRef<HTMLElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
 
@@ -205,9 +209,9 @@ export function ExperienceDetailRoute() {
 
           <div className="pointer-events-auto flex shrink-0 items-center gap-3">
             <ButtonIcon
-              label={saved ? 'Saved' : 'Save'}
-              icon={saved ? FavoriteSaved : FavoriteOutline}
-              onClick={() => setSaved((on) => !on)}
+              label={isSaved ? 'Saved' : 'Save'}
+              icon={isSaved ? FavoriteSaved : FavoriteOutline}
+              onClick={() => saved.toggle(experienceId)}
             />
             <ButtonIcon label="More options" icon={MoreHoriz} onClick={() => {}} />
           </div>

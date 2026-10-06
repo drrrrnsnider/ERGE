@@ -177,8 +177,12 @@ name?
 budget?      { min, max, currency }   total, not per person
 groupSize?
 dates?       { start, end } — rollup, derived from items
-items[]      { experienceId, date?, time?, selected, giftedBy? }
+items[]      { experienceId, addedAt, date?, time?, selected, giftedBy? }
 ```
+
+`addedAt` `[ASSUMPTION]` was added when Saved became the first list drawn.
+Lists are newest-first, and the timestamp is also what lets Undo put a
+removed item back in its old place. Schema: `schemas/collection.ts`.
 
 **Modelled as a collection with an id and an `active` flag, never a
 singleton.** This costs nothing now and makes `[V2]` saved carts a data change
@@ -196,6 +200,39 @@ creation **claims** the existing cart rather than rebuilding it.
 
 `[DECIDE — DEV]` Claim semantics when a user with an existing account signs in
 on a device holding an anonymous cart. Merge, replace, or ask?
+
+### `GET /collections/active?kind=<kind>`
+
+**Returns:** `Collection`, this user's current one of that kind, items
+newest first.
+**Auth:** none. Works signed out against the anonymous id, as the cart does.
+**Empty:** `items: []` — the first-run state, and not an error. Library
+shows its empty state.
+**Errors:** any normalised code.
+**Mock:** Saved only. It persists to this device through `lib/storage`
+(key `erge.mock.saved.v1`), because a save that forgets on reload is not a
+save. That is the mock's doing, not the contract's: once the endpoint is
+real, saves follow the anonymous id rather than the device.
+
+### `PUT /collections/:collectionId/items/:experienceId`
+
+**Request:** `{ addedAt? }`. Leave `addedAt` out and the server stamps it.
+Send it only to restore an item that was just removed — Undo — so it goes
+back to its old place rather than the top.
+**Returns:** the whole `Collection` as it now stands.
+**Idempotent:** saving something already saved changes nothing, including
+its `addedAt`, so a double tap cannot reorder the list.
+**Errors:** `not_found` for an unknown collection.
+
+### `DELETE /collections/:collectionId/items/:experienceId`
+
+**Returns:** the whole `Collection` as it now stands. Removing something
+that is not there is not an error.
+
+**Client behaviour, all three:** one cached collection is shared by every
+screen with a heart (`src/lib/use-saved.ts`). A change shows immediately and
+rolls back if the request fails, and the collection is re-read after the
+last of a burst of changes lands.
 
 ---
 

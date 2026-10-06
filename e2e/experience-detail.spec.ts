@@ -48,6 +48,42 @@ test.describe('experience detail', () => {
   })
 
   /**
+   * SAVING IS ONE ANSWER, AND IT LASTS. Each screen used to keep its own
+   * `saved`, so a heart lit on Explore was dark on the detail screen and
+   * gone after navigating. Saving here and reading it on a different screen,
+   * after a full reload, is the case that used to fail.
+   */
+  test('a save on Explore shows on the detail screen and survives a reload', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const save = page.getByRole('button', { name: 'Save Rooftop Picnic Night' }).first()
+    await save.click()
+    await expect(
+      page.getByRole('button', { name: 'Remove Rooftop Picnic Night from saved' }).first(),
+    ).toHaveAttribute('aria-pressed', 'true')
+
+    /* In-app, by the card, as a person would — a hard `goto` here would
+     * abandon the request still in flight, which no tap can do. */
+    await page.getByRole('link', { name: 'Rooftop Picnic Night' }).first().click()
+    await expect(page.getByRole('button', { name: 'Saved', exact: true })).toBeVisible()
+
+    /* The heart lights before the save lands — that is the optimistic
+     * update — so reloading straight away could outrun the write. Wait for
+     * it to reach the device, which is what a reload actually reads. */
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('erge.mock.saved.v1')))
+      .toContain('exp-rooftop-picnic')
+    await page.reload()
+    // And unsaving is the same one answer, read back on Explore.
+    await page.getByRole('button', { name: 'Saved', exact: true }).click()
+    await page.getByRole('button', { name: 'Back' }).click()
+    await expect(
+      page.getByRole('button', { name: 'Save Rooftop Picnic Night' }).first(),
+    ).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  /**
    * Viewing records the experience, and this screen is what does it — the
    * card used to, which counted a tap rather than an arrival and missed
    * anyone coming in from a shared link. Landing here directly, as this test
