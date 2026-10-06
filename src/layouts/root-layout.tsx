@@ -18,6 +18,7 @@ import { Link, Outlet, useLocation } from 'react-router'
 import { ButtonIcon } from '@/components/patterns/button'
 import { FieldPill } from '@/components/patterns/field-pill'
 import { TopScrim } from '@/components/patterns/top-scrim'
+import { TAB_ROUTES, useCurrentTab, type TabName } from '@/lib/tabs'
 import { cn } from '@/lib/utils'
 
 /** Every icon in src/components/icons has this shape. */
@@ -306,7 +307,7 @@ function SearchOverlay() {
  * because the icon is decorative: it carries aria-hidden and the label is the
  * accessible name, so nothing is communicated by the icon's contrast alone.
  *
- * Only Explore is wired. The rest render as plain items — visible, correctly
+ * Explore and Library are wired. The rest render as plain items — visible, correctly
  * placed, not links. Deliberately NOT `disabled` buttons: a disabled control
  * promises interaction and then refuses it, which is worse for a screen
  * reader than an item that is simply not interactive.
@@ -314,54 +315,34 @@ function SearchOverlay() {
  * A TAB STAYS LIT BENEATH ITSELF. Explore is current not only on `/` but on
  * everything you reach by going down from it — search, its results, an
  * experience — so the tab bar says which part of the app you are in, not
- * just which page. `owns` lists those paths. On the tab's own page it is
- * `aria-current="page"`; beneath it, `aria-current="true"`, which a screen
- * reader announces as "current" without claiming this IS the page.
+ * just which page. On the tab's own page it is `aria-current="page"`;
+ * beneath it, `aria-current="true"`, which a screen reader announces as
+ * "current" without claiming this IS the page.
  *
- * BY PATH, FOR NOW, and that is a known stand-in. The rule is "the tab you
- * started from" — confirmed by Darrin and written up in
- * docs/user-flows.md, Navigation: an experience opened from a saved list
- * keeps LIBRARY lit. Today only Explore can start anything, so path and
- * origin give the same answer — including for a shared link that opens a
- * detail page cold, which has no "from" at all.
- *
- * WHEN A SECOND TAB CAN OPEN AN EXPERIENCE, this has to change, because the
- * same `/experience/…` will then belong to whichever tab got there. The
- * starting tab travels with the navigation instead — stamped into each
- * history entry, so Back restores the right one — and `owns` stays as the
- * fallback for cold links. Do not build Library's link to an experience
- * without it, or the experience will light Explore.
+ * AND IT IS THE TAB YOU STARTED FROM, not the one that owns the path. The
+ * same experience lights Library when opened from Saved and Explore when
+ * opened from a rail (docs/user-flows.md, Navigation). Which tab that is
+ * lives in src/lib/tabs.ts, because the card's link needs the same answer
+ * to pass it on: the tab travels with the navigation, stamped into the
+ * history entry, and the path is only the fallback for cold links.
  */
 const TABS: ReadonlyArray<{
-  label: string
+  label: TabName
   /** At rest. */
   icon: IconComponent
   /** When this is the current tab. Required — every tab in the set has one. */
   activeIcon: IconComponent
-  to?: string
-  /** Paths beneath this tab, where it stays current. Each matches itself
-   * and anything below it. */
-  owns?: readonly string[]
 }> = [
-  {
-    label: 'Explore',
-    icon: TabExplore,
-    activeIcon: TabExploreFilled,
-    to: '/',
-    owns: ['/search', '/experience'],
-  },
+  { label: 'Explore', icon: TabExplore, activeIcon: TabExploreFilled },
   { label: 'Concierge', icon: TabConcierge, activeIcon: TabConciergeFilled },
   { label: 'Cart', icon: TabCart, activeIcon: TabCartFilled },
   { label: 'Library', icon: TabLibrary, activeIcon: TabLibraryFilled },
   { label: 'Profile', icon: TabProfile, activeIcon: TabProfileFilled },
 ]
 
-/** Whether `pathname` is `path` or somewhere below it. */
-const isWithin = (pathname: string, path: string) =>
-  pathname === path || pathname.startsWith(`${path}/`)
-
 function TabBar() {
   const { pathname } = useLocation()
+  const current = useCurrentTab()
   return (
     <nav
       aria-label="Primary"
@@ -370,10 +351,11 @@ function TabBar() {
       className="shrink-0 border-t border-card bg-background pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="flex items-stretch justify-around">
-        {TABS.map(({ label, icon: Icon, activeIcon: ActiveIcon, to, owns = [] }) => {
-          const here = to !== undefined && pathname === to
-          const beneath = owns.some((path) => isWithin(pathname, path))
-          const isActive = here || beneath
+        {TABS.map(({ label, icon: Icon, activeIcon: ActiveIcon }) => {
+          const { to } = TAB_ROUTES[label]
+          const isActive = current === label
+          const here = isActive && pathname === to
+          const beneath = isActive && !here
           const Glyph = isActive ? ActiveIcon : Icon
           return (
             <li key={label} className="flex-1">

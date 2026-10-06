@@ -3,6 +3,7 @@ import { Badge } from '@/components/patterns/badge'
 import { Link } from 'react-router'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
+import { tabState, useCurrentTab } from '@/lib/tabs'
 import { cn, joinMeta } from '@/lib/utils'
 
 /**
@@ -68,8 +69,12 @@ function OpenLink({
   className?: string
   children: React.ReactNode
 }) {
+  /* Carries the tab this card was tapped under onto the experience, so the
+   * tab bar keeps it lit there — Library for a saved card, Explore for a
+   * rail. See src/lib/tabs.ts. */
+  const tab = useCurrentTab()
   return (
-    <Link to={hrefFor(experience)} className={className}>
+    <Link to={hrefFor(experience)} state={tabState(tab)} className={className}>
       {children}
     </Link>
   )

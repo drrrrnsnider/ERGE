@@ -10,11 +10,6 @@ tokens.
 
 ## Navigation
 
-- **The tab you started from, not the path.** The tab bar lights a tab by
-  path today, which matches the rule while only Explore can open anything.
-  Before Library or Cart can open an experience, the starting tab has to
-  travel with navigation, stamped into history. Rule: `docs/user-flows.md`,
-  Navigation. How: the `TabBar` comment in `src/layouts/root-layout.tsx`.
 - **Scroll position carries between experiences.** Opening one detail screen
   from another can land already scrolled down, because `main` keeps its
   scroll across the route change.
