@@ -5,11 +5,17 @@ import { cn } from '@/lib/utils'
  * `Tab Pill Bar` — Library's Experiences / Wishlists / Trips (Figma
  * 172:6369, pills from `.Tab Pill` 172:6368 / 172:6391).
  *
- * A capsule of Surface/Card at 33% with a Border/Default hairline and 8px of
- * padding, holding equal-width 32px pills. The selected pill takes `Radial +
- * Card` and the Border/Subtle Focus edge — the same treatment as the active
- * filter chip, so it reuses `bg-radial-card` rather than a second drawing of
- * it. Body/SM, medium, throughout; only colour and fill change.
+ * A capsule of Surface/Card at 33% with 8px of padding, holding
+ * equal-width 32px pills. The selected pill takes the `Radial + Card` fill,
+ * reusing the active filter chip's `bg-radial-card`. Body/SM, medium,
+ * throughout; only colour, fill and edge change.
+ *
+ * BOTH EDGES ARE GRADIENTS, not hairlines. The bar's stroke is `Border
+ * Default 100 → 0` and the selected pill's is `Border Brighter → 0`: each
+ * full strength along the top and gone by the bottom. Those are the
+ * existing `stroke-gradient-card` and `stroke-gradient` overlays, so they
+ * take no layout space and the pill keeps its exact 32px. A flat `border`
+ * was the first build and read as a hard outline the frame does not have.
  *
  * LINKS, NOT `role="tablist"`. Each pill is a different URL, so the browser
  * handles Back, a refresh keeps you on the same grouping, and a link to
@@ -40,7 +46,7 @@ export function TabPillBar({
       aria-label={label}
       data-slot="tab-pill-bar"
       className={cn(
-        'flex h-12 gap-2 rounded-full border border-border bg-card/33 px-2',
+        'flex h-12 gap-2 rounded-full bg-card/33 px-2 stroke-gradient-card',
         className,
       )}
     >
@@ -53,7 +59,7 @@ export function TabPillBar({
           end
           className="group flex min-w-0 flex-1 items-center"
         >
-          <span className="flex h-8 w-full items-center justify-center rounded-full border border-transparent px-2.5 text-body-sm font-medium text-muted-foreground group-aria-[current=page]:border-border-subtle-focus group-aria-[current=page]:bg-radial-card group-aria-[current=page]:text-foreground">
+          <span className="flex h-8 w-full items-center justify-center rounded-full px-2.5 text-body-sm font-medium text-muted-foreground group-aria-[current=page]:bg-radial-card group-aria-[current=page]:stroke-gradient group-aria-[current=page]:text-foreground">
             {text}
           </span>
         </NavLink>

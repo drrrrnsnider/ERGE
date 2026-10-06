@@ -216,9 +216,9 @@ function RemovedRow({
   return (
     <div
       data-slot="removed-row"
-      className="flex items-center gap-3 rounded-md bg-card py-2 pr-2 pl-3"
+      className="flex items-center gap-3 rounded-md bg-card p-2"
     >
-      <div className="size-8 shrink-0 overflow-hidden rounded-xs bg-muted">
+      <div className="size-8 shrink-0 overflow-hidden rounded-sm bg-muted">
         {image ? (
           /* Decorative: the title beside it names the same thing. */
           <img src={image.url} alt="" className="size-full object-cover" />
