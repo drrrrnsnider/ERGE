@@ -87,6 +87,14 @@ tokens.
   the line-height rule. Move each to the matching scale size — the empty
   state's description is a paragraph, so it also takes `leading-normal`.
 
+## Check on a real phone
+
+- **Dragging the Tab Pill Bar's highlight with a finger.** The drag is
+  pointer events with `touch-action: pan-y`, tested in Playwright with a
+  mouse only. Confirm on a device, after the Capacitor setup, that a
+  sideways drag moves the highlight and an up-or-down swipe still scrolls
+  the page. `src/components/patterns/tab-pill-bar.tsx`.
+
 ## When the real map arrives
 
 - **Touches above the results sheet.** The empty area over the map belongs

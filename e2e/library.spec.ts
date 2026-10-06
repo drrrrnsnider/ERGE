@@ -457,3 +457,103 @@ test.describe('library wishlists', () => {
     expect(Math.round(c!.top - a!.bottom)).toBe(16)
   })
 })
+
+test.describe('the section pills', () => {
+  const bar = (page: Page) => page.getByRole('navigation', { name: 'Library sections' })
+  const highlight = (page: Page) => bar(page).locator('[data-slot="tab-pill-highlight"]')
+  const pill = (page: Page, name: string) =>
+    bar(page).getByRole('link', { name }).locator('span')
+
+  /** Where the highlight is, and where a pill is, from the bar's left. */
+  async function offsets(page: Page, name: string) {
+    const [b, h, p] = await Promise.all([
+      bar(page).boundingBox(),
+      highlight(page).boundingBox(),
+      pill(page, name).boundingBox(),
+    ])
+    return { highlight: Math.round(h!.x - b!.x), pill: Math.round(p!.x - b!.x) }
+  }
+
+  /**
+   * ONE HIGHLIGHT THAT SLIDES. Choosing another pill moves the same element
+   * there with a real transition — not a second highlight appearing — and
+   * it comes to rest exactly on the new pill.
+   */
+  test('the highlight slides to the chosen pill', async ({ page }) => {
+    await page.goto('/library')
+    await expect(highlight(page)).toBeVisible()
+    let at = await offsets(page, 'Experiences')
+    expect(at.highlight).toBe(at.pill)
+
+    await bar(page).getByRole('link', { name: 'Wishlists' }).click()
+    const moving = await highlight(page).evaluate((el) =>
+      el.getAnimations().some((a) => (a as CSSTransition).transitionProperty === 'transform'),
+    )
+    expect(moving).toBe(true)
+
+    await expect(highlight(page)).toHaveCSS('transform', /matrix/)
+    await expect.poll(async () => {
+      at = await offsets(page, 'Wishlists')
+      return at.highlight - at.pill
+    }).toBe(0)
+  })
+
+  /** Under reduced motion it is simply there: no transition at all. */
+  test('under reduced motion the highlight moves without sliding', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/library')
+    await expect(highlight(page)).toBeVisible()
+    await bar(page).getByRole('link', { name: 'Wishlists' }).click()
+    const transitions = await highlight(page).evaluate((el) => el.getAnimations().length)
+    expect(transitions).toBe(0)
+    const at = await offsets(page, 'Wishlists')
+    expect(at.highlight).toBe(at.pill)
+  })
+
+  /**
+   * DRAG IT. Pick up the highlighted pill, move it along the bar, let go
+   * nearer another — that tab opens, and the highlight settles on it.
+   */
+  test('dragging the highlight to another pill opens that tab', async ({ page }) => {
+    await page.goto('/library')
+    await expect(highlight(page)).toBeVisible()
+    const from = (await pill(page, 'Experiences').boundingBox())!
+    const to = (await pill(page, 'Wishlists').boundingBox())!
+    const y = from.y + from.height / 2
+
+    await page.mouse.move(from.x + from.width / 2, y)
+    await page.mouse.down()
+    await page.mouse.move(to.x + to.width / 2, y, { steps: 8 })
+    // Mid-drag it follows the pointer, and is marked as being dragged.
+    await expect(highlight(page)).toHaveAttribute('data-dragging', 'true')
+    await page.mouse.up()
+
+    await expect(page).toHaveURL(/\/library\/wishlists$/)
+    await expect(highlight(page)).not.toHaveAttribute('data-dragging')
+    await expect.poll(async () => {
+      const at = await offsets(page, 'Wishlists')
+      return at.highlight - at.pill
+    }).toBe(0)
+  })
+
+  /** Let go back where it started and nothing happens — no navigation. */
+  test('a drag released on its own pill goes nowhere', async ({ page }) => {
+    await page.goto('/library')
+    await expect(highlight(page)).toBeVisible()
+    const from = (await pill(page, 'Experiences').boundingBox())!
+    const y = from.y + from.height / 2
+    const x = from.x + from.width / 2
+
+    await page.mouse.move(x, y)
+    await page.mouse.down()
+    await page.mouse.move(x + 30, y, { steps: 4 })
+    await page.mouse.move(x, y, { steps: 4 })
+    await page.mouse.up()
+
+    await expect(page).toHaveURL(/\/library$/)
+    await expect.poll(async () => {
+      const at = await offsets(page, 'Experiences')
+      return at.highlight - at.pill
+    }).toBe(0)
+  })
+})
