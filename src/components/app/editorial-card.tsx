@@ -33,7 +33,7 @@ export function EditorialCard({ content }: { content: Editorial }) {
       >
         <div className="flex flex-col gap-4 px-4">
           <Badge variant="text">{content.badge}</Badge>
-          <h2 id={headingId} className="font-serif text-display-md leading-tight text-foreground">
+          <h2 id={headingId} className="font-serif text-display-md text-foreground">
             {content.headline}
           </h2>
         </div>
@@ -78,10 +78,11 @@ export function EditorialCard({ content }: { content: Editorial }) {
       className="mx-4 flex flex-col gap-6 rounded-lg border border-ring bg-background p-4"
     >
       <Badge variant="text">{content.badge}</Badge>
-      <h2 id={headingId} className="font-serif text-display-md leading-tight text-foreground">
+      <h2 id={headingId} className="font-serif text-display-md text-foreground">
         {content.headline}
       </h2>
-      <p className="text-body-xs text-muted-foreground">
+      {/* Running copy, so 1.5 — see the type scale in theme.css. */}
+      <p className="text-body-xs leading-normal text-muted-foreground">
         {content.caption}{' '}
         {/* Underlined ALWAYS, not on hover. This link sits inside a block of
           * text, and champagne on muted grey is far below the 3:1 that would

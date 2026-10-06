@@ -449,4 +449,34 @@ test.describe('experience detail', () => {
     })
     expect(still).toEqual({ animation: 'none', before: '90%', after: '90%' })
   })
+
+  /**
+   * Line height: Figma's "Auto" (CSS `normal`) for titles and single lines,
+   * 1.5 for running paragraphs — Darrin's rule. Read as rendered boxes,
+   * because "normal" only means something once the font's metrics turn it
+   * into pixels: a one-line 21px Outfit title is 26 tall, as the frame draws
+   * it; the 16px description runs at 24.
+   *
+   * The ELEMENT's box, not the text's. A first draft measured the text's
+   * own glyph box, which the font sets regardless of line height — and
+   * which happens to equal Auto exactly — so it passed with the scale
+   * reverted to 1.5. A one-line element is one line-height tall; that is
+   * what moves.
+   */
+  test('titles sit at Auto, paragraphs at 1.5', async ({ page }) => {
+    await page.goto(PICNIC)
+    const title = page.getByRole('heading', { level: 1, name: 'Rooftop Picnic Night' })
+    await expect(title).toBeVisible()
+
+    const boxes = await title.evaluate((h1) => {
+      const description = h1.parentElement!.querySelector('p.text-body-lg')!
+      const oneLine = (el: Element) => Math.round(el.getBoundingClientRect().height)
+      return {
+        titleLine: oneLine(h1),
+        metaLine: oneLine(h1.nextElementSibling!),
+        paragraphLineHeight: getComputedStyle(description).lineHeight,
+      }
+    })
+    expect(boxes).toEqual({ titleLine: 26, metaLine: 18, paragraphLineHeight: '24px' })
+  })
 })

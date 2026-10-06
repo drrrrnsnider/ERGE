@@ -132,6 +132,12 @@ It is a script rather than an oxlint rule because oxlint does not implement
 If that changes, move the patterns into `.oxlintrc.json` and delete the
 script.
 - **Never** invent a spacing or radius value. Use the scale.
+- **Line height is Figma's "Auto" by default, 1.5 for paragraphs.** Every
+  size in the type scale carries `--leading-auto` (CSS `normal`), so
+  titles, labels, prices and single card lines match the frames to the
+  pixel. Running copy — a paragraph someone reads — adds `leading-normal`
+  (1.5) on its element. Darrin's rule. `normal` is safe here only because
+  both fonts are self-hosted: measured identical in Chromium and WebKit.
 - **Motion uses the named scale**, the same way: `duration-fast` / `base` /
   `moderate` / `slow` and `ease-standard` / `enter` / `exit`, from the
   Figma Motion tokens. Never `duration-200` — Tailwind keeps the numeric
@@ -382,7 +388,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **85 unit tests** and **246 e2e** passing, 3 e2e skipped by
+Current state: **85 unit tests** and **249 e2e** passing, 3 e2e skipped by
 design: the coarse-pointer size assertions do not apply to `desktop-chrome`,
 and neither does the sheet's reduced-motion test, because desktop opens a
 popover instead of a sheet.

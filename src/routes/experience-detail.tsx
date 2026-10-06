@@ -324,7 +324,8 @@ function Detail({
           </h1>
           <p className="text-body-md text-muted-foreground">{metaLine}</p>
           {experience.description ? (
-            <p className="text-body-lg text-emphasis">
+            /* Running copy, so 1.5 — see the type scale in theme.css. */
+            <p className="text-body-lg leading-normal text-emphasis">
               {experience.description}
             </p>
           ) : null}
@@ -338,7 +339,7 @@ function Detail({
               {/* Ovo — display-md is the serif, and the size utility does not
                 * set the family, so `font-serif` has to be here too. This
                 * rendered in Outfit until the fonts were audited. */}
-              <span className="font-serif text-display-md leading-tight text-primary">
+              <span className="font-serif text-display-md text-primary">
                 {formatMoney(price)}
               </span>
               {experience.price.unit ? (

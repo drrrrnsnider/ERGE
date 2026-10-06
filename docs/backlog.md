@@ -8,20 +8,6 @@ Not here: decisions (CLAUDE.md and the other docs), and anything already owned
 by a section of CLAUDE.md — the Capacitor setup task, the booking status
 tokens.
 
-## Awaiting a decision
-
-- **Line height: Auto for titles and single-line text, 1.5 for paragraphs.**
-  Darrin's direction, 2026-10-05; not built. Today the theme sets 1.5
-  everywhere, so titles and card lines sit taller than the frames. Proposed:
-  a `leading-auto` utility (`line-height: normal`, Figma's "Auto"), made the
-  default for every size in the type scale, with running paragraphs opting
-  into `leading-normal` (1.5) — the detail description, editorial copy, empty
-  and error states. Measured: `normal` gives Figma's exact boxes in Chromium
-  and WebKit alike for both self-hosted faces (Outfit 21→26, 14→18, 12→15;
-  Ovo 32→36), closer than the existing 1.25 `leading-snug`. App-wide visual
-  change: its own commit, with screenshots. Once built, record the rule in
-  CLAUDE.md.
-
 ## Navigation
 
 - **The tab you started from, not the path.** The tab bar lights a tab by
@@ -62,6 +48,13 @@ tokens.
 - **"Rooftop Bars" rail on the results screen.** The results frame
   interleaves a horizontal rail of compact cards between the large ones. Kept
   in backlog by Darrin.
+- **Three spots use Tailwind's `text-sm`, not the type scale:** the empty
+  state's description and the error state's message
+  (`src/components/patterns/empty-state.tsx`, `error-state.tsx`) and the
+  budget hint (`src/components/app/budget-range.tsx`). `text-sm` brings its
+  own size and a 1.43 line height, so it sits outside both the scale and
+  the line-height rule. Move each to the matching scale size — the empty
+  state's description is a paragraph, so it also takes `leading-normal`.
 
 ## When the real map arrives
 

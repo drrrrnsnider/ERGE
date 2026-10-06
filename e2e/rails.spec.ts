@@ -470,7 +470,12 @@ test.describe('the overlay bars', () => {
     await page.goto('/')
     await expect(page.locator(CARD).first()).toBeVisible()
 
-    const link = page.locator(`${CARD} a`).first()
+    /* The LAST card link, as the comment above says. This read `.first()`
+     * until the line-height change made Explore shorter: the first card then
+     * sat too high to be scrolled down under the row at all, and the
+     * precondition below — rightly — refused to pass. The last card is far
+     * enough down whatever the text above it measures. */
+    const link = page.locator(`${CARD} a`).last()
 
     /* Put the card UNDER the row first. That is the case the criterion is
      * actually about: the element is inside the scrollport, so without a
