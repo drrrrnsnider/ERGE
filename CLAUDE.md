@@ -441,17 +441,22 @@ asset filenames are content-hashed, so `ls dist/assets/` after a local
 `npm run build` at that commit should match the `/assets/…` names in
 production's `index.html`.
 
-None of the deployment configuration lives here. There is no `vercel.json`:
-the build command, output directory and Node version are set in Vercel's
-dashboard, so someone reading the repo alone cannot see them or reproduce the
-build. Moving them into `vercel.json` is the fix if that ever matters.
+Almost none of the deployment configuration lives here. `vercel.json` holds
+one rule, the deep-link rewrite below; the build command, output directory
+and Node version are still set in Vercel's dashboard, so someone reading the
+repo alone cannot see them or reproduce the build. Moving them into
+`vercel.json` too is the fix if that ever matters.
 
 Deep links survive a hard refresh — `/search?near=me` pasted straight into the
-address bar serves the app rather than a 404 — because Vercel's Vite preset
-falls back to `index.html` for paths that are not files. That is inherited
-from framework detection rather than pinned by us, so re-test it if the preset
-or the build output changes. `src/router.tsx` is a single catch-all, so every
-path that has no screen yet renders the not-built route instead of erroring.
+address bar serves the app rather than a 404 — because `vercel.json` rewrites
+every path to `/index.html`. Vercel serves a real file first, so `/assets/…`
+and `/favicon.svg` are unaffected; only paths that are not files reach the
+rewrite. This used to be left to the Vite framework preset, and on
+2026-10-05 production was found returning Vercel's own NOT_FOUND for every
+path but `/`, so it is pinned here now rather than inherited. After a
+deploy, `curl -s -o /dev/null -w '%{http_code}'` on a deep path should say
+200. `src/router.tsx` is a single catch-all, so every path that has no
+screen yet renders the not-built route instead of erroring.
 
 ## Copy conventions
 
