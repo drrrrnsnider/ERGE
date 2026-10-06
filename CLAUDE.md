@@ -356,7 +356,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **83 unit tests** and **243 e2e** passing, 3 e2e skipped by
+Current state: **85 unit tests** and **243 e2e** passing, 3 e2e skipped by
 design: the coarse-pointer size assertions do not apply to `desktop-chrome`,
 and neither does the sheet's reduced-motion test, because desktop opens a
 popover instead of a sheet.
@@ -405,6 +405,15 @@ falls back to `index.html` for paths that are not files. That is inherited
 from framework detection rather than pinned by us, so re-test it if the preset
 or the build output changes. `src/router.tsx` is a single catch-all, so every
 path that has no screen yet renders the not-built route instead of erroring.
+
+## Copy conventions
+
+- **A meta line separates its pieces with two spaces either side of "•"** —
+  `Miami Beach, FL  •  3 hrs` — everywhere, through `joinMeta()` in
+  `src/lib/utils.ts`. Never type `' • '` by hand: a browser collapses
+  repeated ordinary spaces to one, so two typed spaces render as one unless
+  the element happens to carry `white-space: pre`. The helper uses
+  non-breaking spaces, which need no CSS, and breaks only after the bullet.
 
 ## Working practice
 

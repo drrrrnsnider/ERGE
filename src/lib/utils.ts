@@ -52,3 +52,24 @@ export function cn(...inputs: ClassValue[]) {
 
 /** Exported for the test that keeps it in step with theme.css. */
 export { FONT_SIZES }
+
+/**
+ * The design's separator between pieces of a meta line — "Miami Beach, FL
+ * •  3 hrs": TWO spaces either side of the bullet, everywhere. Use
+ * `joinMeta`, never a hand-typed `' • '`.
+ *
+ * Non-breaking spaces, because a browser collapses repeated ordinary spaces
+ * to one. Typing two was not enough — the experience card did, and still
+ * rendered one either side, while the detail screen needed
+ * `white-space: pre-wrap` to keep its pair. These need no CSS.
+ *
+ * Both spaces before the bullet are non-breaking, and only the first after
+ * it, so a line that has to wrap breaks AFTER the bullet: it stays with the
+ * piece it follows rather than starting the next line.
+ */
+export const META_SEPARATOR = '\u00a0\u00a0•\u00a0 '
+
+/** Joins the parts that exist, skipping empty ones, with META_SEPARATOR. */
+export function joinMeta(parts: ReadonlyArray<string | null | undefined | false>) {
+  return parts.filter(Boolean).join(META_SEPARATOR)
+}

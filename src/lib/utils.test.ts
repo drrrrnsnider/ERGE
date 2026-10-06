@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { cn, FONT_SIZES } from './utils'
+import { cn, FONT_SIZES, joinMeta } from './utils'
 
 /**
  * `cn()` must never eat a font size.
@@ -73,5 +73,23 @@ describe('cn', () => {
   it('has not broken Tailwind’s own scale', () => {
     expect(cn('text-sm', 'text-lg')).toBe('text-lg')
     expect(cn('text-sm', 'text-foreground')).toBe('text-sm text-foreground')
+  })
+})
+
+/**
+ * The meta-line separator: two spaces either side of "•", as non-breaking
+ * spaces so no browser collapses them, breaking only after the bullet.
+ */
+describe('joinMeta', () => {
+  it('puts two unbreakable spaces before the bullet, two spaces after', () => {
+    expect(joinMeta(['Miami Beach, FL', '3 hrs'])).toBe(
+      'Miami Beach, FL\u00a0\u00a0•\u00a0 3 hrs',
+    )
+  })
+
+  it('skips parts that are missing, so no bullet dangles', () => {
+    expect(joinMeta(['Miami Beach, FL', undefined, '', null, false])).toBe(
+      'Miami Beach, FL',
+    )
   })
 })

@@ -3,7 +3,7 @@ import { Badge } from '@/components/patterns/badge'
 import { Link } from 'react-router'
 import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
-import { cn } from '@/lib/utils'
+import { cn, joinMeta } from '@/lib/utils'
 
 /**
  * The experience card, in the four shapes the design library defines.
@@ -154,7 +154,7 @@ export function ExperienceCard({
   const meta = big
     ? [experience.summary, duration]
     : [experience.location.address, duration]
-  const metaLine = meta.filter(Boolean).join('  •  ')
+  const metaLine = joinMeta(meta)
 
   if (big) {
     /* media-lg is media-md at full width, so they share this branch rather

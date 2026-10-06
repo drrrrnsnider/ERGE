@@ -30,7 +30,7 @@ import {
 } from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
 import { addRecentlyViewed } from '@/lib/recents'
-import { cn } from '@/lib/utils'
+import { cn, joinMeta } from '@/lib/utils'
 
 /**
  * The experience detail screen (Figma 230:9324).
@@ -239,10 +239,7 @@ function Detail({
   titleRef: RefObject<HTMLHeadingElement | null>
 }) {
   const duration = experience.details.find((d) => d.label === 'Duration')?.value
-  /* Two spaces either side of the bullet, as the design sets it. The
-   * paragraph is `whitespace-pre-wrap` so the browser keeps them rather than
-   * collapsing them to one, and can still wrap a long address. */
-  const metaLine = [experience.location.address, duration].filter(Boolean).join('  •  ')
+  const metaLine = joinMeta([experience.location.address, duration])
   const price = priceLowBound(experience.price)
   const category = CATEGORY_BADGE[experience.category]
   const hero = experience.images[0]
@@ -325,7 +322,7 @@ function Detail({
           <h1 ref={titleRef} className="text-h2 font-semibold text-foreground">
             {experience.title}
           </h1>
-          <p className="text-body-md whitespace-pre-wrap text-muted-foreground">{metaLine}</p>
+          <p className="text-body-md text-muted-foreground">{metaLine}</p>
           {experience.description ? (
             <p className="text-body-lg text-emphasis">
               {experience.description}
