@@ -187,7 +187,7 @@ test.describe('rails', () => {
   })
 
   /**
-   * THE GUIDES TILES SNAP 16px IN, not flush to the card's edge. Without
+   * THE GUIDES TILES SNAP 20px IN, not flush to the card's edge. Without
    * scroll padding, `snap-start` lines a tile up with the scroller's own
    * edge, so a small swipe pulled Date Night out of its inset and against
    * the card's border. Measured as an outcome: nudge the row, let it
@@ -207,7 +207,7 @@ test.describe('rails', () => {
         ul.firstElementChild!.getBoundingClientRect().left - ul.getBoundingClientRect().left,
       )
     })
-    expect(fromEdge).toBe(16)
+    expect(fromEdge).toBe(20)
   })
 
   /**
