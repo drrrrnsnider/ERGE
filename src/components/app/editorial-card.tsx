@@ -29,10 +29,10 @@ export function EditorialCard({ content }: { content: Editorial }) {
         data-kind="guides"
         /* The gradient is a copper wash fading out over the card's own
          * surface — built from role tokens, not literal colours. */
-        className="mx-4 flex flex-col gap-2.5 overflow-hidden rounded-lg stroke-gradient bg-card bg-[linear-gradient(180deg,color-mix(in_oklch,var(--primary)_10%,transparent)_0%,transparent_63%)] pt-5 shadow-card"
+        className="mx-4 flex flex-col overflow-hidden rounded-lg stroke-gradient bg-card bg-[linear-gradient(180deg,color-mix(in_oklch,var(--primary)_10%,transparent)_0%,transparent_63%)] pt-5 shadow-card"
       >
         {/* 20px in from every edge (Figma 172:6527). */}
-        <div className="flex flex-col gap-4 px-5">
+        <div className="flex flex-col gap-5 px-5">
           <Badge variant="text">{content.badge}</Badge>
           <h2 id={headingId} className="font-serif text-display-md text-foreground">
             {content.headline}
@@ -44,12 +44,14 @@ export function EditorialCard({ content }: { content: Editorial }) {
         {/* scroll-px-5 matches the px-5 inset: tiles snap 20px in from the
           * card's edge, where the first one starts, not flush against it.
           *
-          * The card's 20px BOTTOM padding lives here, on the scroller, not
-          * on the card. Figma puts it on the card, but a scroller clips
-          * whatever falls outside its own box, so with no padding of its
-          * own the tiles' drop shadows would be cut flat along their bottom
-          * edge. Same 20px, same picture, shadows intact. */}
-        <ul className="flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pt-4 pb-5 [scrollbar-width:thin] motion-safe:scroll-smooth">
+          * The 20px ABOVE the tiles (Figma's gap under the headline) and
+          * the card's 20px BOTTOM padding both live here, on the scroller,
+          * not on the card. A scroller clips whatever falls outside its own
+          * box, so with no padding of its own the tiles' drop shadows would
+          * be cut flat along their top and bottom edges. Same 20px, same
+          * picture, shadows intact — which is also why the card itself has
+          * no gap between this and the text above. */}
+        <ul className="flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pt-5 pb-5 [scrollbar-width:thin] motion-safe:scroll-smooth">
           {content.entries.map((entry) => (
             <li key={entry.id} className="shrink-0 snap-start">
               <Link
@@ -85,7 +87,7 @@ export function EditorialCard({ content }: { content: Editorial }) {
       data-slot="editorial-card"
       data-kind="promotion"
       /* 20px in from every edge (Figma 172:6581). */
-      className="mx-4 flex flex-col gap-6 rounded-lg border border-ring bg-background p-5"
+      className="mx-4 flex flex-col gap-5 rounded-lg border border-ring bg-background p-5"
     >
       <Badge variant="text">{content.badge}</Badge>
       <h2 id={headingId} className="font-serif text-display-md text-foreground">
