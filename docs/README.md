@@ -1,9 +1,9 @@
 # `docs/` — the thinking behind the app
 
 Decisions that shape the product but aren't visible in the code. Four documents,
-each answering a different question. They are stubs; fill them in as the
-decisions get made, and keep them current — a stale spec is worse than none,
-because people trust it.
+each answering a different question, and a backlog of what is known to be
+missing. They are stubs; fill them in as the decisions get made, and keep them
+current — a stale spec is worse than none, because people trust it.
 
 | File                     | Answers                                        |
 | ------------------------ | ---------------------------------------------- |
@@ -11,6 +11,7 @@ because people trust it.
 | `user-flows.md`          | What does someone actually do, start to end?   |
 | `interaction-spec.md`    | How does it behave — states, motion, keyboard? |
 | `api-contract.md`        | What data crosses the boundary, in what shape? |
+| `backlog.md`             | What is known to be missing, and why?          |
 
 ## Why these live in the repo
 

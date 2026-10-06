@@ -132,9 +132,21 @@ It is a script rather than an oxlint rule because oxlint does not implement
 If that changes, move the patterns into `.oxlintrc.json` and delete the
 script.
 - **Never** invent a spacing or radius value. Use the scale.
+- **Motion uses the named scale**, the same way: `duration-fast` / `base` /
+  `moderate` / `slow` and `ease-standard` / `enter` / `exit`, from the
+  Figma Motion tokens. Never `duration-200` — Tailwind keeps the numeric
+  utilities and cannot remove them, so nothing stops it but this rule.
 - To change how something looks, edit `theme.css`. Not the component.
 - If a role you need doesn't exist in `theme.css` — stop and ask. Do not
   improvise one, and do not reach past the bridge to a primitive.
+- **A frame bound to the OLD variable collection is a binding to fix, not a
+  value to copy.** Some Figma frames still bind `accent/copper`,
+  `accent/champagne`, or lowercase `text/primary` / `text/secondary` /
+  `text/muted` — a retired collection, often a shade off the real token.
+  Flag it so Darrin re-binds it in Figma; do not map it in code. When a
+  binding and the picture disagree, sample the rendered pixels from the
+  screenshot: `get_variable_defs` and the design context have both been
+  wrong here, and the pixels never have.
 
 The reason `src/components/ui/` stays unmodified is that shadcn components only
 ever refer to role names. That keeps them byte-identical to upstream, so
@@ -270,6 +282,19 @@ both as hard tests on the mobile projects, so a compact control that shrinks
 below 32px fails the build.
 - Interactive components need keyboard operation and correct focus management,
   not just correct visuals.
+- **Subtle decorative loops are allowed to run indefinitely** — Darrin's
+  call. The flow button's orbiting light and the Concierge tab's turning
+  highlight are not held to WCAG 2.2.2's five-second rule; a full animated
+  scene or a video would be. Every such loop still STOPS under
+  `prefers-reduced-motion` (`motion-safe:`, or the media query in
+  `theme.css`), resting on its static design. Do not "fix" the loops as a
+  2.2.2 violation, and do not drop the reduced-motion stop.
+- **Hover states must not stick on touch.** Use Tailwind's `hover:` variant,
+  which is gated on `(hover: hover)`, never a bare `:hover` selector or an
+  arbitrary `[&:hover]` — a phone keeps `:hover` applied after a tap. Give
+  phones the same feedback while pressed with `active:`. Tests check both
+  sides: the hover applies on `desktop-chrome` and changes nothing on the
+  touch projects.
 
 ## Project structure
 
@@ -283,7 +308,8 @@ src/layouts/        the layout archetypes
 src/routes/         page-level screens
 src/lib/api/        typed API layer, Zod schemas
 src/mocks/          mock data, swappable for real endpoints
-docs/               design brief, user flows, interaction spec, API contract
+docs/               design brief, user flows, interaction spec, API contract,
+                    and the backlog of known gaps
 ```
 
 ## Data layer
@@ -425,5 +451,10 @@ path that has no screen yet renders the not-built route instead of erroring.
 - **Don't add dependencies without asking.** Every package is a maintenance
   obligation for a solo maintainer.
 - **Prefer editing an existing file over creating a new one.**
+- **Prove every new test can fail.** Break the behaviour it guards — revert
+  the fix, remove the class — run it, see it fail, then restore. A test that
+  has only ever passed has not been shown to test anything: several here
+  passed while checking nothing (the wrong element, a page with no strip, a
+  value a broken version produces too) until this caught them.
 - When something is ambiguous, ask. A thirty-second question beats a day of
   rework.
