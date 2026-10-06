@@ -417,16 +417,6 @@ function serially<T>(change: () => Promise<T>): Promise<T> {
   return next
 }
 
-function checkId(collectionId: string) {
-  if (collectionId !== SAVED_ID) {
-    throw new ApiRequestError({
-      code: 'not_found',
-      message: 'That collection does not exist.',
-      retryable: false,
-    })
-  }
-}
-
 /** Newest first — the order every collection list draws in. */
 const newestFirst = (items: CollectionItem[]) =>
   [...items].sort((a, b) => b.addedAt.localeCompare(a.addedAt))
@@ -446,28 +436,83 @@ export async function getActiveCollection(
 }
 
 /**
- * Put an experience in. Idempotent: saving something already saved changes
- * nothing, including when it was saved — so a double tap cannot reorder the
- * list.
+ * One collection by id, and a way to write it back — Saved, or any
+ * wishlist. Everything below works through this, so a change to how a kind
+ * is stored is a change here only.
+ */
+async function openCollection(collectionId: string): Promise<{
+  collection: Collection
+  write: (next: Collection) => Promise<void>
+}> {
+  if (collectionId === SAVED_ID) {
+    return { collection: await readSaved(), write: (next) => writeJSON(SAVED_KEY, next) }
+  }
+  const wishlists = await readWishlists()
+  const found = wishlists.find((c) => c.collectionId === collectionId)
+  if (found === undefined) {
+    throw new ApiRequestError({
+      code: 'not_found',
+      message: 'That collection does not exist.',
+      retryable: false,
+    })
+  }
+  return {
+    collection: found,
+    write: (next) =>
+      writeJSON(
+        WISHLISTS_KEY,
+        wishlists.map((c) => (c.collectionId === collectionId ? next : c)),
+      ),
+  }
+}
+
+/**
+ * A wishlist as it is SHOWN: only what is still saved. A wishlist is a way
+ * of sorting saved things (Darrin, 2026-10-06), so unsaving hides an
+ * experience from every wishlist — without deleting the membership, which
+ * is what lets Undo, from any screen, bring it back everywhere just by
+ * saving it again. See api-contract.md, `GET /collections/:id`.
+ */
+async function visible(collection: Collection): Promise<Collection> {
+  if (collection.kind === 'saved') return collection
+  const saved = new Set((await readSaved()).items.map((i) => i.experienceId))
+  return { ...collection, items: collection.items.filter((i) => saved.has(i.experienceId)) }
+}
+
+/** `GET /collections/:id` — one collection, whole. */
+export async function getCollection(collectionId: string): Promise<Collection> {
+  await delay(200)
+  return visible((await openCollection(collectionId)).collection)
+}
+
+/**
+ * Put an experience in. Idempotent: putting in something already there
+ * changes nothing, including when it went in — so a double tap cannot
+ * reorder the list.
  *
  * `addedAt` is honoured when sent. That is Undo: it hands back the item as it
  * was, so it returns to its old place rather than jumping to the top.
+ *
+ * Into a wishlist, it is saved as well: everything in a wishlist is saved,
+ * and this keeps that true however the wishlist was reached.
  */
 export async function putCollectionItem(
   collectionId: string,
   item: { experienceId: string; addedAt?: string },
 ): Promise<Collection> {
   await delay(150)
-  checkId(collectionId)
   return serially(async () => {
-    const current = await readSaved()
-    if (current.items.some((i) => i.experienceId === item.experienceId)) {
-      return current
+    const { collection, write } = await openCollection(collectionId)
+    if (collection.kind !== 'saved') {
+      await ensureSaved(item.experienceId)
+    }
+    if (collection.items.some((i) => i.experienceId === item.experienceId)) {
+      return visible(collection)
     }
     const next: Collection = {
-      ...current,
+      ...collection,
       items: newestFirst([
-        ...current.items,
+        ...collection.items,
         {
           experienceId: item.experienceId,
           addedAt: item.addedAt ?? new Date().toISOString(),
@@ -475,26 +520,44 @@ export async function putCollectionItem(
         },
       ]),
     }
-    await writeJSON(SAVED_KEY, next)
-    return next
+    await write(next)
+    return visible(next)
   })
 }
 
-/** Take one out. Removing something that is not there is not an error. */
+async function ensureSaved(experienceId: string) {
+  const saved = await readSaved()
+  if (saved.items.some((i) => i.experienceId === experienceId)) return
+  await writeJSON(SAVED_KEY, {
+    ...saved,
+    items: newestFirst([
+      ...saved.items,
+      { experienceId, addedAt: new Date().toISOString(), selected: false },
+    ]),
+  })
+}
+
+/**
+ * Take one out. Removing something that is not there is not an error.
+ *
+ * Out of Saved is "Delete from Library": it disappears from every wishlist
+ * too, by `visible` hiding it rather than by deleting its memberships.
+ * Out of a wishlist is "Remove from Wishlist": that wishlist only, and it
+ * stays saved.
+ */
 export async function deleteCollectionItem(
   collectionId: string,
   experienceId: string,
 ): Promise<Collection> {
   await delay(150)
-  checkId(collectionId)
   return serially(async () => {
-    const current = await readSaved()
+    const { collection, write } = await openCollection(collectionId)
     const next: Collection = {
-      ...current,
-      items: current.items.filter((i) => i.experienceId !== experienceId),
+      ...collection,
+      items: collection.items.filter((i) => i.experienceId !== experienceId),
     }
-    await writeJSON(SAVED_KEY, next)
-    return next
+    await write(next)
+    return visible(next)
   })
 }
 
@@ -535,7 +598,7 @@ export async function listCollections(
       retryable: false,
     })
   }
-  const wishlists = await readWishlists()
+  const wishlists = await Promise.all((await readWishlists()).map(visible))
   return {
     items: wishlists.map((c) => ({
       collectionId: c.collectionId,

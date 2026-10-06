@@ -359,10 +359,22 @@ test.describe('library', () => {
 
 test.describe('library wishlists', () => {
   /** Wishlists written straight to the device — nothing in the app makes
-   * one yet (they come from the experience page, not built). */
+   * one yet (they come from the experience page, not built). Their
+   * experiences are saved as well: a wishlist only shows what is saved. */
   async function seedWishlists(page: Page) {
     await page.goto('/')
     await page.evaluate(() => {
+      localStorage.setItem(
+        'erge.mock.saved.v1',
+        JSON.stringify({
+          collectionId: 'saved-this-device',
+          kind: 'saved',
+          active: true,
+          items: ['exp-rooftop-picnic', 'exp-tasting-menu', 'exp-sunset-sail', 'exp-jazz-club'].map(
+            (experienceId) => ({ experienceId, addedAt: '2026-09-01T10:00:00.000Z' }),
+          ),
+        }),
+      )
       const at = (day: string) => `2026-10-0${day}T10:00:00.000Z`
       const wishlist = (id: string, name: string, ids: string[]) => ({
         collectionId: id,

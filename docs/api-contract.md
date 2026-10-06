@@ -245,6 +245,29 @@ absent for an empty collection, where the card draws its empty surface.
 **Mock:** wishlists only, persisted on the device under
 `erge.mock.wishlists.v1`. No fixtures — tests write them to storage.
 
+### `GET /collections/:collectionId`
+
+**Returns:** the whole `Collection`, items newest first. For a detail
+screen — a wishlist's own page.
+**Errors:** `not_found` for an id that does not exist; the screen says so.
+
+**A wishlist is a way of sorting saved things** (Darrin, 2026-10-06).
+Everything in one is also saved, so:
+
+- Putting an experience into a wishlist saves it too.
+- `DELETE` from a wishlist is "Remove from Wishlist": that wishlist only;
+  it stays saved.
+- `DELETE` from Saved is "Delete from Library": it disappears from every
+  wishlist as well. Memberships are **hidden, not deleted** — a wishlist
+  only returns items that are still saved — so Undo, from any screen, is
+  just saving it again, and it reappears everywhere it was.
+
+`[DECIDE — DEV]` Hidden memberships mean that re-saving something weeks
+later would bring it back into its old wishlists. A real server should
+drop a hidden membership once the client's Undo window has passed (about
+6s, `animate-countdown` in `theme.css`), or on a schedule; the mock never
+does.
+
 **Library (`/library`)** reads the collection once per visit, then
 resolves its ids with `getExperiencesByIds`. Ids whose experience is gone
 drop out of the list silently; there is no design for "you saved something

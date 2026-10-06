@@ -3,6 +3,7 @@ import { setStore, type Store } from '@/lib/storage'
 import {
   deleteCollectionItem,
   getActiveCollection,
+  getCollection,
   listCollections,
   putCollectionItem,
 } from './collections'
@@ -123,6 +124,15 @@ describe('the list of wishlists', () => {
   it('counts each, and covers it with the newest experience that has a picture', async () => {
     setStore(
       fakeStore({
+        /* Saved too: a wishlist only shows what is saved. */
+        'erge.mock.saved.v1': JSON.stringify({
+          collectionId: 'saved-this-device',
+          kind: 'saved',
+          active: true,
+          items: ['exp-rooftop-picnic', 'exp-tasting-menu', 'exp-ride-to-dinner'].map(
+            (experienceId) => ({ experienceId, addedAt: '2026-09-01T10:00:00.000Z' }),
+          ),
+        }),
         'erge.mock.wishlists.v1': JSON.stringify([
           /* The two newest — Ride to Dinner and the tasting menu — have no
            * photo at all, so the cover falls through to the picnic. */
@@ -145,5 +155,82 @@ describe('the list of wishlists', () => {
     expect(picnic.images[0]).toBeDefined()
     expect(items[0]!.cover).toEqual(picnic.images[0])
     expect(items[1]!.cover).toBeUndefined()
+  })
+})
+
+describe('a wishlist', () => {
+  /* A wishlist of two, both saved — the starting point for each rule below. */
+  async function seed() {
+    const at = (day: string) => `2026-10-0${day}T10:00:00.000Z`
+    setStore(
+      fakeStore({
+        'erge.mock.saved.v1': JSON.stringify({
+          collectionId: 'saved-this-device',
+          kind: 'saved',
+          active: true,
+          items: [
+            { experienceId: 'a', addedAt: at('1') },
+            { experienceId: 'b', addedAt: at('2') },
+          ],
+        }),
+        'erge.mock.wishlists.v1': JSON.stringify([
+          {
+            collectionId: 'wl',
+            kind: 'wishlist',
+            active: true,
+            name: 'Dinners',
+            items: [
+              { experienceId: 'a', addedAt: at('3') },
+              { experienceId: 'b', addedAt: at('4') },
+            ],
+          },
+        ]),
+      }).store,
+    )
+  }
+  const inWishlist = async () =>
+    (await getCollection('wl')).items.map((i) => i.experienceId)
+  const isSaved = async (id: string) =>
+    (await getActiveCollection('saved')).items.some((i) => i.experienceId === id)
+
+  it('opens by id, newest first', async () => {
+    await seed()
+    await expect(inWishlist()).resolves.toEqual(['b', 'a'])
+  })
+
+  it('is not_found for an id that does not exist', async () => {
+    await seed()
+    await expect(getCollection('nope')).rejects.toMatchObject({
+      detail: { code: 'not_found' },
+    })
+  })
+
+  it('Remove from Wishlist takes it out of the wishlist only — it stays saved', async () => {
+    await seed()
+    await deleteCollectionItem('wl', 'a')
+    await expect(inWishlist()).resolves.toEqual(['b'])
+    await expect(isSaved('a')).resolves.toBe(true)
+  })
+
+  it('Delete from Library hides it from the wishlist too', async () => {
+    await seed()
+    await deleteCollectionItem('saved-this-device', 'a')
+    await expect(inWishlist()).resolves.toEqual(['b'])
+    const [summary] = (await listCollections('wishlist')).items
+    expect(summary!.itemCount).toBe(1)
+  })
+
+  it('Undo of a delete — saving again — brings it back to the wishlist as well', async () => {
+    await seed()
+    await deleteCollectionItem('saved-this-device', 'a')
+    await putCollectionItem('saved-this-device', { experienceId: 'a' })
+    await expect(inWishlist()).resolves.toEqual(['b', 'a'])
+  })
+
+  it('anything put into a wishlist is saved too', async () => {
+    await seed()
+    await putCollectionItem('wl', { experienceId: 'c' })
+    await expect(isSaved('c')).resolves.toBe(true)
+    await expect(inWishlist()).resolves.toContain('c')
   })
 })

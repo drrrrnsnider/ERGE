@@ -89,3 +89,15 @@ export async function listCollections(
   const raw = MODE === 'mock' ? await mocks.listCollections(kind) : live()
   return CollectionSummaryListSchema.parse(raw)
 }
+
+/**
+ * `GET /collections/:collectionId` — one collection, whole: for a detail
+ * screen. A wishlist comes back showing only what is still saved; see the
+ * contract for why memberships are hidden rather than deleted.
+ *
+ * Asking for one that does not exist is a `not_found` — the screen says so.
+ */
+export async function getCollection(collectionId: string): Promise<Collection> {
+  const raw = MODE === 'mock' ? await mocks.getCollection(collectionId) : live()
+  return CollectionSchema.parse(raw)
+}
