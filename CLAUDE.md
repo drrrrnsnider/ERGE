@@ -402,11 +402,12 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **104 unit tests** and **310 e2e** passing, 5 e2e skipped by
+Current state: **104 unit tests** and **339 e2e** passing, 6 e2e skipped by
 design: the coarse-pointer size assertions do not apply to `desktop-chrome`,
 and neither does the sheet's reduced-motion test, because desktop opens a
-popover instead of a sheet; and Library's hover-pause test runs on
-`desktop-chrome` only, because a phone has no resting pointer.
+popover instead of a sheet; Library's hover-pause test runs on
+`desktop-chrome` only, because a phone has no resting pointer; and the
+menu's 44px item test runs on the coarse-pointer projects only.
 `npm run verify` exits 0. There are no known-failing tests — if something is
 red, you broke it.
 
@@ -472,6 +473,13 @@ screen yet renders the not-built route instead of erroring.
   the front: the place truncates and the duration stays whole, through
   `MetaLine` in `src/components/app/experience-card.tsx`. So cards in a list
   or rail are always the same height, however long the words.
+
+- **Overflow menus are `Menu` in `src/components/patterns/menu.tsx`**, on
+  Base UI — the same on web, iOS and Android, by decision rather than the
+  native iOS menu (Darrin, 2026-10-06). Its look is mapped from Figma's
+  iOS-kit mockup onto ERGE roles; the file lists the mapping. A
+  destructive item is `tone="destructive"`, Feedback/Error, asserted on
+  Surface/Elevated in the contrast matrix.
 
 ## Working practice
 

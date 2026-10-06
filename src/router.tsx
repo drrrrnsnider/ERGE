@@ -4,6 +4,7 @@ import { ExperienceDetailRoute } from '@/routes/experience-detail'
 import { ExploreRoute } from '@/routes/explore'
 import { LibraryLayout, LibrarySavedRoute } from '@/routes/library'
 import { LibraryWishlistsRoute } from '@/routes/library-wishlists'
+import { WishlistRoute } from '@/routes/wishlist'
 import { NotBuiltRoute } from '@/routes/not-built'
 import { SearchResultsRoute } from '@/routes/search-results'
 import { SearchRoute } from '@/routes/search'
@@ -46,9 +47,9 @@ export const router = createBrowserRouter([
   },
   /* Library draws its own title bar, so it takes the takeover chrome — no
    * wordmark, no search row. LibraryLayout adds the title and the section
-   * pills around each tab. Trips, and a wishlist's own page, are not built
-   * and fall through to NotBuilt below; the Library tab stays lit there
-   * because it owns /library (src/lib/tabs.ts). */
+   * pills around each tab. Trips is not built and falls through to
+   * NotBuilt below; the Library tab stays lit there because it owns
+   * /library (src/lib/tabs.ts). */
   {
     path: '/library',
     element: <RootLayout chrome="takeover" />,
@@ -60,6 +61,11 @@ export const router = createBrowserRouter([
           { path: 'wishlists', Component: LibraryWishlistsRoute },
         ],
       },
+      /* A wishlist's own page draws its own header — back, its name, its
+       * actions — so it sits outside LibraryLayout. One route for both of
+       * its views (`:view` is `purchased` or absent), so the page stays
+       * mounted when the pills change. */
+      { path: 'wishlists/:wishlistId/:view?', Component: WishlistRoute },
     ],
   },
   {

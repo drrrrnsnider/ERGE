@@ -20,9 +20,7 @@ import { toApiError } from '@/lib/api/schemas/error'
  * which is the honest state rather than a gap: there are no fixture
  * wishlists to hide it.
  *
- * A card opens the wishlist at /library/wishlists/:id. The detail screen is
- * next; until it lands the link reaches the not-built route, and the
- * Library tab stays lit because it owns /library.
+ * A card opens the wishlist at /library/wishlists/:id (routes/wishlist.tsx).
  */
 
 const queryKey = ['collections', 'wishlist'] as const
@@ -31,6 +29,10 @@ export function LibraryWishlistsRoute() {
   const query = useQuery({
     queryKey,
     queryFn: () => listCollections('wishlist'),
+    /* Re-read on every visit. Deleting from Library on a wishlist's page
+     * changes this grid's counts without touching the wishlist, so nothing
+     * there knows to invalidate it. */
+    staleTime: 0,
   })
 
   if (query.isPending) {

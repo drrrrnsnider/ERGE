@@ -46,6 +46,23 @@ tokens.
   countdown, and the `+` in the Nav Bar, which is left out until it has
   something to make. The first two are composed from existing roles in
   `src/routes/library.tsx`; the copy is placeholder.
+- **Wishlist detail has undesigned states and placeholder copy:** the
+  empty Wishlist and Purchased views, the two removed-row sentences ("was
+  removed from this wishlist", "was deleted from your Library"), the
+  "wishlist is gone" state, and what a Purchased row shows once gifting
+  exists (today it would reuse the wishlist row, Add to Cart and all).
+  All in `src/routes/wishlist.tsx`.
+- **Wishlist detail links to unbuilt screens:** Share and Rename on the
+  title bar; Add to Cart, Share Experience, Add to… and Build Trip on each
+  row. Each reaches the not-built route; the list is in the header comment
+  of `src/routes/wishlist.tsx`. Suggested Additions, under the list, is not
+  built yet.
+- **Figma re-binds on wishlist detail:** the header's eyebrow and title bind
+  lowercase `text/muted` and `text/primary`, the retired collection. The
+  context menu (230:8766) is Apple's Liquid Glass kit — iOS fills, 17pt
+  labels, 34px corners, `Colors/Red` — and is built from ERGE roles instead
+  (`src/components/patterns/menu.tsx` has the mapping). An ERGE Menu
+  component in Figma, bound to those roles, would bring the file in line.
 - **The Library title binds the retired collection.** The Nav Bar's
   "Library" (230:12281) is bound to lowercase `text/primary` (#f0ece4).
   Built as Text/Primary; re-bind in Figma.

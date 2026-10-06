@@ -148,13 +148,16 @@ export function ButtonIcon({
   to,
   onClick,
   className,
-}: {
+  ...rest
+}: Omit<React.ComponentProps<'button'>, 'onClick'> & {
   label: string
   icon: IconComponent
   size?: Size
   /** Navigates instead of acting. Mutually exclusive with onClick. */
   to?: string
-  onClick?: () => void
+  /* Takes the event because a menu trigger's click handler needs it; a
+   * plain `() => …` still fits. */
+  onClick?: React.MouseEventHandler<HTMLButtonElement>
   className?: string
 }) {
   /* The glyph is Action/Primary, not the surrounding text colour. Both
@@ -191,6 +194,9 @@ export function ButtonIcon({
       aria-label={label}
       data-slot="button-icon"
       className={shape}
+      /* Last, so a menu trigger's props — its ref, aria-haspopup,
+       * aria-expanded — reach the button when this is wrapped in a Menu. */
+      {...rest}
     >
       {glyph}
     </button>
