@@ -795,9 +795,9 @@
     content: '';
     position: absolute;
     inset-inline: 0;
-    /* 2px clear of the word, by moving the line rather than the text: no
+    /* 3px clear of the word, by moving the line rather than the text: no
      * change to the word's box or line height, so nothing around it moves. */
-    bottom: -2px;
+    bottom: -3px;
     height: 1px;
     background-image: linear-gradient(
       to right,
