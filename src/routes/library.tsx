@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { Link } from 'react-router'
 import {
   ExperienceCard,
@@ -176,24 +176,125 @@ export function LibraryRoute() {
       {snapshot.isSuccess && snapshot.data.length > 0 ? (
         <ul ref={listRef} aria-label="Saved experiences" className="flex flex-col gap-4">
           {snapshot.data.map((row) => (
-            <li key={row.item.experienceId} data-experience-id={row.item.experienceId}>
-              {isRemoved(row.item.experienceId) ? (
-                <RemovedRow experience={row.experience} onUndo={() => undo(row)} />
-              ) : (
-                <ExperienceCard
-                  experience={row.experience}
-                  variant="media-sm"
-                  className="w-full"
-                  saved
-                  onToggleSave={() => remove(row)}
-                />
-              )}
-            </li>
+            <SavedRow
+              key={row.item.experienceId}
+              row={row}
+              removed={isRemoved(row.item.experienceId)}
+              onRemove={() => remove(row)}
+              onUndo={() => undo(row)}
+            />
           ))}
         </ul>
       ) : null}
     </div>
   )
+}
+
+/**
+ * One list item: the card, or the message it turns into, with the change
+ * between them animated.
+ */
+function SavedRow({
+  row,
+  removed,
+  onRemove,
+  onUndo,
+}: {
+  row: Row
+  removed: boolean
+  onRemove: () => void
+  onUndo: () => void
+}) {
+  const ref = useRef<HTMLLIElement>(null)
+  useMorph(ref, removed)
+  return (
+    <li ref={ref} data-experience-id={row.item.experienceId}>
+      {removed ? (
+        <RemovedRow experience={row.experience} onUndo={onUndo} />
+      ) : (
+        <ExperienceCard
+          experience={row.experience}
+          variant="media-sm"
+          className="w-full"
+          saved
+          onToggleSave={onRemove}
+        />
+      )}
+    </li>
+  )
+}
+
+/** A motion token's value, read from CSS so Figma stays the source. */
+function token(el: Element, name: string) {
+  return getComputedStyle(el).getPropertyValue(name).trim()
+}
+
+/**
+ * The card-to-message change, animated. Runs whenever `state` changes.
+ *
+ * WHY JAVASCRIPT. The card and the message are two different elements with
+ * two different natural heights — 80px, and 48px or more as the title
+ * wraps. CSS cannot ease between those across browsers (animating to an
+ * `auto` height is Chromium-only), so this measures and uses the browser's
+ * own Web Animations API. No library.
+ *
+ * WHAT MOVES. The row's box eases from the old height to the new one, the
+ * surface's corners ease between the card's radius and the message's, and
+ * the new contents fade in. The surface itself does not fade: card and
+ * message are both Surface/Card, so it reads as one tile changing shape
+ * rather than one thing swapped for another.
+ *
+ * Durations and easings are the Figma Motion tokens, read from CSS at run
+ * time — Moderate/Standard for the shape, Base/Enter for the arrival — so
+ * retuning the scale in Figma retunes this too.
+ *
+ * Reduced motion skips it entirely: the swap is instant, as it was.
+ *
+ * The heights are measured after React has already swapped the elements,
+ * so the "from" is the one recorded at the previous change. A resize in
+ * between would start the ease from a slightly stale height; it still ends
+ * in the right place.
+ */
+function useMorph(ref: RefObject<HTMLElement | null>, state: unknown) {
+  const last = useRef<{ height: number; radius: string } | null>(null)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    const surface = el?.firstElementChild
+    if (!el || !(surface instanceof HTMLElement)) return
+
+    const now = {
+      height: el.getBoundingClientRect().height,
+      radius: getComputedStyle(surface).borderRadius,
+    }
+    const from = last.current
+    last.current = now
+    if (from === null) return // first render: nothing to animate from
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const root = document.documentElement
+    const shape = {
+      duration: parseFloat(token(root, '--motion-duration-moderate')),
+      easing: token(root, '--motion-easing-standard'),
+    }
+
+    /* Clipped while it moves: growing back on Undo, the card is taller than
+     * the box for a moment and would otherwise spill into the gap below. */
+    el.style.overflow = 'hidden'
+    el.animate([{ height: `${from.height}px` }, { height: `${now.height}px` }], shape)
+      .finished.then(
+        () => el.style.removeProperty('overflow'),
+        () => el.style.removeProperty('overflow'),
+      )
+    surface.animate([{ borderRadius: from.radius }, { borderRadius: now.radius }], shape)
+
+    for (const child of surface.children) {
+      child.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: parseFloat(token(root, '--motion-duration-base')),
+        easing: token(root, '--motion-easing-enter'),
+      })
+    }
+  }, [ref, state])
 }
 
 /**
@@ -220,7 +321,9 @@ function RemovedRow({
   return (
     <div
       data-slot="removed-row"
-      className="flex items-center gap-3 rounded-sm bg-card p-2"
+      /* The cards' own edge, Border/Default fading out, so the tile keeps
+       * its outline as it changes shape. */
+      className="flex items-center gap-3 rounded-sm bg-card p-2 stroke-gradient-card"
     >
       <div className="size-8 shrink-0 overflow-hidden rounded-xs bg-muted">
         {image ? (

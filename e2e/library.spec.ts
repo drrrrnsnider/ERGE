@@ -94,6 +94,44 @@ test.describe('library', () => {
     await expect(rows(page)).toHaveCount(3)
   })
 
+  /**
+   * THE TILE CHANGES SHAPE, unless motion is reduced. The card is 80px and
+   * the message shorter — 48, or more where the title wraps on a phone, so
+   * it is measured rather than assumed. The moment the message appears its
+   * box should still be taller than the message, easing down. Under reduced
+   * motion there is no ease: it is the message's own height straight away.
+   * Read on the first frame the message exists, well inside
+   * Motion/Duration/Moderate.
+   */
+  for (const reduced of [false, true]) {
+    test(`unsaving ${reduced ? 'snaps' : 'eases'} the tile to its new height${reduced ? ' under reduced motion' : ''}`, async ({
+      page,
+    }) => {
+      if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' })
+      await seedSaved(page)
+      const item = page.locator('li[data-experience-id="exp-sunset-sail"]')
+      await page.getByRole('button', { name: 'Remove Sunset Sail & Wine from saved' }).click()
+      await expect(item.locator('[data-slot="removed-row"]')).toBeVisible()
+
+      /* The box's height, and the height of the message inside it. */
+      const measure = () =>
+        item.evaluate((el) => [
+          el.getBoundingClientRect().height,
+          el.firstElementChild!.getBoundingClientRect().height,
+        ])
+
+      const [box, message] = await measure()
+      if (reduced) expect(box).toBe(message)
+      else expect(box).toBeGreaterThan(message!)
+
+      // Either way it settles on the message's own height.
+      await expect.poll(async () => {
+        const [b, m] = await measure()
+        return b === m
+      }).toBe(true)
+    })
+  }
+
   /** The message lasts only as long as the visit. */
   test('a removed experience is gone on the next visit', async ({ page }) => {
     await seedSaved(page)
