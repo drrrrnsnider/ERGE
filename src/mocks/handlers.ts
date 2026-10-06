@@ -396,8 +396,11 @@ const emptySaved = (): Collection => ({
   items: [],
 })
 
+/* Sorted on the way out as well as on the way in, so the contract's
+ * newest-first holds even for a value this version did not write. */
 async function readSaved(): Promise<Collection> {
-  return (await readJSON(SAVED_KEY, CollectionSchema)) ?? emptySaved()
+  const stored = await readJSON(SAVED_KEY, CollectionSchema)
+  return stored ? { ...stored, items: newestFirst(stored.items) } : emptySaved()
 }
 
 /**

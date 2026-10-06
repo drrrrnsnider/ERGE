@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { RootLayout } from '@/layouts/root-layout'
 import { ExperienceDetailRoute } from '@/routes/experience-detail'
 import { ExploreRoute } from '@/routes/explore'
+import { LibraryRoute } from '@/routes/library'
 import { NotBuiltRoute } from '@/routes/not-built'
 import { SearchResultsRoute } from '@/routes/search-results'
 import { SearchRoute } from '@/routes/search'
@@ -20,7 +21,8 @@ import { SearchRoute } from '@/routes/search'
  * below it while `/search/results` — which has no screen yet — still falls
  * through to NotBuilt.
  *
- * Explore and Search are the built screens. Everything else resolves to NotBuilt,
+ * Explore, Search, its results, the detail screen and Library are the
+ * built screens. Everything else resolves to NotBuilt,
  * which shows the route and its filters — so a link like Popular Nearby's
  * `/search?near=me` visibly arrives somewhere with `near=me` set, rather than
  * dead-ending on a 404. Replacing one of these with a real screen is a
@@ -40,6 +42,15 @@ export const router = createBrowserRouter([
        * falls through to NotBuilt with the full chrome. */
       { path: 'results', Component: SearchResultsRoute },
     ],
+  },
+  /* Library draws its own title bar, so it takes the takeover chrome — no
+   * wordmark, no search row. Only the index is built: Wishlists and Trips
+   * fall through to NotBuilt below, and the Library tab stays lit there
+   * because it owns /library (src/lib/tabs.ts). */
+  {
+    path: '/library',
+    element: <RootLayout chrome="takeover" />,
+    children: [{ index: true, Component: LibraryRoute }],
   },
   {
     path: '/experience/:experienceId',

@@ -1,0 +1,248 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router'
+import {
+  ExperienceCard,
+  ExperienceCardSkeleton,
+} from '@/components/app/experience-card'
+import { EmptyState } from '@/components/patterns/empty-state'
+import { ErrorState } from '@/components/patterns/error-state'
+import { TabPillBar } from '@/components/patterns/tab-pill-bar'
+import { getExperiencesByIds } from '@/lib/api/experiences'
+import type { CollectionItem } from '@/lib/api/schemas/collection'
+import { toApiError } from '@/lib/api/schemas/error'
+import type { Experience } from '@/lib/api/schemas/experience'
+import { tabState } from '@/lib/tabs'
+import { savedQuery, useSaved } from '@/lib/use-saved'
+
+/**
+ * Library — Saved experiences (Figma 230:9755). The first collection screen.
+ *
+ * ONE LIST ARCHETYPE, FIRST INSTANCE. Cart, Trip, Wishlist, List and Saved
+ * are one shape (docs/design-brief.md), and Saved is the one with no
+ * metadata and one action: unsave. When the next collection is built, the
+ * list below is what it should grow from rather than be copied.
+ *
+ * WHAT IS ON SCREEN IS A SNAPSHOT, ON PURPOSE. The rows are the saved
+ * collection as it was when you arrived. Unsaving does not take the row
+ * away — it turns into "… was removed" with Undo, in the same place, so
+ * nothing jumps under your thumb and a mis-tap is one tap to put right
+ * (Darrin's call). The next visit reads afresh and the row is gone. So the
+ * row list comes from its own query, read once per visit, while whether each
+ * row is still saved comes live from `useSaved`.
+ *
+ * Wishlists and Trips are not built; their pills go to the not-built route.
+ * The frame's `+` is deliberately absent until it has something to make.
+ */
+
+const SECTIONS = [
+  { label: 'Experiences', to: '/library' },
+  { label: 'Wishlists', to: '/library/wishlists' },
+  { label: 'Trips', to: '/library/trips' },
+] as const
+
+type Row = { item: CollectionItem; experience: Experience }
+
+/**
+ * The saved list, as of arriving.
+ *
+ * `gcTime: 0` throws the snapshot away the moment Library unmounts, so the
+ * next visit always reads afresh — which is what makes a removed row
+ * actually go. Nothing invalidates it while you are here, so unsaving and
+ * Undo never re-shuffle it under you.
+ */
+function useSavedSnapshot() {
+  const client = useQueryClient()
+  return useQuery({
+    queryKey: ['library', 'saved-snapshot'],
+    queryFn: async (): Promise<Row[]> => {
+      const collection = await client.fetchQuery(savedQuery)
+      const { items } = await getExperiencesByIds(
+        collection.items.map((i) => i.experienceId),
+      )
+      const byId = new Map(items.map((e) => [e.experienceId, e]))
+      /* An id whose experience has been delisted drops out here rather than
+       * drawing an empty row. It stays in the collection; there is no design
+       * for "you saved something that is gone" yet. */
+      return collection.items.flatMap((item) => {
+        const experience = byId.get(item.experienceId)
+        return experience ? [{ item, experience }] : []
+      })
+    },
+    gcTime: 0,
+    staleTime: 0,
+  })
+}
+
+export function LibraryRoute() {
+  const snapshot = useSavedSnapshot()
+  const saved = useSaved()
+  const listRef = useRef<HTMLUListElement>(null)
+
+  /* Where focus goes after a heart or an Undo. Both make the control that
+   * was pressed disappear — the heart turns into the message, the message
+   * turns back into the card — so without this focus would fall to <body>
+   * and a keyboard or screen reader user would be thrown to the top. */
+  const [focus, setFocus] = useState<{ id: string; on: 'undo' | 'heart' } | null>(
+    null,
+  )
+  const [announcement, setAnnouncement] = useState('')
+
+  useEffect(() => {
+    if (focus === null) return
+    const row = listRef.current?.querySelector(
+      `[data-experience-id="${CSS.escape(focus.id)}"]`,
+    )
+    const target = row?.querySelector<HTMLElement>(
+      focus.on === 'undo' ? '[data-slot="undo"]' : '[data-slot="save-button"]',
+    )
+    /* The row may not have changed yet — the optimistic update lands a tick
+     * after the tap — which is why this also runs when the collection
+     * changes. Once focus has landed the request is cleared, so a later
+     * refetch cannot pull focus back from wherever the user has gone. */
+    if (target) {
+      target.focus()
+      setFocus(null)
+    }
+  }, [focus, saved.collection])
+
+  const remove = (row: Row) => {
+    saved.toggle(row.experience.experienceId)
+    setAnnouncement(`${row.experience.title} was removed`)
+    setFocus({ id: row.experience.experienceId, on: 'undo' })
+  }
+
+  const undo = (row: Row) => {
+    saved.restore(row.item)
+    setAnnouncement(`${row.experience.title} is back in your saved list`)
+    setFocus({ id: row.experience.experienceId, on: 'heart' })
+  }
+
+  /* Until the live collection is here, every row would read as unsaved and
+   * flash as removed. The snapshot fetches it first, so this is a guard
+   * rather than a state anyone sees. */
+  const isRemoved = (id: string) =>
+    saved.collection !== undefined && !saved.isSaved(id)
+
+  return (
+    <div className="flex flex-col gap-4 px-4 pb-4">
+      <header className="flex h-12 items-center">
+        <h1 className="font-serif text-display-md text-foreground">Library</h1>
+      </header>
+
+      <TabPillBar label="Library sections" items={SECTIONS} />
+
+      {/* Spoken, not shown — the row itself says the same thing visibly.
+        * Present from the start, so the first change is announced. */}
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
+
+      {snapshot.isPending ? (
+        <div aria-busy="true" className="flex flex-col gap-4">
+          {[0, 1, 2].map((i) => (
+            <ExperienceCardSkeleton key={i} variant="media-sm" className="w-full" />
+          ))}
+        </div>
+      ) : null}
+
+      {snapshot.isError ? (
+        <ErrorState
+          error={toApiError(snapshot.error)}
+          onRetry={() => void snapshot.refetch()}
+        />
+      ) : null}
+
+      {snapshot.isSuccess && snapshot.data.length === 0 ? (
+        /* No design for this yet — see docs/backlog.md. The generic pattern
+         * with words that say what to do, not just that nothing is here. */
+        <EmptyState
+          title="Nothing saved yet"
+          description="Tap the heart on anything you'd like to come back to."
+          action={
+            /* A link that is really a target, so it carries
+             * data-slot="button" and gets the 44px floor on a phone. */
+            <Link
+              to="/"
+              data-slot="button"
+              className="inline-flex h-8 items-center justify-center rounded-full border border-border bg-card px-4 text-body-md text-primary"
+            >
+              Explore experiences
+            </Link>
+          }
+        />
+      ) : null}
+
+      {snapshot.isSuccess && snapshot.data.length > 0 ? (
+        <ul ref={listRef} aria-label="Saved experiences" className="flex flex-col gap-4">
+          {snapshot.data.map((row) => (
+            <li key={row.item.experienceId} data-experience-id={row.item.experienceId}>
+              {isRemoved(row.item.experienceId) ? (
+                <RemovedRow experience={row.experience} onUndo={() => undo(row)} />
+              ) : (
+                <ExperienceCard
+                  experience={row.experience}
+                  variant="media-sm"
+                  className="w-full"
+                  saved
+                  onToggleSave={() => remove(row)}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * What an unsaved row becomes: a tiny thumbnail, "<title> was removed", and
+ * Undo. The title still opens the experience, so a removal you meant can
+ * still be followed up.
+ *
+ * Not in Figma — composed from existing roles to Darrin's description, and
+ * logged in docs/backlog.md for a design. Card surface and radius so it
+ * reads as the same row in a different state, not as a toast.
+ */
+function RemovedRow({
+  experience,
+  onUndo,
+}: {
+  experience: Experience
+  onUndo: () => void
+}) {
+  const image = experience.images[0]
+  return (
+    <div
+      data-slot="removed-row"
+      className="flex items-center gap-3 rounded-md bg-card py-2 pr-2 pl-3"
+    >
+      <div className="size-8 shrink-0 overflow-hidden rounded-xs bg-muted">
+        {image ? (
+          /* Decorative: the title beside it names the same thing. */
+          <img src={image.url} alt="" className="size-full object-cover" />
+        ) : null}
+      </div>
+      <p className="min-w-0 flex-1 text-body-md text-muted-foreground">
+        <Link
+          to={`/experience/${experience.experienceId}`}
+          state={tabState('Library')}
+          className="text-foreground"
+        >
+          {experience.title}
+        </Link>{' '}
+        was removed
+      </p>
+      <button
+        type="button"
+        data-slot="undo"
+        aria-label={`Undo, put ${experience.title} back`}
+        onClick={onUndo}
+        className="h-8 shrink-0 rounded-full px-3 text-body-md font-medium text-primary"
+      >
+        Undo
+      </button>
+    </div>
+  )
+}

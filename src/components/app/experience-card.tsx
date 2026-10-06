@@ -138,6 +138,7 @@ export function ExperienceCard({
   variant,
   saved = false,
   onToggleSave,
+  className,
 }: {
   experience: Experience
   variant: Variant
@@ -149,6 +150,13 @@ export function ExperienceCard({
    */
   saved?: boolean
   onToggleSave?: (experienceId: string) => void
+  /**
+   * For the card's outer box — in practice its width, where a screen lays
+   * cards out differently from a rail: Library's list runs `media-sm` the
+   * full width of the screen, where Explore's rail fixes it at 320. Applied
+   * to every variant's root, so it never silently does nothing.
+   */
+  className?: string
 }) {
   const duration = experience.details.find((d) => d.label === 'Duration')?.value
 
@@ -189,6 +197,7 @@ export function ExperienceCard({
         className={cn(
           'relative isolate flex flex-col gap-2',
           large ? 'w-full' : 'w-80',
+          className,
         )}
       >
         <div
@@ -268,7 +277,10 @@ export function ExperienceCard({
          * other and nothing else. Without a stacking context here they would
          * be competing up in `main`, which is where the last z-index bug
          * came from. */
-        className="relative isolate flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card"
+        className={cn(
+          'relative isolate flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card',
+          className,
+        )}
       >
         {/* The image is flush with the card on three edges, so the two strokes
           * land on the same line. Both are ::after overlays, and the card's
@@ -308,7 +320,7 @@ export function ExperienceCard({
       <article
         data-slot="experience-card"
         data-variant={variant}
-        className="flex w-full items-center gap-3"
+        className={cn('flex w-full items-center gap-3', className)}
       >
         {/* 66x48, 12px radius — `rounded-sm` since Radius/Sm is 12. This ran
           * at `rounded-md` (16) for a while because 12 was not on the scale
@@ -342,7 +354,7 @@ export function ExperienceCard({
     <article
       data-slot="experience-card"
       data-variant={variant}
-      className="flex w-38 flex-col justify-center gap-3"
+      className={cn('flex w-38 flex-col justify-center gap-3', className)}
     >
       <Media
         experience={experience}
@@ -362,7 +374,14 @@ export function ExperienceCard({
 }
 
 /** Skeletons match the shape they replace, so nothing shifts on load. */
-export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
+export function ExperienceCardSkeleton({
+  variant,
+  className,
+}: {
+  variant: Variant
+  /** The same as the card's, so a skeleton is the width of what replaces it. */
+  className?: string
+}) {
   if (variant === 'media-md' || variant === 'media-lg') {
     return (
       <div
@@ -370,6 +389,7 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
         className={cn(
           'flex flex-col gap-2',
           variant === 'media-lg' ? 'w-full' : 'w-80',
+          className,
         )}
         aria-hidden="true"
       >
@@ -385,7 +405,10 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
     return (
       <div
         data-slot="experience-card-skeleton"
-        className="flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card"
+        className={cn(
+          'flex w-80 items-center gap-3 rounded-md bg-card stroke-gradient-card',
+          className,
+        )}
         aria-hidden="true"
       >
         <div className="h-20 w-27.5 shrink-0 rounded-md bg-muted motion-safe:animate-pulse" />
@@ -400,7 +423,7 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
     return (
       <div
         data-slot="experience-card-skeleton"
-        className="flex w-full items-center gap-3"
+        className={cn('flex w-full items-center gap-3', className)}
         aria-hidden="true"
       >
         <div className="h-12 w-16.5 shrink-0 rounded-md bg-muted motion-safe:animate-pulse" />
@@ -415,7 +438,7 @@ export function ExperienceCardSkeleton({ variant }: { variant: Variant }) {
   return (
     <div
       data-slot="experience-card-skeleton"
-      className="flex w-38 flex-col gap-3"
+      className={cn('flex w-38 flex-col gap-3', className)}
       aria-hidden="true"
     >
       <div className="h-27.5 rounded-md bg-muted motion-safe:animate-pulse" />

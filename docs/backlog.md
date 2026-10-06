@@ -30,6 +30,17 @@ tokens.
 
 ## Design follow-ups
 
+- **Library has three undesigned states:** the empty list, the "*Title* was
+  removed" row, and the `+` in the Nav Bar, which is left out until it has
+  something to make. The first two are composed from existing roles in
+  `src/routes/library.tsx`; the copy is placeholder.
+- **The Library title binds the retired collection.** The Nav Bar's
+  "Library" (230:12281) is bound to lowercase `text/primary` (#f0ece4).
+  Built as Text/Primary; re-bind in Figma.
+- **Library's title bar scrolls away.** The frame's `top bar gradient +
+  blur` suggests it stays pinned with the list passing under it. Built in
+  flow for now; pin it if a long list shows it is needed.
+
 - **Glyphs for four categories.** Event, transport, lodging and other have no
   icon in the design, so the detail screen shows them no category badge
   rather than an invented one. Needs glyphs in Figma first.

@@ -309,10 +309,12 @@ Worth a short conversation with whoever handles legal before this is built.
   you reach by going down from it, not only on its own page: Explore → search
   results → an experience keeps Explore active. And it follows the starting
   point, not the screen — the same experience opened from a saved list keeps
-  **Library** active instead. (Darrin, 2026-10-05.) Built today by path,
-  which agrees with this while only Explore can open anything; see
-  `TabBar` in `src/layouts/root-layout.tsx` for what changes when a
-  second tab can.
+  **Library** active instead. (Darrin, 2026-10-05.) Built: a card's link
+  stamps its tab into the history entry, and path is the fallback for cold
+  links — `src/lib/tabs.ts`.
+- **Unsaving in Library leaves the row in place** as "*Title* was
+  removed", with Undo and the title still linking to the experience. It
+  lasts for the visit; next time the row is gone. (Darrin, 2026-10-05.)
 
 `[DECIDE]` Desktop — sidebar or top nav?
 

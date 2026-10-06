@@ -229,6 +229,13 @@ its `addedAt`, so a double tap cannot reorder the list.
 **Returns:** the whole `Collection` as it now stands. Removing something
 that is not there is not an error.
 
+**Library (`/library`)** reads the collection once per visit, then
+resolves its ids with `getExperiencesByIds`. Ids whose experience is gone
+drop out of the list silently; there is no design for "you saved something
+that is no longer listed". Unsaving leaves the row on screen as "… was
+removed" with Undo, which sends the original `addedAt` back. Wishlists and
+Trips are not built.
+
 **Client behaviour, all three:** one cached collection is shared by every
 screen with a heart (`src/lib/use-saved.ts`). A change shows immediately and
 rolls back if the request fails, and the collection is re-read after the
