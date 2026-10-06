@@ -249,7 +249,12 @@ export function TabPillBar({
             ref={(element) => {
               pillRefs.current[index] = element
             }}
-            className="flex h-8 w-full items-center justify-center rounded-full px-2.5 text-body-sm font-medium text-muted-foreground select-none group-aria-[current=page]:text-foreground"
+            /* `relative` puts the label ABOVE the highlight. The highlight is
+             * positioned, and a positioned box paints over plain ones, so a
+             * plain label sat underneath it. Positioned too, and later in the
+             * page, the label wins. It does not change what the label is
+             * measured from: that is still the bar. */
+            className="relative flex h-8 w-full items-center justify-center rounded-full px-2.5 text-body-sm font-medium text-muted-foreground select-none group-aria-[current=page]:text-foreground"
           >
             {text}
           </span>

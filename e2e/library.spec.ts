@@ -498,6 +498,32 @@ test.describe('the section pills', () => {
     }).toBe(0)
   })
 
+  /**
+   * The label reads ON TOP of the highlight. Hit-testing the middle of the
+   * active pill's word must find the word, not the highlight drawn over it.
+   *
+   * The highlight is `pointer-events: none`, and hit-testing skips anything
+   * that is — so probed as it is, it could never be found, and this would
+   * pass with the highlight painted right over the word. So it is made
+   * hittable for the probe and put back, the same trick as the top-bar
+   * test in rails.spec.ts.
+   */
+  test('the active label sits above the highlight', async ({ page }) => {
+    await page.goto('/library')
+    await expect(highlight(page)).toBeVisible()
+    const onTop = await pill(page, 'Experiences').evaluate((label) => {
+      const glow = label
+        .closest('nav')!
+        .querySelector<HTMLElement>('[data-slot="tab-pill-highlight"]')!
+      glow.style.pointerEvents = 'auto'
+      const r = label.getBoundingClientRect()
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+      glow.style.removeProperty('pointer-events')
+      return label === hit || label.contains(hit)
+    })
+    expect(onTop).toBe(true)
+  })
+
   /** Under reduced motion it is simply there: no transition at all. */
   test('under reduced motion the highlight moves without sliding', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })

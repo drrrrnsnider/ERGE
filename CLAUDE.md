@@ -402,7 +402,7 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **104 unit tests** and **354 e2e** passing, 6 e2e skipped by
+Current state: **104 unit tests** and **357 e2e** passing, 6 e2e skipped by
 design: the coarse-pointer size assertions do not apply to `desktop-chrome`,
 and neither does the sheet's reduced-motion test, because desktop opens a
 popover instead of a sheet; Library's hover-pause test runs on
