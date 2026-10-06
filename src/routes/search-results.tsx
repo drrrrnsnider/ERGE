@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import {
   AccountBalance,
@@ -37,13 +37,16 @@ import {
  * Search results — a list of experiences over a map (Figma 230:8163).
  *
  * THE YELP SHAPE. The map is behind, the results are a sheet in front of it,
- * and scrolling the sheet up covers the map. That is done with ordinary
- * scrolling rather than a draggable sheet: the map is fixed behind a
- * transparent spacer, and the sheet begins below it, so the first scroll
- * slides the results over the map exactly as dragging would. It has no snap
- * points, which is the one thing a real drag would add — worth doing only if
- * the half-open resting position turns out to matter, and cheap to add later
- * because the sheet is already its own element.
+ * and the sheet rests at one of three heights (Figma 2345:4201 is the
+ * lowest): COLLAPSED, just its header sitting on the tab bar over a full
+ * map; HALF, where it opens, map above and results below; and FULL, header
+ * pinned under the search pill, results scrolling beneath it.
+ *
+ * Done with ordinary scrolling and CSS scroll snapping, not a drag library.
+ * The map is fixed behind a transparent spacer and the sheet begins below
+ * it, so scrolling slides the sheet over the map exactly as dragging would,
+ * with the platform's own touch momentum — and `scroll-snap` makes that
+ * scroll come to rest only at the three heights. See the scroller below.
  *
  * THE SEARCH IS IN THE URL; THE SIFTING IS NOT. `?q=` and `?category=` are
  * what you searched for, they survive a hard refresh, and the takeover gets
@@ -137,11 +140,27 @@ export function SearchResultsRoute() {
 
   const items = results.data?.items ?? []
 
+  /* Open at HALF. Before paint, so the sheet never shows at collapsed first
+   * and then jumps. Measured from the half snap point itself, less the
+   * scroll padding, so it lands exactly on the snap and stays there; it does
+   * not re-run when results arrive, because the spacer does not depend on
+   * them. */
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const halfRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current
+    const half = halfRef.current
+    if (scroller === null || half === null) return
+    const padding = parseFloat(getComputedStyle(scroller).scrollPaddingTop) || 0
+    scroller.scrollTop = half.offsetTop - padding
+  }, [])
+
   return (
     <div className="relative h-full">
       {/* The map is FIXED behind the scrolling sheet rather than scrolling
         * with it, which is what makes the sheet read as sliding over it. */}
-      <MapPlaceholder items={items} className="absolute inset-x-0 top-0 h-80" />
+      {/* Full height, so the collapsed sheet has a whole map above it. */}
+      <MapPlaceholder items={items} className="absolute inset-0" />
 
       {/* The summary bar floats over the map, above the sheet. It is the one
         * piece of chrome this screen keeps — see the takeover for why the
@@ -212,10 +231,35 @@ export function SearchResultsRoute() {
         * view, and that band is exactly where the scrim's downward fade has
         * run out. Clipping removes the strip rather than trying to cover it.
         *
-        * The spacer is transparent, so the map shows through until you
-        * scroll. It is 4rem shorter than the bar is tall, which keeps the
-        * sheet's resting edge where it was before the clip moved everything
-        * down — it is a view onto the map, not a measurement of anything.
+        * THREE RESTING HEIGHTS, by scroll snapping. `snap-mandatory` means
+        * a scroll always comes to rest on a snap point, and there are three:
+        *
+        *   collapsed  scrollTop 0: the spacer fills all but --peek of the
+        *              scroller, so only the sheet's header shows, on the
+        *              tab bar — 1px LOWER than flush, so the header's own
+        *              bottom border falls just outside the scroller and is
+        *              clipped. Flush, it sat on the tab bar's top border
+        *              and the two read as one doubled line
+        *   half       the sheet's top edge at the scroller's middle. Where
+        *              the screen opens — see the layout effect
+        *   full       the RESULTS LIST's top: the header pinned, results
+        *              below it
+        *
+        * The third is what keeps the results scrollable. The list is taller
+        * than the screen, and a snap target taller than the screen may be
+        * scrolled through freely — the browser only snaps at its edges. So
+        * snapping governs the sheet's height and nothing else.
+        *
+        * Each snap point sits --peek LOWER than the position it means,
+        * because the scroll padding below (the header's height, for focus)
+        * also moves where a snap lands: a target aligns to the top of the
+        * padded area, not of the scroller. Hence the first spacer block,
+        * --peek tall, with no snap of its own.
+        *
+        * --peek is the header's height, set once here; the spacer, the snap
+        * offsets and the focus padding all read it. On desktop a mouse
+        * cannot drag a scroller, so there the wheel or trackpad moves the
+        * sheet, and it snaps the same.
         *
         * The scroll padding is the sheet header's height: 116px, the design's
         * `sticky` frame, plus its 1px bottom border. Figma draws that stroke
@@ -236,8 +280,18 @@ export function SearchResultsRoute() {
         * gaps beside them — the sheet keeps its shape all the way up. At
         * rest the corners only clip the transparent window onto the map,
         * which shows the same thing either way. */}
-      <div className="absolute inset-x-0 top-16 bottom-0 overflow-y-auto rounded-t-lg scroll-pt-[calc(--spacing(29)+1px)]">
-        <div aria-hidden="true" className="h-48 shrink-0" />
+      <div
+        ref={scrollerRef}
+        data-slot="results-sheet"
+        className="absolute inset-x-0 top-16 bottom-0 snap-y snap-mandatory overflow-y-auto rounded-t-lg [--peek:calc(--spacing(29)+1px)] scroll-pt-(--peek)"
+      >
+        <div aria-hidden="true" className="h-(--peek)" />
+        {/* Snap: collapsed. The extra 1px is the hidden border — see above.
+          * It is added here, before the half point, so half and full do not
+          * move. */}
+        <div aria-hidden="true" className="h-[calc(50%-var(--peek)+1px)] snap-start" />
+        {/* Snap: half. */}
+        <div ref={halfRef} aria-hidden="true" className="h-[calc(50%-var(--peek))] snap-start" />
 
         <div className="min-h-full rounded-t-lg bg-background pb-8">
           {/* Sticky, so the categories and filters stay reachable however
@@ -290,7 +344,9 @@ export function SearchResultsRoute() {
             />
           </div>
 
-          <div className="flex flex-col gap-4 px-4 pt-2">
+          {/* Snap: full. The list is taller than the screen, so beyond this
+            * point it scrolls freely. */}
+          <div className="flex snap-start flex-col gap-4 px-4 pt-2">
             {results.isPending
               ? [0, 1, 2].map((i) => (
                   <ExperienceCardSkeleton key={i} variant="media-lg" />

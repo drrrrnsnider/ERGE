@@ -300,6 +300,73 @@ test.describe('search results', () => {
   })
 
   /**
+   * The sheet rests at three heights (Figma 2345:4201 is the lowest), by
+   * scroll snapping: COLLAPSED, its header sitting on the tab bar; HALF,
+   * where it opens; FULL, the header pinned under the pill. A scroll that
+   * stops anywhere between settles on the nearest, while one deep in the
+   * results is left alone — snapping must not fight reading the list.
+   *
+   * Driven with scrollTo, which the browser snaps the same as a drag. A
+   * real finger is not emulated: the snapping is the browser's own, and
+   * this checks where it is told to land.
+   */
+  test('the results sheet rests collapsed, half or full', async ({ page }) => {
+    await page.goto('/search/results')
+    await expect(page.locator(cards).first()).toBeVisible()
+
+    const state = await page.evaluate(async () => {
+      const sheet = document.querySelector<HTMLElement>('[data-slot="results-sheet"]')!
+      const header = document.querySelector('[data-slot="tab-text-bar"]')!.parentElement!
+      const tabs = document.querySelector('nav[aria-label="Primary"]')!
+      const box = sheet.getBoundingClientRect()
+      const settle = () => new Promise((done) => setTimeout(done, 600))
+      const where = () => {
+        const h = header.getBoundingClientRect()
+        const top = Math.round(h.top)
+        /* Collapsed sits 1px past flush: the header's bottom border is
+         * clipped, so it does not double up with the tab bar's top border. */
+        if (Math.round(h.bottom - tabs.getBoundingClientRect().top) === 1) return 'collapsed'
+        if (Math.abs(top - (box.top + box.height / 2)) <= 1) return 'half'
+        if (Math.abs(top - box.top) <= 1) return 'full'
+        return `between (${top})`
+      }
+      const at = async (top: number) => {
+        sheet.scrollTo({ top, behavior: 'instant' })
+        await settle()
+        return where()
+      }
+      const opened = where()
+      /* Full is where the results list's top meets the scroll padding
+       * (the header's height), read from the page rather than derived. */
+      const list = header.nextElementSibling as HTMLElement
+      const peek = parseFloat(getComputedStyle(sheet).scrollPaddingTop)
+      const half = sheet.scrollTop
+      const full = list.offsetTop - peek
+      return {
+        opened,
+        nearCollapsed: await at(15),
+        betweenLow: await at(half * 0.6),
+        betweenHigh: await at((half + full) / 2 + 20),
+        deep: await (async () => {
+          sheet.scrollTo({ top: full + 300, behavior: 'instant' })
+          await settle()
+          return Math.round(sheet.scrollTop - full) === 300 ? 'left alone' : 'snapped'
+        })(),
+        backToHalf: await at(half + 10),
+      }
+    })
+
+    expect(state).toEqual({
+      opened: 'half',
+      nearCollapsed: 'collapsed',
+      betweenLow: 'half',
+      betweenHigh: 'full',
+      deep: 'left alone',
+      backToHalf: 'half',
+    })
+  })
+
+  /**
    * The categories and filters pin BELOW the summary bar once the sheet
    * reaches the top. They used to pin to the top of the screen, where the
    * bar floats over them, so the whole header vanished at exactly the moment
