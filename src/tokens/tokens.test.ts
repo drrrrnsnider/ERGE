@@ -59,6 +59,9 @@ const TEXT_ON_FILL: ReadonlyArray<readonly [string, string]> = [
   ['text-inverse', 'feedback-error'],
   // A picked date under the pointer: the day number on Action/Secondary.
   ['text-inverse', 'action-secondary'],
+  // A destructive menu item — "Delete from Library" — in Feedback/Error on
+  // the menu's Surface/Elevated. Text, so 4.5:1, not the 3:1 for a glyph.
+  ['feedback-error', 'surface-elevated'],
 ]
 
 describe('text contrast (1.4.3, 4.5:1)', () => {
