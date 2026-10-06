@@ -442,6 +442,13 @@ asset filenames are content-hashed, so `ls dist/assets/` after a local
 `npm run build` at that commit should match the `/assets/…` names in
 production's `index.html`.
 
+If the names do not match, compare contents before concluding anything:
+fetch production's `/assets/index-….js` and `cmp` it with the local one.
+On 2026-10-06 they were byte-identical under different names — the local
+build's CSS differed, most likely because Tailwind scanned an untracked
+`.claude/worktrees/` copy of the source that Vercel never sees, and the JS
+filename hash follows the CSS.
+
 Almost none of the deployment configuration lives here. `vercel.json` holds
 one rule, the deep-link rewrite below; the build command, output directory
 and Node version are still set in Vercel's dashboard, so someone reading the

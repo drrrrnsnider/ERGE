@@ -424,13 +424,17 @@
   --default-transition-duration: var(--motion-duration-fast);
   --default-transition-timing-function: var(--motion-easing-standard);
 
-  /* The flow button's light: once round its edge, then a rest. See
+  /* The flow button's light: a rest, then once round its edge. See
    * `flow-ring` below for what moves and why.
    *
-   * NINE SECONDS = 3s TRAVELLING + 6s RESTING. The rest is twice the run,
-   * so the keyframes spend the first third moving and hold still for the
-   * other two. Keep that 1:2 split and only this duration needs changing:
-   * a 4s run would be 12s here. This is the effect's own tempo, not a step
+   * THE REST COMES FIRST (Darrin, 2026-10-06). Nothing moves as a page
+   * loads: the light waits 6s, dark, then runs. It used to run first, so
+   * every arrival started with motion.
+   *
+   * NINE SECONDS = 6s RESTING + 3s TRAVELLING. The rest is twice the run,
+   * so the keyframes hold still for the first two thirds and move in the
+   * last. Keep that 2:1 split and only this duration needs changing: a 4s
+   * run would be 12s here. This is the effect's own tempo, not a step
    * on the Motion scale, which is for things arriving and leaving and tops
    * out at 400ms. Linear, because a light running round a track should not
    * speed up and slow down at the corners.
@@ -443,22 +447,24 @@
    * as 180deg, so the next cycle starts without a jump.
    *
    * And it is OFF for the rest, not just parked out of sight: --flow-shine,
-   * the light's own colour, fades in over the first quarter-second of the
-   * run, out over the last, and is transparent for all six seconds of the
-   * pause. An earlier version rested the light on the bottom edge at the
+   * the light's own colour, is transparent for all six seconds of the
+   * pause, fades in over the first quarter-second of the run and out over
+   * the last. An earlier version rested the light on the bottom edge at the
    * lower right, where the Figma glint sits — which read as the loop
    * overshooting and stopping, rather than finishing.
    *
    * Runs and turns are timed by distance, so the light keeps one speed. */
   --animate-flow-orbit: flow-orbit 9s var(--motion-easing-linear) infinite;
   @keyframes flow-orbit {
-    0% { --flow-x: 100%; --flow-angle: 180deg; --flow-shine: transparent; }
-    2.7778% { --flow-shine: var(--action-secondary); }
-    10.9409% { --flow-x: 10%; --flow-angle: 180deg; }
-    16.6667% { --flow-x: 10%; --flow-angle: 360deg; }
-    27.6076% { --flow-x: 100%; --flow-angle: 360deg; }
-    30.5556% { --flow-shine: var(--action-secondary); }
-    33.3333%, 100% { --flow-x: 100%; --flow-angle: 540deg; --flow-shine: transparent; }
+    /* Resting: dark, parked on the end cap where it cannot be seen. */
+    0%, 66.6667% { --flow-x: 100%; --flow-angle: 180deg; --flow-shine: transparent; }
+    /* The run — the same circuit and timing as ever, moved to the end. */
+    69.4444% { --flow-shine: var(--action-secondary); }
+    77.6076% { --flow-x: 10%; --flow-angle: 180deg; }
+    83.3333% { --flow-x: 10%; --flow-angle: 360deg; }
+    94.2743% { --flow-x: 100%; --flow-angle: 360deg; }
+    97.2222% { --flow-shine: var(--action-secondary); }
+    100% { --flow-x: 100%; --flow-angle: 540deg; --flow-shine: transparent; }
   }
 
   /* The Concierge tab icon's highlight, turning once round the star every

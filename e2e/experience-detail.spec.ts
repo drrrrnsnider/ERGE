@@ -406,15 +406,15 @@ test.describe('experience detail', () => {
       })
 
     const first = await read()
-    /* Up to a full 9s cycle: the light travels for 3s and then rests for
-     * 6s, and the test may land anywhere in that. */
+    /* The light rests for the first 6s of every 9s cycle, and runs in the
+     * last 3 — so up to 9s before it moves at all. */
     await expect
       .poll(
         async () => {
           const x = parseFloat((await read()).x)
           return x > 10 && x < 100
         },
-        { timeout: 10_000 },
+        { timeout: 12_000 },
       )
       .toBe(true)
 
@@ -430,15 +430,17 @@ test.describe('experience detail', () => {
   })
 
   /**
-   * Between runs the light is OFF, not parked. Each 9s cycle is a 3s
-   * circuit and a 6s pause, and --flow-shine — the light's colour — is
-   * transparent for the whole pause. An earlier version left it lit at the
-   * lower right, which read as the loop overshooting and stopping.
+   * Between runs the light is OFF, not parked — and the REST COMES FIRST,
+   * so nothing moves as the page loads (Darrin, 2026-10-06). Each 9s cycle
+   * is a 6s pause and then a 3s circuit, and --flow-shine — the light's
+   * colour — is transparent for the whole pause. An earlier version left it
+   * lit at the lower right, which read as the loop overshooting and
+   * stopping; a later one ran first, so every arrival began with motion.
    *
    * The animation is paused and moved to exact moments rather than waited
-   * for: mid-run it must be lit, and at two points in the pause dark.
+   * for: dark at the very start and through the pause, lit mid-run.
    */
-  test('the flow light is off between runs', async ({ page }) => {
+  test('the flow light waits, then runs, and is off between runs', async ({ page }) => {
     await page.goto(PICNIC)
     const flow = page.locator('[data-slot="button-flow"]').first()
     await expect(flow).toBeVisible()
@@ -460,9 +462,10 @@ test.describe('experience detail', () => {
         return parts.length > 3 ? parts[3]! : 1
       }, ms)
 
-    expect(await alphaAt(1500)).toBe(1)
-    expect(await alphaAt(4000)).toBe(0)
-    expect(await alphaAt(8500)).toBe(0)
+    expect(await alphaAt(0)).toBe(0) // page load: still, and dark
+    expect(await alphaAt(3000)).toBe(0)
+    expect(await alphaAt(5900)).toBe(0)
+    expect(await alphaAt(7500)).toBe(1) // mid-run
   })
 
   /**
