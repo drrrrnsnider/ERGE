@@ -357,6 +357,38 @@ test.describe('the tab bar', () => {
   })
 
   /**
+   * Explore stays current on everything beneath it — the search takeover,
+   * its results, an experience — so the tab bar says which part of the app
+   * you are in. There it is `aria-current="true"` and filled, the same
+   * drawing as on `/`; only `/` itself is `"page"`.
+   *
+   * `/searchlight` is the edge case: it starts with "/search" but is not
+   * beneath it, and must not light the tab.
+   */
+  test('Explore stays current on the screens beneath it', async ({ page }) => {
+    const explore = page
+      .locator('nav[aria-label="Primary"]')
+      .getByRole('link', { name: 'Explore' })
+    const glyph = () => explore.locator('svg path').first().getAttribute('d')
+
+    await page.goto('/')
+    await expect(explore).toHaveAttribute('aria-current', 'page')
+    const filled = await glyph()
+
+    for (const path of ['/search', '/search/results?near=me', '/experience/exp-rooftop-picnic']) {
+      await page.goto(path)
+      await expect(explore, path).toHaveAttribute('aria-current', 'true')
+      expect(await glyph(), path).toBe(filled)
+    }
+
+    for (const path of ['/searchlight', '/somewhere-unbuilt']) {
+      await page.goto(path)
+      await expect(explore, path).not.toHaveAttribute('aria-current')
+      expect(await glyph(), path).not.toBe(filled)
+    }
+  })
+
+  /**
    * A resting tab's icon is dimmer than its own label — Text/Disabled against
    * Text/Muted. That only survives review if it is written down as
    * deliberate, so it is asserted rather than left to look like a mistake.

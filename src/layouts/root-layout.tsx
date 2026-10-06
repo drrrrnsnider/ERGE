@@ -14,7 +14,7 @@ import {
   TabProfile,
   TabProfileFilled,
 } from '@/components/icons'
-import { Link, NavLink, Outlet } from 'react-router'
+import { Link, Outlet, useLocation } from 'react-router'
 import { ButtonIcon } from '@/components/patterns/button'
 import { FieldPill } from '@/components/patterns/field-pill'
 import { TopScrim } from '@/components/patterns/top-scrim'
@@ -310,6 +310,27 @@ function SearchOverlay() {
  * placed, not links. Deliberately NOT `disabled` buttons: a disabled control
  * promises interaction and then refuses it, which is worse for a screen
  * reader than an item that is simply not interactive.
+ *
+ * A TAB STAYS LIT BENEATH ITSELF. Explore is current not only on `/` but on
+ * everything you reach by going down from it — search, its results, an
+ * experience — so the tab bar says which part of the app you are in, not
+ * just which page. `owns` lists those paths. On the tab's own page it is
+ * `aria-current="page"`; beneath it, `aria-current="true"`, which a screen
+ * reader announces as "current" without claiming this IS the page.
+ *
+ * BY PATH, FOR NOW, and that is a known stand-in. The rule is "the tab you
+ * started from" — confirmed by Darrin and written up in
+ * docs/user-flows.md, Navigation: an experience opened from a saved list
+ * keeps LIBRARY lit. Today only Explore can start anything, so path and
+ * origin give the same answer — including for a shared link that opens a
+ * detail page cold, which has no "from" at all.
+ *
+ * WHEN A SECOND TAB CAN OPEN AN EXPERIENCE, this has to change, because the
+ * same `/experience/…` will then belong to whichever tab got there. The
+ * starting tab travels with the navigation instead — stamped into each
+ * history entry, so Back restores the right one — and `owns` stays as the
+ * fallback for cold links. Do not build Library's link to an experience
+ * without it, or the experience will light Explore.
  */
 const TABS: ReadonlyArray<{
   label: string
@@ -318,15 +339,29 @@ const TABS: ReadonlyArray<{
   /** When this is the current tab. Required — every tab in the set has one. */
   activeIcon: IconComponent
   to?: string
+  /** Paths beneath this tab, where it stays current. Each matches itself
+   * and anything below it. */
+  owns?: readonly string[]
 }> = [
-  { label: 'Explore', icon: TabExplore, activeIcon: TabExploreFilled, to: '/' },
+  {
+    label: 'Explore',
+    icon: TabExplore,
+    activeIcon: TabExploreFilled,
+    to: '/',
+    owns: ['/search', '/experience'],
+  },
   { label: 'Concierge', icon: TabConcierge, activeIcon: TabConciergeFilled },
   { label: 'Cart', icon: TabCart, activeIcon: TabCartFilled },
   { label: 'Library', icon: TabLibrary, activeIcon: TabLibraryFilled },
   { label: 'Profile', icon: TabProfile, activeIcon: TabProfileFilled },
 ]
 
+/** Whether `pathname` is `path` or somewhere below it. */
+const isWithin = (pathname: string, path: string) =>
+  pathname === path || pathname.startsWith(`${path}/`)
+
 function TabBar() {
+  const { pathname } = useLocation()
   return (
     <nav
       aria-label="Primary"
@@ -335,51 +370,49 @@ function TabBar() {
       className="shrink-0 border-t border-card bg-background pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="flex items-stretch justify-around">
-        {TABS.map(({ label, icon: Icon, activeIcon: ActiveIcon, to }) => (
-          <li key={label} className="flex-1">
-            {to ? (
-              <NavLink
-                to={to}
-                end
-                className={({ isActive }) =>
-                  cn(
+        {TABS.map(({ label, icon: Icon, activeIcon: ActiveIcon, to, owns = [] }) => {
+          const here = to !== undefined && pathname === to
+          const beneath = owns.some((path) => isWithin(pathname, path))
+          const isActive = here || beneath
+          const Glyph = isActive ? ActiveIcon : Icon
+          return (
+            <li key={label} className="flex-1">
+              {to ? (
+                /* A plain Link with aria-current set here rather than NavLink:
+                 * NavLink knows only "this exact page", and this needs a
+                 * second state, "a page beneath this one". */
+                <Link
+                  to={to}
+                  aria-current={here ? 'page' : beneath ? 'true' : undefined}
+                  className={cn(
                     'flex min-h-14 flex-col items-center justify-center gap-0.5 p-2 text-[11px] font-medium',
                     isActive ? 'text-primary' : 'text-muted-foreground',
-                  )
-                }
-              >
-                {/* Children as a function, so the glyph can swap on selection
-                  * the same way the colour does. */}
-                {({ isActive }) => {
-                  const Glyph = isActive ? ActiveIcon : Icon
-                  return (
-                    <>
-                      <Glyph
-                        className={cn(
-                          'size-6',
-                          // The current tab's icon inherits Action/Primary
-                          // from the link; a resting one is dimmer than its
-                          // own label, which is what the design draws.
-                          !isActive && 'text-disabled-foreground',
-                        )}
-                        aria-hidden="true"
-                      />
-                      {label}
-                    </>
-                  )
-                }}
-              </NavLink>
-            ) : (
-              <span className="flex min-h-14 flex-col items-center justify-center gap-0.5 p-2 text-[11px] font-medium text-muted-foreground">
-                <Icon
-                  className="size-6 text-disabled-foreground"
-                  aria-hidden="true"
-                />
-                {label}
-              </span>
-            )}
-          </li>
-        ))}
+                  )}
+                >
+                  <Glyph
+                    className={cn(
+                      'size-6',
+                      // The current tab's icon inherits Action/Primary from the
+                      // link; a resting one is dimmer than its own label,
+                      // which is what the design draws.
+                      !isActive && 'text-disabled-foreground',
+                    )}
+                    aria-hidden="true"
+                  />
+                  {label}
+                </Link>
+              ) : (
+                <span className="flex min-h-14 flex-col items-center justify-center gap-0.5 p-2 text-[11px] font-medium text-muted-foreground">
+                  <Icon
+                    className="size-6 text-disabled-foreground"
+                    aria-hidden="true"
+                  />
+                  {label}
+                </span>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </nav>
   )

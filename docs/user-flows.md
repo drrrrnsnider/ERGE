@@ -305,6 +305,14 @@ Worth a short conversation with whoever handles legal before this is built.
 - **Cart as a tab** is unusual but earned here: it's the assembly surface, not
   a checkout queue, and a trip is a saved cart.
 - **Profile** was originally top-nav on Explore only; promoted to a tab.
+- **The tab you started from stays lit.** A tab stays current on every screen
+  you reach by going down from it, not only on its own page: Explore → search
+  results → an experience keeps Explore active. And it follows the starting
+  point, not the screen — the same experience opened from a saved list keeps
+  **Library** active instead. (Darrin, 2026-10-05.) Built today by path,
+  which agrees with this while only Explore can open anything; see
+  `TabBar` in `src/layouts/root-layout.tsx` for what changes when a
+  second tab can.
 
 `[DECIDE]` Desktop — sidebar or top nav?
 
