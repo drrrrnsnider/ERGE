@@ -229,11 +229,28 @@ its `addedAt`, so a double tap cannot reorder the list.
 **Returns:** the whole `Collection` as it now stands. Removing something
 that is not there is not an error.
 
+### `GET /collections?kind=<kind>`
+
+**Returns:** `{ items: CollectionSummary[] }` — every collection of that
+kind, newest first, as a grid card draws it: `{ collectionId, kind, name,
+itemCount, cover? }`. `[ASSUMPTION]` The summary shape is not in the
+`Collection` definition above: a grid of wishlists should not load every
+experience in every wishlist to find a name, a count and a picture. The
+full `Collection` is for a detail screen. Schema: `schemas/collection.ts`.
+**Empty:** `items: []` — the first-run state. Nobody has a wishlist until
+they create one, from the experience page ("Add to → Wishlist → New",
+not built yet).
+**Cover:** the newest item's first picture, skipping items with none;
+absent for an empty collection, where the card draws its empty surface.
+**Mock:** wishlists only, persisted on the device under
+`erge.mock.wishlists.v1`. No fixtures — tests write them to storage.
+
 **Library (`/library`)** reads the collection once per visit, then
 resolves its ids with `getExperiencesByIds`. Ids whose experience is gone
 drop out of the list silently; there is no design for "you saved something
 that is no longer listed". Unsaving leaves the row on screen as "… was
-removed" with Undo, which sends the original `addedAt` back. Wishlists and
+removed" with Undo, which sends the original `addedAt` back.
+`/library/wishlists` reads the summaries above. A wishlist's own page and
 Trips are not built.
 
 **Client behaviour, all three:** one cached collection is shared by every

@@ -2,16 +2,19 @@ import * as mocks from '@/mocks/handlers'
 import { ApiRequestError } from './schemas/error'
 import {
   CollectionSchema,
+  CollectionSummaryListSchema,
   type Collection,
   type CollectionKind,
+  type CollectionSummaryList,
 } from './schemas/collection'
 
 /**
  * Collections — Cart, Trip, Wishlist, List and Saved through one set of
  * calls, because they are one shape (schemas/collection.ts).
  *
- * Only Saved is backed today. The calls take a kind or an id anyway, so the
- * next collection to be built adds a mock, not a second API.
+ * Backed today: Saved, and the list of wishlists. The calls take a kind or
+ * an id anyway, so the next collection to be built adds a mock, not a
+ * second API.
  *
  * Same boundary rules as explore.ts — mock or live chosen by VITE_API_MODE,
  * every response parsed at the edge, no React in the file. The hook screens
@@ -71,4 +74,18 @@ export async function deleteCollectionItem(
       ? await mocks.deleteCollectionItem(collectionId, experienceId)
       : live()
   return CollectionSchema.parse(raw)
+}
+
+/**
+ * `GET /collections?kind=…` — every collection of a kind, as cards.
+ *
+ * Summaries, not full collections: what `Card / List MD` draws is a name, a
+ * count and a cover (schemas/collection.ts, `CollectionSummary`). Newest
+ * first. Empty is a real answer — nobody has a wishlist until they make one.
+ */
+export async function listCollections(
+  kind: CollectionKind,
+): Promise<CollectionSummaryList> {
+  const raw = MODE === 'mock' ? await mocks.listCollections(kind) : live()
+  return CollectionSummaryListSchema.parse(raw)
 }

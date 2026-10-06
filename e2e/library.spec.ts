@@ -356,3 +356,92 @@ test.describe('library', () => {
     }
   })
 })
+
+test.describe('library wishlists', () => {
+  /** Wishlists written straight to the device — nothing in the app makes
+   * one yet (they come from the experience page, not built). */
+  async function seedWishlists(page: Page) {
+    await page.goto('/')
+    await page.evaluate(() => {
+      const at = (day: string) => `2026-10-0${day}T10:00:00.000Z`
+      const wishlist = (id: string, name: string, ids: string[]) => ({
+        collectionId: id,
+        kind: 'wishlist',
+        active: true,
+        name,
+        items: ids.map((experienceId, i) => ({ experienceId, addedAt: at(String(i + 1)) })),
+      })
+      localStorage.setItem(
+        'erge.mock.wishlists.v1',
+        JSON.stringify([
+          wishlist('wl-dinners', 'Dinners & Views', [
+            'exp-rooftop-picnic',
+            'exp-tasting-menu',
+            'exp-sunset-sail',
+          ]),
+          wishlist('wl-one', 'Birthday', ['exp-jazz-club']),
+          wishlist('wl-empty', 'Someday', []),
+        ]),
+      )
+    })
+    await page.goto('/library/wishlists')
+  }
+
+  const grid = (page: Page) => page.getByRole('list', { name: 'Wishlists' })
+
+  test('has no detectable WCAG 2.2 AA violations, full or empty', async ({ page }) => {
+    await seedWishlists(page)
+    await expect(grid(page)).toBeVisible()
+    let results = await new AxeBuilder({ page }).withTags(WCAG22AA).analyze()
+    expect(results.violations).toEqual([])
+
+    await page.evaluate(() => localStorage.removeItem('erge.mock.wishlists.v1'))
+    await page.reload()
+    await expect(page.getByText('No wishlists yet')).toBeVisible()
+    results = await new AxeBuilder({ page }).withTags(WCAG22AA).analyze()
+    expect(results.violations).toEqual([])
+  })
+
+  /** First run has none, and nothing seeds them — the empty state is real. */
+  test('a first run shows the empty state under the same title and pills', async ({
+    page,
+  }) => {
+    await page.goto('/library/wishlists')
+    await expect(page.getByRole('heading', { level: 1, name: 'Library' })).toBeVisible()
+    await expect(
+      page.getByRole('navigation', { name: 'Library sections' }).getByRole('link', {
+        name: 'Wishlists',
+      }),
+    ).toHaveAttribute('aria-current', 'page')
+    await expect(page.getByText('No wishlists yet')).toBeVisible()
+  })
+
+  test('lists each wishlist with its count, and opens it', async ({ page }) => {
+    await seedWishlists(page)
+    await expect(grid(page).getByRole('listitem')).toHaveText([
+      /Dinners & Views\s*3 Experiences/,
+      /Birthday\s*1 Experience$/,
+      /Someday\s*0 Experiences/,
+    ])
+    await grid(page).getByRole('link', { name: /Dinners & Views/ }).click()
+    await expect(page).toHaveURL(/\/library\/wishlists\/wl-dinners$/)
+    // Not built yet, but still inside Library.
+    await expect(
+      page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Library' }),
+    ).toHaveAttribute('aria-current', 'true')
+  })
+
+  /** Two columns, 16px apart both ways, at the frame's width. */
+  test('draws a two-column grid with 16px gaps', async ({ page }) => {
+    await page.setViewportSize({ width: 402, height: 874 })
+    await seedWishlists(page)
+    await expect(grid(page).getByRole('listitem')).toHaveCount(3)
+    const boxes = await grid(page)
+      .getByRole('listitem')
+      .evaluateAll((items) => items.map((li) => li.getBoundingClientRect().toJSON()))
+    const [a, b, c] = boxes as DOMRect[]
+    expect(Math.round(a!.width)).toBe(177)
+    expect(Math.round(b!.left - a!.right)).toBe(16)
+    expect(Math.round(c!.top - a!.bottom)).toBe(16)
+  })
+})

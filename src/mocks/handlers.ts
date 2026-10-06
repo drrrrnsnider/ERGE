@@ -22,6 +22,7 @@ import {
   type Collection,
   type CollectionItem,
   type CollectionKind,
+  type CollectionSummaryList,
 } from '@/lib/api/schemas/collection'
 import { readJSON, writeJSON } from '@/lib/storage'
 import { experiences } from './fixtures/experiences'
@@ -495,4 +496,55 @@ export async function deleteCollectionItem(
     await writeJSON(SAVED_KEY, next)
     return next
   })
+}
+
+/* ===================================================================== *
+ * Collections — Wishlists
+ * ===================================================================== */
+
+/**
+ * Wishlists, kept on this device the same way Saved is, and for the same
+ * reason: they are made by the person, so they have to survive a reload.
+ *
+ * There are no fixture wishlists. A first run has none, and the grid's
+ * empty state is the real first-run state — seeding some would hide it.
+ * They are created from the experience page ("Add to → Wishlist → New"),
+ * which is not built yet; until then tests write them straight into
+ * storage under this key.
+ */
+const WISHLISTS_KEY = 'erge.mock.wishlists.v1'
+
+async function readWishlists(): Promise<Collection[]> {
+  const stored = await readJSON(WISHLISTS_KEY, CollectionSchema.array())
+  return (stored ?? []).map((c) => ({ ...c, items: newestFirst(c.items) }))
+}
+
+/**
+ * One card per collection: name, count, and a cover taken from the most
+ * recently added experience that has a picture. A real server would keep
+ * the cover with the collection; here it is worked out on the way out.
+ */
+export async function listCollections(
+  kind: CollectionKind,
+): Promise<CollectionSummaryList> {
+  await delay(200)
+  if (kind !== 'wishlist') {
+    throw new ApiRequestError({
+      code: 'not_found',
+      message: `Listing ${kind} collections is not mocked yet.`,
+      retryable: false,
+    })
+  }
+  const wishlists = await readWishlists()
+  return {
+    items: wishlists.map((c) => ({
+      collectionId: c.collectionId,
+      kind: c.kind,
+      name: c.name ?? 'Untitled',
+      itemCount: c.items.length,
+      cover: c.items
+        .map((i) => byId.get(i.experienceId)?.images[0])
+        .find((image) => image !== undefined),
+    })),
+  }
 }

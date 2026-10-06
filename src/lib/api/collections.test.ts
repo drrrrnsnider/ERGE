@@ -3,8 +3,10 @@ import { setStore, type Store } from '@/lib/storage'
 import {
   deleteCollectionItem,
   getActiveCollection,
+  listCollections,
   putCollectionItem,
 } from './collections'
+import { getExperiencesByIds } from './experiences'
 
 /**
  * Saved, through the API layer and the mock behind it. The mock is the one
@@ -99,5 +101,49 @@ describe('the saved collection', () => {
     await expect(
       putCollectionItem('someone-elses', { experienceId: 'a' }),
     ).rejects.toMatchObject({ detail: { code: 'not_found' } })
+  })
+})
+
+describe('the list of wishlists', () => {
+  const wishlist = (id: string, items: [string, string][]) => ({
+    collectionId: id,
+    kind: 'wishlist',
+    active: true,
+    name: id,
+    items: items.map(([experienceId, day]) => ({
+      experienceId,
+      addedAt: `2026-10-0${day}T10:00:00.000Z`,
+    })),
+  })
+
+  it('is empty on a first run', async () => {
+    await expect(listCollections('wishlist')).resolves.toEqual({ items: [] })
+  })
+
+  it('counts each, and covers it with the newest experience that has a picture', async () => {
+    setStore(
+      fakeStore({
+        'erge.mock.wishlists.v1': JSON.stringify([
+          /* The two newest — Ride to Dinner and the tasting menu — have no
+           * photo at all, so the cover falls through to the picnic. */
+          wishlist('a', [
+            ['exp-rooftop-picnic', '1'],
+            ['exp-tasting-menu', '2'],
+            ['exp-ride-to-dinner', '3'],
+          ]),
+          wishlist('empty', []),
+        ]),
+      }).store,
+    )
+    const { items } = await listCollections('wishlist')
+    const picnic = (await getExperiencesByIds(['exp-rooftop-picnic'])).items[0]!
+
+    expect(items.map((w) => [w.collectionId, w.itemCount])).toEqual([
+      ['a', 3],
+      ['empty', 0],
+    ])
+    expect(picnic.images[0]).toBeDefined()
+    expect(items[0]!.cover).toEqual(picnic.images[0])
+    expect(items[1]!.cover).toBeUndefined()
   })
 })

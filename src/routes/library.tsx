@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
-import { Link } from 'react-router'
+import { Link, Outlet } from 'react-router'
 import {
   ExperienceCard,
   ExperienceCardSkeleton,
@@ -32,8 +32,11 @@ import { savedQuery, useSaved } from '@/lib/use-saved'
  * visit. So the row list comes from its own query, read once per visit,
  * while whether each row is still saved comes live from `useSaved`.
  *
- * Wishlists and Trips are not built; their pills go to the not-built route.
- * The frame's `+` is deliberately absent until it has something to make.
+ * THE TITLE AND THE PILLS ARE THE LAYOUT'S, not this screen's. Every tab
+ * shares them, so `LibraryLayout` draws them once and each tab renders into
+ * its Outlet — Saved here, Wishlists in library-wishlists.tsx. Trips is not
+ * built and falls through to the not-built route. The frame's `+` is
+ * deliberately absent until it has something to make.
  */
 
 const SECTIONS = [
@@ -75,7 +78,27 @@ function useSavedSnapshot() {
   })
 }
 
-export function LibraryRoute() {
+/**
+ * Library's frame: the title and the section pills, around whichever tab
+ * is open. A tab renders as a fragment into this column, so the 16px gap
+ * between the pills and the tab's first element is this layout's.
+ */
+export function LibraryLayout() {
+  return (
+    <div className="flex flex-col gap-4 px-4 pb-4">
+      <header className="flex h-12 items-center">
+        <h1 className="font-serif text-display-md text-foreground">Library</h1>
+      </header>
+
+      <TabPillBar label="Library sections" items={SECTIONS} />
+
+      <Outlet />
+    </div>
+  )
+}
+
+/** The Experiences tab: everything saved with a heart. */
+export function LibrarySavedRoute() {
   const snapshot = useSavedSnapshot()
   const saved = useSaved()
   const listRef = useRef<HTMLUListElement>(null)
@@ -160,13 +183,7 @@ export function LibraryRoute() {
     saved.collection !== undefined && !saved.isSaved(id)
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-4">
-      <header className="flex h-12 items-center">
-        <h1 className="font-serif text-display-md text-foreground">Library</h1>
-      </header>
-
-      <TabPillBar label="Library sections" items={SECTIONS} />
-
+    <>
       {/* Spoken, not shown — the row itself says the same thing visibly.
         * Present from the start, so the first change is announced. */}
       <p role="status" className="sr-only">
@@ -223,7 +240,7 @@ export function LibraryRoute() {
           ))}
         </ul>
       ) : null}
-    </div>
+    </>
   )
 }
 

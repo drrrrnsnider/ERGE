@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ImageSchema } from './experience'
 
 /**
  * `Collection` — Cart, Trip, Wishlist, List and Saved, as one shape.
@@ -60,3 +61,29 @@ export const CollectionSchema = z.object({
   items: z.array(CollectionItemSchema),
 })
 export type Collection = z.infer<typeof CollectionSchema>
+
+/**
+ * One collection as a grid card draws it — `Card / List MD`: a name, how
+ * many experiences it holds, and a cover.
+ *
+ * [ASSUMPTION] Not in the contract, which only has the full `Collection`.
+ * A grid of six wishlists should not have to load every experience in all
+ * six to find a picture and a count; the server already knows both. The
+ * full `Collection` is for the detail screen.
+ *
+ * `cover` is optional: an empty wishlist has nothing to show, and the card
+ * draws its empty image surface instead.
+ */
+export const CollectionSummarySchema = z.object({
+  collectionId: z.string().min(1),
+  kind: CollectionKindSchema,
+  name: z.string().min(1),
+  itemCount: z.number().int().nonnegative(),
+  cover: ImageSchema.optional(),
+})
+export type CollectionSummary = z.infer<typeof CollectionSummarySchema>
+
+export const CollectionSummaryListSchema = z.object({
+  items: z.array(CollectionSummarySchema),
+})
+export type CollectionSummaryList = z.infer<typeof CollectionSummaryListSchema>

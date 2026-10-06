@@ -22,6 +22,17 @@ tokens.
 
 ## Data
 
+- **Accounts.** `docs/user-flows.md` §5: saving an experience, creating a
+  wishlist and creating a trip all require an account — the first save is
+  where sign-up is offered. Confirmed still the rule (Darrin, 2026-10-05).
+  Not built: Saved, and the wishlists built after it, work signed out and
+  live on this device through the mock in `src/mocks/handlers.ts`. When
+  accounts land, a save attempt while signed out prompts sign-up, and
+  anything already gathered on the device is claimed by the new account,
+  the same claim the anonymous cart makes (`docs/api-contract.md`,
+  Anonymous carts), rather than being lost. Nothing above `src/lib/api/`
+  should need to change.
+
 - **The dates the search takeover collects are not carried to results.** See
   the header comment in `src/routes/search-results.tsx`.
 - **Explore's collage has no name or count.** `CollageItems` carries a
@@ -30,8 +41,9 @@ tokens.
 
 ## Design follow-ups
 
-- **Library has three undesigned states:** the empty list, the "*Title* was
-  removed" row with its Undo countdown, and the `+` in the Nav Bar, which is left out until it has
+- **Library has four undesigned states:** the empty Experiences list, the
+  empty Wishlists grid, the "*Title* was removed" row with its Undo
+  countdown, and the `+` in the Nav Bar, which is left out until it has
   something to make. The first two are composed from existing roles in
   `src/routes/library.tsx`; the copy is placeholder.
 - **The Library title binds the retired collection.** The Nav Bar's
