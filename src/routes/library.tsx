@@ -202,8 +202,12 @@ export function LibraryRoute() {
  * still be followed up.
  *
  * Not in Figma — composed from existing roles to Darrin's description, and
- * logged in docs/backlog.md for a design. Card surface and radius so it
- * reads as the same row in a different state, not as a toast.
+ * logged in docs/backlog.md for a design. Card surface so it reads as the
+ * same row in a different state, not as a toast.
+ *
+ * Concentric corners: the row is Radius/sm (12) with an 8px inset, so the
+ * thumbnail is Radius/xs (4) — 12 − 8. That is a step tighter than the
+ * cards' md, because md would need an 8px inner radius the scale lacks.
  */
 function RemovedRow({
   experience,
@@ -216,9 +220,9 @@ function RemovedRow({
   return (
     <div
       data-slot="removed-row"
-      className="flex items-center gap-3 rounded-md bg-card p-2"
+      className="flex items-center gap-3 rounded-sm bg-card p-2"
     >
-      <div className="size-8 shrink-0 overflow-hidden rounded-sm bg-muted">
+      <div className="size-8 shrink-0 overflow-hidden rounded-xs bg-muted">
         {image ? (
           /* Decorative: the title beside it names the same thing. */
           <img src={image.url} alt="" className="size-full object-cover" />
