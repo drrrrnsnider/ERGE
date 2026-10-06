@@ -576,12 +576,23 @@ test.describe('the overlay bars', () => {
    *
    * `found` is asserted too. Without it, a fixture change that stopped
    * producing an overlap would turn this into a test that always passes.
+   *
+   * TWO LAYERS NOW KEEP THIS TRUE: `isolate` on `main`, and `isolate` on
+   * each experience card, which seals its own heart and badge inside it. So
+   * removing either one alone changes nothing on screen and this test
+   * passes; to see it fail, remove both. That is the design working, not
+   * the test missing it.
    */
   test('content scrolls under the search row, never over it', async ({
     page,
   }) => {
     await page.goto('/')
     await expect(page.locator(CARD).first()).toBeVisible()
+    /* Every rail settled first. Each loads on its own, so scanning as soon
+     * as the first card appears raced the later rails: on a slow run they
+     * were still skeletons, nothing lifted crossed the pill, and the test
+     * failed on `found` with nothing wrong on screen. */
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)
 
     const result = await page.evaluate(() => {
       const main = document.getElementById('main')!
@@ -592,7 +603,10 @@ test.describe('the overlay bars', () => {
           (el) => getComputedStyle(el).zIndex !== 'auto',
         )
 
-      for (let top = 0; top < main.scrollHeight - main.clientHeight; top += 20) {
+      /* 4px steps. At 20 a short lifted element — a 32px heart — could
+       * jump clean over the pill between two samples, so whether it was
+       * ever seen depended on where the page's layout happened to put it. */
+      for (let top = 0; top < main.scrollHeight - main.clientHeight; top += 4) {
         main.scrollTop = top
         const p = pill.getBoundingClientRect()
         for (const el of lifted()) {
