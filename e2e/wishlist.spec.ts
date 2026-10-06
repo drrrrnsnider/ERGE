@@ -206,6 +206,66 @@ test.describe('a wishlist', () => {
     }
   })
 
+  /**
+   * SUGGESTED ADDITIONS: what else might go in this wishlist — never
+   * something already in it — each card opening its experience, and the
+   * concierge handed the wishlist for more.
+   */
+  test('suggests what is not already in the wishlist', async ({ page }) => {
+    await seed(page)
+    const section = page.getByRole('region', { name: 'Suggested additions' })
+    const cards = section.locator('[data-variant="media-sm-narrow"]')
+    await expect(cards.first()).toBeVisible()
+
+    const titles = await cards.locator('a').allTextContents()
+    expect(titles.length).toBeGreaterThan(0)
+    for (const inIt of ['Sunset Sail & Wine', 'Rooftop Picnic Night']) {
+      expect(titles).not.toContain(inIt)
+    }
+    await expect(
+      section.getByRole('link', { name: 'Discover more using concierge' }),
+    ).toHaveAttribute('href', '/concierge?collection=wl-dinners')
+
+    await cards.locator('a').first().click()
+    await expect(page).toHaveURL(/\/experience\//)
+  })
+
+  /** Nothing left to suggest is an answer: no section, not an empty one. */
+  test('leaves the section out when there is nothing to suggest', async ({ page }) => {
+    await seed(page)
+    await page.evaluate(async () => {
+      /* Every fixture into the wishlist, so there is nothing left. */
+      const all = [
+        'exp-rooftop-picnic', 'exp-sunset-sail', 'exp-tasting-menu', 'exp-jazz-club',
+        'exp-rooftop-cocktails', 'exp-padel-court', 'exp-sound-bath', 'exp-ride-to-dinner',
+        'exp-bouquet', 'exp-houseboat', 'exp-glass-cabin', 'exp-everglades',
+      ]
+      const items = all.map((experienceId) => ({ experienceId, addedAt: '2026-10-01T10:00:00.000Z' }))
+      localStorage.setItem(
+        'erge.mock.saved.v1',
+        JSON.stringify({ collectionId: 'saved-this-device', kind: 'saved', active: true, items }),
+      )
+      localStorage.setItem(
+        'erge.mock.wishlists.v1',
+        JSON.stringify([
+          { collectionId: 'wl-dinners', kind: 'wishlist', active: true, name: 'Everything', items },
+        ]),
+      )
+    })
+    await page.reload()
+    await expect(rows(page)).toHaveCount(12)
+    // Give the suggestions call time to answer, then check it said nothing.
+    await page.waitForTimeout(600)
+    await expect(page.getByRole('region', { name: 'Suggested additions' })).toHaveCount(0)
+  })
+
+  test('the Purchased view has no suggestions', async ({ page }) => {
+    await seed(page)
+    await pills(page).getByRole('link', { name: 'Purchased (0)' }).click()
+    await expect(page.getByText('Nothing gifted yet')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Suggested additions' })).toHaveCount(0)
+  })
+
   /** Base UI's menu, used by keyboard: open, move, close, focus returns. */
   test('a menu works by keyboard and gives focus back', async ({ page }) => {
     await seed(page)

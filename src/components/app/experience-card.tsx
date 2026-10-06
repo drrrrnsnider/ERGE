@@ -537,7 +537,10 @@ export function ExperienceCard({
         >
           {experience.title}
         </OpenLink>
-        <MetaLine parts={meta} className="text-body-xs text-muted-foreground" />
+        {/* The descriptor alone — "Panoramic views" — as the narrow card is
+          * drawn in Suggested Additions (Figma 2002:4089). A 154px column
+          * has no room for a place and a duration beside it. */}
+        <MetaLine parts={[experience.summary]} className="text-body-xs text-muted-foreground" />
         <p className="text-body-sm text-emphasis">
           <Price experience={experience} />
         </p>

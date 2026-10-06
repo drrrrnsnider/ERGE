@@ -55,14 +55,20 @@ tokens.
 - **Wishlist detail links to unbuilt screens:** Share and Rename on the
   title bar; Add to Cart, Share Experience, Add to… and Build Trip on each
   row. Each reaches the not-built route; the list is in the header comment
-  of `src/routes/wishlist.tsx`. Suggested Additions, under the list, is not
-  built yet.
+  of `src/routes/wishlist.tsx`. Suggested Additions' "Discover more using
+  concierge" reaches the not-built route too, with the wishlist in the
+  query.
 - **Figma re-binds on wishlist detail:** the header's eyebrow and title bind
   lowercase `text/muted` and `text/primary`, the retired collection. The
   context menu (230:8766) is Apple's Liquid Glass kit — iOS fills, 17pt
   labels, 34px corners, `Colors/Red` — and is built from ERGE roles instead
   (`src/components/patterns/menu.tsx` has the mapping). An ERGE Menu
   component in Figma, bound to those roles, would bring the file in line.
+- **Promo Items (2002:4089) binds `accent/copper`** for its edge — the
+  retired collection. Built as Border/Focus, the Promotion card's edge.
+  The component's own button still reads "Update this trip using
+  concierge"; the wishlist frame's instance says "Discover more using
+  concierge", which is what is built.
 - **The Library title binds the retired collection.** The Nav Bar's
   "Library" (230:12281) is bound to lowercase `text/primary` (#f0ece4).
   Built as Text/Primary; re-bind in Figma.

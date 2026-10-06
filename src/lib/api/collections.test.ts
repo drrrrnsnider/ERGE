@@ -4,6 +4,7 @@ import {
   deleteCollectionItem,
   getActiveCollection,
   getCollection,
+  getCollectionSuggestions,
   listCollections,
   putCollectionItem,
 } from './collections'
@@ -232,5 +233,26 @@ describe('a wishlist', () => {
     await putCollectionItem('wl', { experienceId: 'c' })
     await expect(isSaved('c')).resolves.toBe(true)
     await expect(inWishlist()).resolves.toContain('c')
+  })
+})
+
+describe('suggestions for a wishlist', () => {
+  it('never suggests something already in it', async () => {
+    setStore(
+      fakeStore({
+        'erge.mock.wishlists.v1': JSON.stringify([
+          {
+            collectionId: 'wl',
+            kind: 'wishlist',
+            active: true,
+            name: 'Dinners',
+            items: [{ experienceId: 'exp-rooftop-picnic', addedAt: '2026-10-01T10:00:00.000Z' }],
+          },
+        ]),
+      }).store,
+    )
+    const { items } = await getCollectionSuggestions('wl')
+    expect(items.length).toBeGreaterThan(0)
+    expect(items.map((e) => e.experienceId)).not.toContain('exp-rooftop-picnic')
   })
 })

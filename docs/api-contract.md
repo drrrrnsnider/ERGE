@@ -268,6 +268,19 @@ drop a hidden membership once the client's Undo window has passed (about
 6s, `animate-countdown` in `theme.css`), or on a schedule; the mock never
 does.
 
+### `GET /collections/:collectionId/suggestions`
+
+**Returns:** `{ items: Experience[] }` — experiences that would sit well in
+this collection, never one already in it. Full experiences, because the
+cards show a price. A wishlist's "Suggested Additions" draws them.
+**Empty:** `items: []` — nothing to suggest. The section is omitted rather
+than shown empty.
+**Errors:** its own, inside its own section; the wishlist above is
+unaffected.
+**Mock:** the catalogue minus the collection's items, five at most.
+`[DECIDE — DEV]` Ranking — by the collection's taste, the user's budget,
+what is nearby — is the server's; the client only draws the list.
+
 **Library (`/library`)** reads the collection once per visit, then
 resolves its ids with `getExperiencesByIds`. Ids whose experience is gone
 drop out of the list silently; there is no design for "you saved something

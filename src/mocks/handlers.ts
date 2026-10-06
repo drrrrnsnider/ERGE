@@ -611,3 +611,23 @@ export async function listCollections(
     })),
   }
 }
+
+/**
+ * What else might go in a collection — a wishlist's "Suggested Additions".
+ *
+ * A MOCK'S GUESS: the catalogue, minus what is already in it, newest
+ * fixtures first, five at most. A real server would rank by the
+ * collection's taste, the user's budget and what is nearby; the screen
+ * only needs the list.
+ *
+ * Empty is an answer — everything suggestible is already in it — and the
+ * screen leaves the section out rather than showing an empty state.
+ */
+export async function getCollectionSuggestions(
+  collectionId: string,
+): Promise<{ items: Experience[] }> {
+  await delay(300)
+  const { collection } = await openCollection(collectionId)
+  const inIt = new Set(collection.items.map((i) => i.experienceId))
+  return { items: experiences.filter((e) => !inIt.has(e.experienceId)).slice(0, 5) }
+}

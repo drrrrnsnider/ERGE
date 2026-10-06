@@ -15,11 +15,16 @@ import {
   IosShare,
   MoreHoriz,
 } from '@/components/icons'
+import { RailItem, RailScroller } from '@/components/app/rail'
+import { Badge } from '@/components/patterns/badge'
 import { ButtonIcon } from '@/components/patterns/button'
+import { ButtonFlow } from '@/components/patterns/button-flow'
 import { EmptyState } from '@/components/patterns/empty-state'
 import { ErrorState } from '@/components/patterns/error-state'
+import { Skeleton } from '@/components/patterns/skeleton'
 import { Menu, MenuItem, MenuSeparator } from '@/components/patterns/menu'
 import { TabPillBar } from '@/components/patterns/tab-pill-bar'
+import { getCollectionSuggestions } from '@/lib/api/collections'
 import { getExperiencesByIds } from '@/lib/api/experiences'
 import type { CollectionItem } from '@/lib/api/schemas/collection'
 import { toApiError } from '@/lib/api/schemas/error'
@@ -57,7 +62,7 @@ import { NotBuiltRoute } from '@/routes/not-built'
  *   Share Experience        /experience/:id/share
  *   Add to…                 /experience/:id/add-to
  *   Build Trip              /library/trips/new?from=:experienceId
- * Suggested Additions, under the list, is the next piece of work.
+ * Suggested Additions, under the list, has its own states — see below.
  */
 
 type Row = { item: CollectionItem; experience: Experience }
@@ -356,9 +361,98 @@ function Wishlist({ wishlistId, purchased }: { wishlistId: string; purchased: bo
                 })}
               </ul>
             ) : null}
+
+            {/* On the Wishlist view only — Purchased is what has been
+              * bought, not what to add — and only once the list is in, so
+              * the page does not load from the bottom up. */}
+            {!purchased && snapshot.isSuccess ? (
+              <SuggestedAdditions wishlistId={wishlistId} />
+            ) : null}
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+/**
+ * "Suggested Additions" (`Promo Items`, Figma 2002:4089) — what else might
+ * go in this wishlist, as a scrolling row of `Card / Media SM Narrow`, and
+ * the concierge for more.
+ *
+ * ITS OWN STATES, like every section — a separate call, so a slow or failed
+ * suggestion never holds up the wishlist above it:
+ *
+ *   loading  the card's outline over a row-shaped skeleton
+ *   error    an ErrorState with retry, inside the card
+ *   empty    NO SECTION. Everything suggestible is already in the
+ *            wishlist; a card announcing nothing would be noise.
+ *
+ * The frame's copper edge binds `accent/copper`, the retired collection —
+ * built as Border/Focus (`border-ring`), the Promotion card's edge, and
+ * logged in docs/backlog.md for a re-bind.
+ *
+ * The concierge is not built; its button reaches the not-built route with
+ * the wishlist in the query, the same way pairings hand over an anchor.
+ */
+function SuggestedAdditions({ wishlistId }: { wishlistId: string }) {
+  const suggestions = useQuery({
+    queryKey: ['collection', wishlistId, 'suggestions'],
+    queryFn: () => getCollectionSuggestions(wishlistId),
+  })
+
+  if (suggestions.isSuccess && suggestions.data.items.length === 0) return null
+
+  return (
+    <div className="py-4">
+      <section
+        aria-label="Suggested additions"
+        className="flex flex-col gap-5 overflow-hidden rounded-lg border border-ring"
+      >
+        {/* A flex row, so the badge keeps its own width instead of
+          * stretching to the card's. */}
+        <div className="flex px-5 pt-5">
+          <Badge variant="text">Suggested Additions</Badge>
+        </div>
+
+        {suggestions.isPending ? (
+          <div aria-busy="true" className="flex gap-3 px-5">
+            {[0, 1].map((i) => (
+              <Skeleton key={i} className="h-28 w-38.5 shrink-0 rounded-md" />
+            ))}
+          </div>
+        ) : null}
+
+        {suggestions.isError ? (
+          <div className="px-5">
+            <ErrorState
+              error={toApiError(suggestions.error)}
+              onRetry={() => void suggestions.refetch()}
+            />
+          </div>
+        ) : null}
+
+        {suggestions.isSuccess ? (
+          /* Explore's rail scroller, inset to the card's 20px. It keeps its
+           * 8px of bottom padding — a desktop scrollbar sits there rather
+           * than over the prices — and gives it back with -mb-2, so the gap
+           * to the button is still the card's 20. */
+          <RailScroller aria-label="Suggestions" className="-mb-2 px-5 scroll-px-5">
+            {suggestions.data.items.map((experience) => (
+              <RailItem key={experience.experienceId}>
+                <ExperienceCard experience={experience} variant="media-sm-narrow" />
+              </RailItem>
+            ))}
+          </RailScroller>
+        ) : null}
+
+        <div className="px-5 pb-5">
+          <ButtonFlow
+            label="Discover more using concierge"
+            to={`/concierge?collection=${encodeURIComponent(wishlistId)}`}
+          />
+        </div>
+      </section>
     </div>
   )
 }

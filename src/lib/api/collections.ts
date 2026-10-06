@@ -7,6 +7,7 @@ import {
   type CollectionKind,
   type CollectionSummaryList,
 } from './schemas/collection'
+import { ExperienceListSchema, type ExperienceList } from './schemas/experience'
 
 /**
  * Collections — Cart, Trip, Wishlist, List and Saved through one set of
@@ -100,4 +101,18 @@ export async function listCollections(
 export async function getCollection(collectionId: string): Promise<Collection> {
   const raw = MODE === 'mock' ? await mocks.getCollection(collectionId) : live()
   return CollectionSchema.parse(raw)
+}
+
+/**
+ * `GET /collections/:collectionId/suggestions` — experiences that would sit
+ * well in this collection, as full experiences: the cards show a price.
+ *
+ * Empty means nothing to suggest, and the screen omits the section.
+ */
+export async function getCollectionSuggestions(
+  collectionId: string,
+): Promise<ExperienceList> {
+  const raw =
+    MODE === 'mock' ? await mocks.getCollectionSuggestions(collectionId) : live()
+  return ExperienceListSchema.parse(raw)
 }
