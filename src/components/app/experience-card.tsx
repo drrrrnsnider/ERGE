@@ -399,7 +399,18 @@ export function ExperienceCard({
         /* `isolate` for the same reason as media-sm: the image's stroke and
          * the card's are ordered against each other and nothing else. */
         className={cn(
-          'relative isolate flex w-full items-start rounded-md bg-card stroke-gradient-card',
+          /* ONE HEIGHT, whatever the title (Darrin, 2026-10-06): 155px is a
+           * two-line card exactly, as drawn. A one-line title keeps the
+           * height — the text stays pinned to the top and Add to Cart to the
+           * bottom, so the space opens between them and the button lines up
+           * row to row. A minimum, not a fixed height, so text enlarged by
+           * the reader still grows the card rather than spilling out.
+           *
+           * 167 on a coarse pointer: the button grows from 32 to 44 there
+           * (the theme's touch-target floor), so a two-line card is 12px
+           * taller, and the minimum has to grow with it or one-line rows
+           * would sit 12px shorter than two-line ones on a phone. */
+          'relative isolate flex min-h-38.75 w-full items-start rounded-md bg-card stroke-gradient-card pointer-coarse:min-h-41.75',
           className,
         )}
       >
@@ -435,7 +446,7 @@ export function ExperienceCard({
             className="absolute top-1.75 left-1.75 z-10"
           />
         )}
-        <div className="flex min-w-0 flex-1 flex-col gap-[3px] p-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-[3px] self-stretch p-3">
           {/* TWO lines here, the one exception to the one-line rule: this
             * card is drawn with room for it (Darrin, 2026-10-06). Then "…". */}
           <OpenLink
@@ -463,7 +474,8 @@ export function ExperienceCard({
           <Button
             label="Add to Cart"
             onClick={onAddToCart}
-            className="w-full"
+            /* mt-auto: pinned to the bottom of the card. */
+            className="mt-auto w-full"
             moreLabel={`More options for ${experience.title}`}
             renderMore={(button) => (
               <Menu label={`Options for ${experience.title}`} trigger={button}>

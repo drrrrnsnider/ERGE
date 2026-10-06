@@ -123,21 +123,25 @@ test.describe('a wishlist', () => {
    */
   test('Delete from Library unsaves it, and Undo restores it everywhere', async ({ page }) => {
     await seed(page)
+    /* The screen answers before each save lands, and the hard `goto` at the
+     * end would abandon one in flight — which no tap inside the app can do.
+     * So wait for each write in turn: first the delete, then the Undo.
+     * Checking only "contains Sunset Sail" at the end could pass on the
+     * value from before the delete was ever written. */
+    const stored = () => page.evaluate(() => localStorage.getItem('erge.mock.saved.v1') ?? '')
+
     await page.getByRole('button', { name: 'More options for Sunset Sail & Wine' }).click()
     await page.getByRole('menuitem', { name: 'Delete from Library' }).click()
     await expect(sunset(page)).toContainText('was deleted from your Library')
+    await expect.poll(stored).not.toContain('exp-sunset-sail')
 
     await sunset(page).getByRole('button', { name: /^Undo/ }).click()
     await expect(
       sunset(page).getByRole('button', { name: 'Remove Sunset Sail & Wine…' }),
     ).toBeFocused()
     await expect(pills(page).getByRole('link').first()).toHaveText('Wishlist (3)')
+    await expect.poll(stored).toContain('exp-sunset-sail')
 
-    /* The screen answers before the save lands; a hard `goto` would abandon
-     * it in flight, which no tap inside the app can do. Wait for the write. */
-    await expect
-      .poll(() => page.evaluate(() => localStorage.getItem('erge.mock.saved.v1') ?? ''))
-      .toContain('exp-sunset-sail')
     /* Back in its OLD place — last, the oldest save — not at the top, which
      * is where a fresh save would put it. That is the difference between
      * restoring the save and merely saving it again. */
@@ -167,6 +171,39 @@ test.describe('a wishlist', () => {
     )
     await page.goto('/library/wishlists')
     await expect(page.getByRole('list', { name: 'Wishlists' })).toContainText('2 Experiences')
+  })
+
+  /**
+   * ONE HEIGHT, whatever the title. Sunset Sail's title is one line and the
+   * tasting menu's two, at the frame's width; every row is still the same —
+   * text pinned to the top, Add to Cart to the bottom — so the buttons line
+   * up down the list. 155 under a mouse, as drawn; 167 on a phone, where
+   * the button is 44 rather than 32.
+   */
+  test('every row is one height, with Add to Cart at the bottom', async ({ page }) => {
+    await page.setViewportSize({ width: 402, height: 874 })
+    await seed(page)
+    const shapes = await page
+      .locator('[data-variant="media-sm-full"]')
+      .evaluateAll((cards) =>
+        cards.map((card) => {
+          const box = card.getBoundingClientRect()
+          const button = card.querySelector('[data-slot="button-split"]')!.getBoundingClientRect()
+          const title = card.querySelector('a')!.getBoundingClientRect()
+          return {
+            height: Math.round(box.height),
+            buttonFromBottom: Math.round(box.bottom - button.bottom),
+            titleLines: Math.round(title.height / 20),
+          }
+        }),
+      )
+    // Both kinds of title are present, or this proves nothing.
+    expect(new Set(shapes.map((s) => s.titleLines))).toEqual(new Set([1, 2]))
+    const expected = test.info().project.name === 'desktop-chrome' ? 155 : 167
+    for (const shape of shapes) {
+      expect(shape.height).toBe(expected)
+      expect(shape.buttonFromBottom).toBe(12)
+    }
   })
 
   /** Base UI's menu, used by keyboard: open, move, close, focus returns. */
