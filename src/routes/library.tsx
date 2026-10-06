@@ -25,11 +25,12 @@ import { savedQuery, useSaved } from '@/lib/use-saved'
  *
  * WHAT IS ON SCREEN IS A SNAPSHOT, ON PURPOSE. The rows are the saved
  * collection as it was when you arrived. Unsaving does not take the row
- * away — it turns into "… was removed" with Undo, in the same place, so
- * nothing jumps under your thumb and a mis-tap is one tap to put right
- * (Darrin's call). The next visit reads afresh and the row is gone. So the
- * row list comes from its own query, read once per visit, while whether each
- * row is still saved comes live from `useSaved`.
+ * away at once — it turns into "… was removed" with Undo, in the same
+ * place, so nothing jumps under your thumb and a mis-tap is one tap to put
+ * right (Darrin's call). Undo counts down over 6s and then the row folds
+ * away; under reduced motion there is no countdown and it stays for the
+ * visit. So the row list comes from its own query, read once per visit,
+ * while whether each row is still saved comes live from `useSaved`.
  *
  * Wishlists and Trips are not built; their pills go to the not-built route.
  * The frame's `+` is deliberately absent until it has something to make.
@@ -79,23 +80,26 @@ export function LibraryRoute() {
   const saved = useSaved()
   const listRef = useRef<HTMLUListElement>(null)
 
-  /* Where focus goes after a heart or an Undo. Both make the control that
-   * was pressed disappear — the heart turns into the message, the message
-   * turns back into the card — so without this focus would fall to <body>
-   * and a keyboard or screen reader user would be thrown to the top. */
-  const [focus, setFocus] = useState<{ id: string; on: 'undo' | 'heart' } | null>(
+  const emptyLinkRef = useRef<HTMLAnchorElement>(null)
+
+  /* Where focus goes next. Every action here makes the control that was
+   * pressed disappear — the heart turns into the message, the message turns
+   * back into the card, and an expired message leaves the list — so without
+   * this focus would fall to <body> and a keyboard or screen reader user
+   * would be thrown to the top. Held as a function that FINDS the element,
+   * because the element does not exist yet when the action happens. */
+  const [focus, setFocus] = useState<{ find: () => HTMLElement | null | undefined } | null>(
     null,
   )
   const [announcement, setAnnouncement] = useState('')
 
+  /* Rows whose message counted down and left. For this visit only, like
+   * the snapshot itself. */
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set())
+
   useEffect(() => {
     if (focus === null) return
-    const row = listRef.current?.querySelector(
-      `[data-experience-id="${CSS.escape(focus.id)}"]`,
-    )
-    const target = row?.querySelector<HTMLElement>(
-      focus.on === 'undo' ? '[data-slot="undo"]' : '[data-slot="save-button"]',
-    )
+    const target = focus.find()
     /* The row may not have changed yet — the optimistic update lands a tick
      * after the tap — which is why this also runs when the collection
      * changes. Once focus has landed the request is cleared, so a later
@@ -104,19 +108,50 @@ export function LibraryRoute() {
       target.focus()
       setFocus(null)
     }
-  }, [focus, saved.collection])
+  }, [focus, saved.collection, dismissed])
+
+  /** A control inside one row, found when asked for. */
+  const inRow = (id: string, slot: string) => () =>
+    listRef.current
+      ?.querySelector(`[data-experience-id="${CSS.escape(id)}"]`)
+      ?.querySelector<HTMLElement>(`[data-slot="${slot}"]`)
 
   const remove = (row: Row) => {
     saved.toggle(row.experience.experienceId)
     setAnnouncement(`${row.experience.title} was removed`)
-    setFocus({ id: row.experience.experienceId, on: 'undo' })
+    setFocus({ find: inRow(row.experience.experienceId, 'undo') })
   }
 
   const undo = (row: Row) => {
     saved.restore(row.item)
     setAnnouncement(`${row.experience.title} is back in your saved list`)
-    setFocus({ id: row.experience.experienceId, on: 'heart' })
+    setFocus({ find: inRow(row.experience.experienceId, 'save-button') })
   }
+
+  /**
+   * The countdown ran out and the row has collapsed: take it off the list.
+   *
+   * Focus moves ONLY if it was on this row — the Undo the user was sitting
+   * on is about to stop existing. If they had already gone elsewhere, a
+   * timer firing must not pull them back. It goes to the next row, or the
+   * previous one if this was the last, or the empty state's link if this
+   * was the only one; whichever control that row has, heart or Undo.
+   */
+  const dismiss = (id: string, item: HTMLElement) => {
+    if (item.contains(document.activeElement)) {
+      const neighbour = (item.nextElementSibling ?? item.previousElementSibling)
+        ?.getAttribute('data-experience-id')
+      setFocus({
+        find: () =>
+          neighbour
+            ? (inRow(neighbour, 'save-button')() ?? inRow(neighbour, 'undo')())
+            : emptyLinkRef.current,
+      })
+    }
+    setDismissed((current) => new Set(current).add(id))
+  }
+
+  const rows = snapshot.data?.filter((row) => !dismissed.has(row.item.experienceId))
 
   /* Until the live collection is here, every row would read as unsaved and
    * flash as removed. The snapshot fetches it first, so this is a guard
@@ -153,7 +188,7 @@ export function LibraryRoute() {
         />
       ) : null}
 
-      {snapshot.isSuccess && snapshot.data.length === 0 ? (
+      {rows?.length === 0 ? (
         /* No design for this yet — see docs/backlog.md. The generic pattern
          * with words that say what to do, not just that nothing is here. */
         <EmptyState
@@ -163,6 +198,7 @@ export function LibraryRoute() {
             /* A link that is really a target, so it carries
              * data-slot="button" and gets the 44px floor on a phone. */
             <Link
+              ref={emptyLinkRef}
               to="/"
               data-slot="button"
               className="inline-flex h-8 items-center justify-center rounded-full border border-border bg-card px-4 text-body-md text-primary"
@@ -173,15 +209,16 @@ export function LibraryRoute() {
         />
       ) : null}
 
-      {snapshot.isSuccess && snapshot.data.length > 0 ? (
+      {rows !== undefined && rows.length > 0 ? (
         <ul ref={listRef} aria-label="Saved experiences" className="flex flex-col gap-4">
-          {snapshot.data.map((row) => (
+          {rows.map((row) => (
             <SavedRow
               key={row.item.experienceId}
               row={row}
               removed={isRemoved(row.item.experienceId)}
               onRemove={() => remove(row)}
               onUndo={() => undo(row)}
+              onGone={(item) => dismiss(row.item.experienceId, item)}
             />
           ))}
         </ul>
@@ -199,18 +236,47 @@ function SavedRow({
   removed,
   onRemove,
   onUndo,
+  onGone,
 }: {
   row: Row
   removed: boolean
   onRemove: () => void
   onUndo: () => void
+  /** The countdown ended and the row has finished collapsing. */
+  onGone: (item: HTMLElement) => void
 }) {
   const ref = useRef<HTMLLIElement>(null)
   useMorph(ref, removed)
+
+  /* Fold the row away, then report it gone. Height to nothing, and the
+   * list's gap cancelled by a matching negative margin, so the rows below
+   * close up smoothly rather than jumping 16px at the end. Motion tokens,
+   * as in useMorph. Reduced motion never gets here — it has no countdown. */
+  const collapse = () => {
+    const el = ref.current
+    if (!el) return
+    const root = document.documentElement
+    const gap = el.parentElement ? getComputedStyle(el.parentElement).rowGap : '0px'
+    /* The gap sits above every row but the first; the first's sits below. */
+    const margin = el.previousElementSibling ? 'marginTop' : 'marginBottom'
+    el.style.overflow = 'hidden'
+    el.animate(
+      [
+        { height: `${el.getBoundingClientRect().height}px`, opacity: 1, [margin]: '0px' },
+        { height: '0px', opacity: 0, [margin]: `-${gap}` },
+      ],
+      {
+        duration: parseFloat(token(root, '--motion-duration-moderate')),
+        easing: token(root, '--motion-easing-exit'),
+        fill: 'forwards',
+      },
+    ).finished.then(() => onGone(el), () => undefined)
+  }
+
   return (
     <li ref={ref} data-experience-id={row.item.experienceId}>
       {removed ? (
-        <RemovedRow experience={row.experience} onUndo={onUndo} />
+        <RemovedRow experience={row.experience} onUndo={onUndo} onExpire={collapse} />
       ) : (
         <ExperienceCard
           experience={row.experience}
@@ -313,9 +379,12 @@ function useMorph(ref: RefObject<HTMLElement | null>, state: unknown) {
 function RemovedRow({
   experience,
   onUndo,
+  onExpire,
 }: {
   experience: Experience
   onUndo: () => void
+  /** The countdown on Undo has run out. */
+  onExpire: () => void
 }) {
   const image = experience.images[0]
   return (
@@ -346,9 +415,32 @@ function RemovedRow({
         data-slot="undo"
         aria-label={`Undo, put ${experience.title} back`}
         onClick={onUndo}
-        className="h-8 shrink-0 rounded-full px-3 text-body-md font-medium text-primary"
+        /* The countdown's END is the timer — see `animate-countdown` in
+         * theme.css. Named, because animationend bubbles and nothing else
+         * should be able to dismiss the row by finishing. */
+        onAnimationEnd={(event) => {
+          /* The underline runs the same countdown on a ::after and its end
+           * bubbles here too. Only the word's own counts. */
+          if (event.animationName === 'countdown' && event.pseudoElement === '') {
+            onExpire()
+          }
+        }}
+        /* THE COUNTDOWN. The word sweeps from Action/Primary to Text/Muted,
+         * left to right, over 6s; when it finishes the message goes.
+         *
+         * It is a time limit, so WCAG 2.2.1 applies: it PAUSES while a
+         * pointer rests on Undo or keyboard focus is on it, and resumes on
+         * leaving. A tap on a phone moves focus here without it counting as
+         * keyboard focus, so the countdown still runs for touch. Under
+         * reduced motion there is no countdown at all — the word stays
+         * Primary and the message stays for the visit (Darrin's call). */
+        className="group h-8 shrink-0 rounded-full px-3 text-body-md font-medium"
       >
-        Undo
+        {/* The pause is triggered by the BUTTON — its whole target — and
+          * applied to the word, which is what carries the countdown. */}
+        <span className="text-countdown animate-countdown group-hover:[animation-play-state:paused] group-focus-visible:[animation-play-state:paused] motion-reduce:animate-none">
+          Undo
+        </span>
       </button>
     </div>
   )

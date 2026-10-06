@@ -31,7 +31,7 @@ tokens.
 ## Design follow-ups
 
 - **Library has three undesigned states:** the empty list, the "*Title* was
-  removed" row, and the `+` in the Nav Bar, which is left out until it has
+  removed" row with its Undo countdown, and the `+` in the Nav Bar, which is left out until it has
   something to make. The first two are composed from existing roles in
   `src/routes/library.tsx`; the copy is placeholder.
 - **The Library title binds the retired collection.** The Nav Bar's

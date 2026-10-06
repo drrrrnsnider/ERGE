@@ -295,6 +295,11 @@ below 32px fails the build.
   `prefers-reduced-motion` (`motion-safe:`, or the media query in
   `theme.css`), resting on its static design. Do not "fix" the loops as a
   2.2.2 violation, and do not drop the reduced-motion stop.
+- **A countdown is a time limit (2.2.1), so it pauses.** Library's Undo
+  dismisses itself after 6s; it pauses while hovered or keyboard-focused
+  and does not run at all under reduced motion. The animation IS the
+  timer — its end dismisses — so pausing it pauses the clock with nothing
+  to keep in sync. Any future timed message follows the same rules.
 - **Hover states must not stick on touch.** Use Tailwind's `hover:` variant,
   which is gated on `(hover: hover)`, never a bare `:hover` selector or an
   arbitrary `[&:hover]` — a phone keeps `:hover` applied after a tap. Give
@@ -397,10 +402,11 @@ npm run build        # production build
 Run `npm run check` before proposing any commit, and `npm run verify` before
 merging anything that changes markup, focus behaviour, colour or tokens.
 
-Current state: **94 unit tests** and **279 e2e** passing, 3 e2e skipped by
+Current state: **94 unit tests** and **292 e2e** passing, 5 e2e skipped by
 design: the coarse-pointer size assertions do not apply to `desktop-chrome`,
 and neither does the sheet's reduced-motion test, because desktop opens a
-popover instead of a sheet.
+popover instead of a sheet; and Library's hover-pause test runs on
+`desktop-chrome` only, because a phone has no resting pointer.
 `npm run verify` exits 0. There are no known-failing tests — if something is
 red, you broke it.
 

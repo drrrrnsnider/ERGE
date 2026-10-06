@@ -466,6 +466,20 @@
     to { transform: rotate(360deg); }
   }
 
+  /* The Undo countdown — see `text-countdown` below for the fill it moves.
+   * Linear because it is a timer, and a timer that speeds up or slows down
+   * tells you the wrong time. `forwards` so it rests on Text/Muted, and its
+   * END is what dismisses the message (src/routes/library.tsx): pausing the
+   * animation pauses the countdown, with no second clock to keep in step.
+   *
+   * 6s is a dwell time, not a motion duration, which is why it is not on
+   * the Motion scale — that scale is how long a movement takes, and this is
+   * how long someone gets to change their mind. */
+  --animate-countdown: countdown 6s var(--motion-easing-linear) forwards;
+  @keyframes countdown {
+    to { background-position: 0% 0; }
+  }
+
   /* Hands `leading-tight` and friends to Tailwind. These names are also
    * Tailwind's own, so its defaults are replaced rather than sitting
    * alongside ours. */
@@ -738,6 +752,61 @@
       linear-gradient(var(--foreground) 0 0) content-box,
       linear-gradient(var(--foreground) 0 0);
     mask-composite: exclude;
+  }
+}
+
+/**
+ * Countdown text: Text/Muted on the left, Action/Primary on the right, with
+ * a hard edge between them, painted INTO the letters rather than behind them.
+ * Goes on the word itself, not its button, so the edge crosses the letters
+ * and not the button's padding — otherwise the colour would lag the timer.
+ *
+ * The gradient is twice the element's width. At rest, position 100%, only
+ * its Primary half shows, with the edge sitting just off the word's left
+ * side. `animate-countdown` slides it to 0%, which carries the edge across
+ * to the right — Muted revealed left to right, which is the countdown. Only
+ * the colour changes; nothing moves.
+ *
+ * `color: transparent` lets the clipped background show through the glyphs.
+ * Both halves are text roles already in the contrast matrix, so the word is
+ * legible at every point in the sweep.
+ */
+@utility text-countdown {
+  position: relative;
+  display: inline-block;
+  color: transparent;
+  background-image: linear-gradient(
+    to right,
+    var(--muted-foreground) 50%,
+    var(--primary) 50%
+  );
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  /* The underline: 1px under the Primary side only, so it shortens as the
+   * sweep passes and is gone when the time is. Not a border — a border is
+   * one colour end to end and cannot follow the edge. It is the same
+   * gradient with the Muted half left transparent, at the same size, and
+   * `animation: inherit` runs the same countdown on it: same start, same
+   * pause, same end, so the line and the letters never disagree. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    /* 2px clear of the word, by moving the line rather than the text: no
+     * change to the word's box or line height, so nothing around it moves. */
+    bottom: -2px;
+    height: 1px;
+    background-image: linear-gradient(
+      to right,
+      transparent 50%,
+      var(--primary) 50%
+    );
+    background-size: 200% 100%;
+    background-position: 100% 0;
+    animation: inherit;
   }
 }
 

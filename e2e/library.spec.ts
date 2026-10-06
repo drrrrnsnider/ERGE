@@ -132,6 +132,114 @@ test.describe('library', () => {
     })
   }
 
+  /**
+   * THE COUNTDOWN. Undo sweeps from Primary to Muted over 6s, and the end of
+   * that animation is what dismisses the row. Rather than wait six seconds
+   * per project, these finish or inspect the animation directly — it IS the
+   * timer, so finishing it is the same as the time running out.
+   */
+  /* The word's own countdown — not its underline's, which runs the same
+   * animation on a ::after. `subtree` because it is on the word inside the
+   * button, not the button. Written out twice rather than shared, because
+   * code inside `evaluate` runs in the page and cannot see this file. */
+  const countdown = (page: Page) =>
+    page.locator('[data-slot="undo"]').evaluate((el) => {
+      const run = el
+        .getAnimations({ subtree: true })
+        .find(
+          (a) =>
+            (a as CSSAnimation).animationName === 'countdown' &&
+            !(a.effect as KeyframeEffect).pseudoElement,
+        )
+      return run ? run.playState : 'none'
+    })
+  const runOut = (page: Page) =>
+    page.locator('[data-slot="undo"]').evaluate((el) => {
+      el.getAnimations({ subtree: true })
+        .find(
+          (a) =>
+            (a as CSSAnimation).animationName === 'countdown' &&
+            !(a.effect as KeyframeEffect).pseudoElement,
+        )
+        ?.finish()
+    })
+
+  test('when the countdown runs out the row goes, and focus moves to the next', async ({
+    page,
+  }) => {
+    await seedSaved(page)
+    await page.getByRole('button', { name: 'Remove Sunset Sail & Wine from saved' }).click()
+    await expect(page.getByRole('button', { name: /^Undo/ })).toBeFocused()
+    /* On desktop the pointer is still where the heart was, which is on top
+     * of Undo — and a resting pointer pauses the countdown, by design. */
+    await page.mouse.move(0, 0)
+    expect(await countdown(page)).toBe('running')
+
+    await runOut(page)
+    await expect(rows(page)).toHaveText([/Ride to Dinner/, /Rooftop Picnic Night/])
+    await expect(
+      page.getByRole('button', { name: 'Remove Rooftop Picnic Night from saved' }),
+    ).toBeFocused()
+  })
+
+  test('the last row running out leaves the empty state, with focus on its link', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await page.evaluate(() =>
+      localStorage.setItem(
+        'erge.mock.saved.v1',
+        JSON.stringify({
+          collectionId: 'saved-this-device',
+          kind: 'saved',
+          active: true,
+          items: [{ experienceId: 'exp-sunset-sail', addedAt: '2026-10-01T10:00:00.000Z' }],
+        }),
+      ),
+    )
+    await page.goto('/library')
+    await page.getByRole('button', { name: 'Remove Sunset Sail & Wine from saved' }).click()
+    await runOut(page)
+    await expect(page.getByRole('link', { name: 'Explore experiences' })).toBeFocused()
+  })
+
+  /**
+   * WCAG 2.2.1: a time limit someone can extend. The countdown pauses while
+   * keyboard focus is on Undo — reached here by pressing Enter on the heart,
+   * which moves focus as a keyboard action — and resumes when it leaves.
+   */
+  test('the countdown pauses while Undo has keyboard focus', async ({ page }) => {
+    await seedSaved(page)
+    await page.getByRole('button', { name: 'Remove Sunset Sail & Wine from saved' }).focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('button', { name: /^Undo/ })).toBeFocused()
+    expect(await countdown(page)).toBe('paused')
+
+    await page.keyboard.press('Tab')
+    expect(await countdown(page)).toBe('running')
+  })
+
+  /** And while a pointer rests on it — desktop only, since hover is gated
+   * on `(hover: hover)` and a phone has no resting pointer. */
+  test('the countdown pauses under a resting pointer', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop-chrome', 'hover does not apply to touch')
+    await seedSaved(page)
+    await page.getByRole('button', { name: 'Remove Sunset Sail & Wine from saved' }).click()
+    await page.mouse.move(0, 0)
+    expect(await countdown(page)).toBe('running')
+    await page.getByRole('button', { name: /^Undo/ }).hover()
+    expect(await countdown(page)).toBe('paused')
+  })
+
+  /** Reduced motion has no countdown at all: the message stays for the visit. */
+  test('under reduced motion there is no countdown', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await seedSaved(page)
+    await page.getByRole('button', { name: 'Remove Sunset Sail & Wine from saved' }).click()
+    await expect(page.getByRole('button', { name: /^Undo/ })).toBeVisible()
+    expect(await countdown(page)).toBe('none')
+  })
+
   /** The message lasts only as long as the visit. */
   test('a removed experience is gone on the next visit', async ({ page }) => {
     await seedSaved(page)

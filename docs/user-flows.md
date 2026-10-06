@@ -313,8 +313,12 @@ Worth a short conversation with whoever handles legal before this is built.
   stamps its tab into the history entry, and path is the fallback for cold
   links — `src/lib/tabs.ts`.
 - **Unsaving in Library leaves the row in place** as "*Title* was
-  removed", with Undo and the title still linking to the experience. It
-  lasts for the visit; next time the row is gone. (Darrin, 2026-10-05.)
+  removed", with Undo and the title still linking to the experience.
+  (Darrin, 2026-10-05.) Undo is a 6-second countdown — the word sweeps
+  from Action/Primary to Text/Muted, left to right, with an underline
+  under the Primary side — and when it runs out the row folds away. It
+  pauses while Undo is hovered or keyboard-focused (WCAG 2.2.1). Under
+  reduced motion there is no countdown; the message stays for the visit.
 
 `[DECIDE]` Desktop — sidebar or top nav?
 
