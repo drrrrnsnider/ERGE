@@ -182,7 +182,7 @@ function RailSection({
          * list, with no chunking in the data. */
         <RailScroller
           className={cn(
-            variant === 'media-sm' && 'grid grid-flow-col grid-rows-2 gap-2',
+            variant === 'media-sm' && 'grid grid-flow-col grid-rows-2 gap-3',
           )}
         >
           {query.data.items.map((experience) => (

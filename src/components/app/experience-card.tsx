@@ -25,7 +25,9 @@ import { cn, joinMeta, META_SEPARATOR } from '@/lib/utils'
  *                    Elite treatment and a chrome-backed save button.
  *   media-sm         320-wide horizontal row, 110x80 thumbnail, bare save
  *                    icon with no button chrome.
- *   media-sm-narrow  152-wide column, 110-tall image, NO save button.
+ *   media-sm-narrow  154-wide column, 112-tall image, NO save button.
+ *                    (152 x 110 until the Explore rails moved to 12px
+ *                    gaps; the image kept its ratio.)
  *   media-xs         66x48 thumbnail beside two lines. No save button and NO
  *                    PRICE — it is a pointer back to something you already
  *                    looked at, in the search takeover's "Recently viewed",
@@ -401,11 +403,11 @@ export function ExperienceCard({
     <article
       data-slot="experience-card"
       data-variant={variant}
-      className={cn('flex w-38 flex-col justify-center gap-3', className)}
+      className={cn('flex w-38.5 flex-col justify-center gap-3', className)}
     >
       <Media
         experience={experience}
-        className="h-27.5 w-full rounded-md stroke-gradient"
+        className="h-28 w-full rounded-md stroke-gradient"
       />
       <div className="flex min-w-0 flex-col gap-[3px]">
         <OpenLink
@@ -488,10 +490,10 @@ export function ExperienceCardSkeleton({
   return (
     <div
       data-slot="experience-card-skeleton"
-      className={cn('flex w-38 flex-col gap-3', className)}
+      className={cn('flex w-38.5 flex-col gap-3', className)}
       aria-hidden="true"
     >
-      <div className="h-27.5 rounded-md bg-muted motion-safe:animate-pulse" />
+      <div className="h-28 rounded-md bg-muted motion-safe:animate-pulse" />
       <div className="h-4 w-3/4 rounded-xs bg-muted motion-safe:animate-pulse" />
     </div>
   )

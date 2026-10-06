@@ -103,7 +103,9 @@ export function RailScroller({
     <ul
       data-slot="rail-scroller"
       className={cn(
-        'flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2',
+        /* gap-3: 12px between tiles on every Explore rail, and between the
+         * rows of the two-row media-sm grid (Figma 230:8029). */
+        'flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2',
         'scroll-px-4 motion-safe:scroll-smooth [scrollbar-width:thin]',
         className,
       )}

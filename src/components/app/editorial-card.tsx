@@ -40,7 +40,7 @@ export function EditorialCard({ content }: { content: Editorial }) {
 
         {/* A scroller in its own right — the design shows a fourth tile
           * clipped at the edge, which is what says it scrolls. */}
-        <ul className="flex snap-x gap-2.5 overflow-x-auto p-4 [scrollbar-width:thin] motion-safe:scroll-smooth">
+        <ul className="flex snap-x gap-3 overflow-x-auto p-4 [scrollbar-width:thin] motion-safe:scroll-smooth">
           {content.entries.map((entry) => (
             <li key={entry.id} className="shrink-0 snap-start">
               <Link
