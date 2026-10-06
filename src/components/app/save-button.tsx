@@ -40,11 +40,15 @@ export function SaveButton({
   onToggle,
   style = 'Button',
   className,
-}: {
+  ...rest
+}: Omit<React.ComponentProps<'button'>, 'style' | 'onToggle'> & {
   saved: boolean
   /** What is being saved — becomes part of the accessible name. */
   label: string
-  onToggle: () => void
+  /** Absent when the heart opens a menu instead of toggling — the
+   * wishlist row, where it asks "Remove from Wishlist, or Delete from
+   * Library?". The menu's trigger props arrive through `rest`. */
+  onToggle?: () => void
   style?: 'Button' | 'Icon' | 'Nav'
   className?: string
 }) {
@@ -74,6 +78,10 @@ export function SaveButton({
       aria-pressed={saved}
       aria-label={saved ? `Remove ${label} from saved` : `Save ${label}`}
       onClick={onToggle}
+      /* Last, so a menu trigger's own props — its click, its ref,
+       * aria-haspopup, and an aria-label that says it opens a choice —
+       * win over the toggle's. */
+      {...rest}
       className={cn(
         'grid place-items-center rounded-full',
         style === 'Button' &&

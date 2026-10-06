@@ -24,6 +24,7 @@ import { TopScrim } from '@/components/patterns/top-scrim'
 import { getExperience, getPairings } from '@/lib/api/experiences'
 import { toApiError } from '@/lib/api/schemas/error'
 import {
+  CATEGORY_LABEL,
   priceLowBound,
   type Experience,
   type ExperienceCategory,
@@ -59,20 +60,19 @@ const SUGGESTION = 'Pick me up in a Waymo to grab a cocktail after'
  * The category badge beside the price (`Badge Icon`, Figma 168:2895).
  *
  * Words and glyphs are the results screen's category row, so a category
- * reads the same in both places — "Wellness", not "Spa". Only categories
+ * reads the same in both places — "Wellness", not "Spa" (the words are
+ * CATEGORY_LABEL, beside the schema). Only categories
  * with a glyph in the design are here. Event, transport, lodging and other
  * have none, and get no badge rather than an invented icon: `Badge Icon`
  * without its icon would be a different component.
  */
-const CATEGORY_BADGE: Partial<
-  Record<ExperienceCategory, { label: string; icon: typeof ForkSpoon }>
-> = {
-  dining: { label: 'Dining', icon: ForkSpoon },
-  drinks: { label: 'Drinks', icon: LocalBar },
-  gift: { label: 'Gifts', icon: LocalMall },
-  tour: { label: 'Tours', icon: AccountBalance },
-  sports: { label: 'Sports', icon: RewardedAds },
-  wellness: { label: 'Wellness', icon: Spa },
+const CATEGORY_ICON: Partial<Record<ExperienceCategory, typeof ForkSpoon>> = {
+  dining: ForkSpoon,
+  drinks: LocalBar,
+  gift: LocalMall,
+  tour: AccountBalance,
+  sports: RewardedAds,
+  wellness: Spa,
 }
 
 /* Where both flow buttons and the pairings band go: the concierge, handed
@@ -245,7 +245,11 @@ function Detail({
   const duration = experience.details.find((d) => d.label === 'Duration')?.value
   const metaLine = joinMeta([experience.location.address, duration])
   const price = priceLowBound(experience.price)
-  const category = CATEGORY_BADGE[experience.category]
+  /* The word comes from CATEGORY_LABEL, shared with every card, so a
+   * category is called the same thing on both. A badge needs both halves. */
+  const icon = CATEGORY_ICON[experience.category]
+  const label = CATEGORY_LABEL[experience.category]
+  const category = icon && label ? { icon, label } : undefined
   const hero = experience.images[0]
   /* The strip under the hero is the REST of the gallery, so it starts at 1.
    * Four slots, and the last carries the count when there are more. */

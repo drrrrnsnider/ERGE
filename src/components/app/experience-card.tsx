@@ -1,21 +1,26 @@
 import { SaveButton } from '@/components/app/save-button'
 import { Badge } from '@/components/patterns/badge'
+import { Button } from '@/components/patterns/button'
+import { Menu } from '@/components/patterns/menu'
 import { Link } from 'react-router'
-import { priceLowBound, type Experience } from '@/lib/api/schemas/experience'
+import {
+  CATEGORY_LABEL,
+  priceLowBound,
+  type Experience,
+} from '@/lib/api/schemas/experience'
 import { formatMoney } from '@/lib/money'
 import { tabState, useCurrentTab } from '@/lib/tabs'
 import { cn, joinMeta, META_SEPARATOR } from '@/lib/utils'
 
 /**
- * The experience card, in the four shapes the design library defines.
+ * The experience card, in every shape the design library defines.
  *
- * These are four separate components in Figma — `Card / Media MD`,
- * `Card / Media SM`, `Card / Media SM Narrow` and `Card / Media XS` — and the
- * variant names here match them exactly, so a conversation about "media-sm"
- * means the same thing in both places. They are one component in code because
- * they render the same data through the same text block and differ only in
- * arrangement; splitting them would be four files that must be changed
- * together every time the contract moves.
+ * These are separate components in Figma — `Card / Media LG`, `MD`, `SM`,
+ * `SM Full`, `SM Narrow` and `XS` — and the variant names here match them,
+ * so a conversation about "media-sm" means the same thing in both places.
+ * They are one component in code because they render the same data through
+ * the same text block and differ only in arrangement; splitting them would
+ * be six files that must be changed together every time the contract moves.
  *
  * They are NOT interchangeable, and each is used where the design uses it:
  *
@@ -25,6 +30,10 @@ import { cn, joinMeta, META_SEPARATOR } from '@/lib/utils'
  *                    Elite treatment and a chrome-backed save button.
  *   media-sm         320-wide horizontal row, 110x80 thumbnail, bare save
  *                    icon with no button chrome.
+ *   media-sm-full    the full-width row of a wishlist: 122-wide image
+ *                    the card's height, a two-line title, the price in
+ *                    Ovo, and a split Add to Cart / "•••". Its heart can
+ *                    open a menu instead of toggling. (Card / Media SM Full)
  *   media-sm-narrow  154-wide column, 112-tall image, NO save button.
  *                    (152 x 110 until the Explore rails moved to 12px
  *                    gaps; the image kept its ratio.)
@@ -43,6 +52,7 @@ type Variant =
   | 'media-lg'
   | 'media-md'
   | 'media-sm'
+  | 'media-sm-full'
   | 'media-sm-narrow'
   | 'media-xs'
 
@@ -177,6 +187,9 @@ export function ExperienceCard({
   variant,
   saved = false,
   onToggleSave,
+  saveMenu,
+  moreMenu,
+  onAddToCart,
   className,
 }: {
   experience: Experience
@@ -189,6 +202,16 @@ export function ExperienceCard({
    */
   saved?: boolean
   onToggleSave?: (experienceId: string) => void
+  /**
+   * media-sm-full only. Menu items for the heart, when tapping it should
+   * ASK rather than toggle — a wishlist row, where it offers "Remove from
+   * Wishlist" or "Delete from Library" (Darrin, 2026-10-06).
+   */
+  saveMenu?: React.ReactNode
+  /** media-sm-full only. Menu items for the "•••" beside Add to Cart. */
+  moreMenu?: React.ReactNode
+  /** media-sm-full only. */
+  onAddToCart?: () => void
   /**
    * For the card's outer box — in practice its width, where a screen lays
    * cards out differently from a rail: Library's list runs `media-sm` the
@@ -367,6 +390,92 @@ export function ExperienceCard({
     )
   }
 
+  if (variant === 'media-sm-full') {
+    const { price } = experience
+    return (
+      <article
+        data-slot="experience-card"
+        data-variant={variant}
+        /* `isolate` for the same reason as media-sm: the image's stroke and
+         * the card's are ordered against each other and nothing else. */
+        className={cn(
+          'relative isolate flex w-full items-start rounded-md bg-card stroke-gradient-card',
+          className,
+        )}
+      >
+        {/* 122 wide and the full height of the card, however tall the
+          * title makes it. */}
+        <Media
+          experience={experience}
+          className="relative z-1 w-30.5 shrink-0 self-stretch rounded-md stroke-gradient"
+        />
+        {saveMenu ? (
+          /* The heart sits on the picture at 7px, Style=Button. It is
+           * always filled here — everything in a wishlist is saved — and
+           * asks what "remove" means rather than guessing. */
+          <Menu
+            label={`Remove ${experience.title}`}
+            align="start"
+            trigger={
+              <SaveButton
+                saved={saved}
+                label={experience.title}
+                aria-label={`Remove ${experience.title}…`}
+                className="absolute top-1.75 left-1.75 z-10"
+              />
+            }
+          >
+            {saveMenu}
+          </Menu>
+        ) : (
+          <SaveButton
+            saved={saved}
+            label={experience.title}
+            onToggle={() => onToggleSave?.(experience.experienceId)}
+            className="absolute top-1.75 left-1.75 z-10"
+          />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-[3px] p-3">
+          {/* TWO lines here, the one exception to the one-line rule: this
+            * card is drawn with room for it (Darrin, 2026-10-06). Then "…". */}
+          <OpenLink
+            experience={experience}
+            className="line-clamp-2 text-body-lg text-foreground"
+          >
+            {experience.title}
+          </OpenLink>
+          {/* The category's word, or — for the four categories the design
+            * has no word for — what the experience says it is. */}
+          <p className="truncate text-body-md text-muted-foreground">
+            {CATEGORY_LABEL[experience.category] ?? experience.summary}
+          </p>
+          <p className="flex items-end gap-1 pb-0.5">
+            {price.kind === 'from' ? (
+              <span className="pb-[3px] text-body-xs text-emphasis">from</span>
+            ) : null}
+            <span className="font-serif text-display-sm text-primary">
+              {formatMoney(priceLowBound(price))}
+            </span>
+            {price.unit ? (
+              <span className="pb-[3px] text-body-xs text-emphasis">per {price.unit}</span>
+            ) : null}
+          </p>
+          <Button
+            label="Add to Cart"
+            onClick={onAddToCart}
+            className="w-full"
+            moreLabel={`More options for ${experience.title}`}
+            renderMore={(button) => (
+              <Menu label={`Options for ${experience.title}`} trigger={button}>
+                {moreMenu}
+              </Menu>
+            )}
+          />
+        </div>
+      </article>
+    )
+  }
+
   if (variant === 'media-xs') {
     return (
       <article
@@ -467,6 +576,23 @@ export function ExperienceCardSkeleton({
         <div className="flex flex-1 flex-col gap-[3px]">
           <div className="h-4 w-3/4 rounded-xs bg-muted motion-safe:animate-pulse" />
           <div className="h-3 w-1/2 rounded-xs bg-muted motion-safe:animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'media-sm-full') {
+    return (
+      <div
+        data-slot="experience-card-skeleton"
+        className={cn('flex h-38.75 w-full rounded-md bg-card stroke-gradient-card', className)}
+        aria-hidden="true"
+      >
+        <div className="w-30.5 shrink-0 rounded-md bg-muted motion-safe:animate-pulse" />
+        <div className="flex flex-1 flex-col gap-2 p-3">
+          <div className="h-5 w-3/4 rounded-xs bg-muted motion-safe:animate-pulse" />
+          <div className="h-4 w-1/3 rounded-xs bg-muted motion-safe:animate-pulse" />
+          <div className="h-7 w-1/2 rounded-xs bg-muted motion-safe:animate-pulse" />
+          <div className="mt-auto h-8 w-full rounded-full bg-muted motion-safe:animate-pulse" />
         </div>
       </div>
     )

@@ -30,6 +30,7 @@ import { extendTailwindMerge } from 'tailwind-merge'
  */
 const FONT_SIZES = [
   'display-md',
+  'display-sm',
   'h2',
   'h3',
   'h4',

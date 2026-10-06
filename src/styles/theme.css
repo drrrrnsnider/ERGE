@@ -312,6 +312,11 @@
    * scale and only coincide by accident. */
   --text-display-md: 32px;
   --text-display-md--line-height: var(--leading-auto);
+  /* Display/Small — Ovo 27, a price on Card / Media SM Full. In the Figma
+   * export as Font Size 27; same rule as display-md: pair it with
+   * `font-serif`. */
+  --text-display-sm: 27px;
+  --text-display-sm--line-height: var(--leading-auto);
   --text-h2: 21px;
   --text-h2--line-height: var(--leading-auto);
   --text-h3: 18px;

@@ -123,6 +123,24 @@ export const ExperienceCategorySchema = z.enum([
 export type ExperienceCategory = z.infer<typeof ExperienceCategorySchema>
 
 /**
+ * What a category is called on screen — the results screen's category row,
+ * so a category reads the same everywhere: "Wellness", not "Spa".
+ *
+ * Partial on purpose. Event, transport, lodging and other have no word in
+ * the design, and inventing copy for them here would quietly become the
+ * copy. A screen that needs one falls back to something the experience
+ * already says about itself.
+ */
+export const CATEGORY_LABEL: Partial<Record<ExperienceCategory, string>> = {
+  dining: 'Dining',
+  drinks: 'Drinks',
+  gift: 'Gifts',
+  tour: 'Tours',
+  sports: 'Sports',
+  wellness: 'Wellness',
+}
+
+/**
  * `details[]` absorbs type-specific fields — party size, duration, seat
  * class — as label/value pairs, so the component stays stable as categories
  * are added. Anything needing its own interaction is a separate component

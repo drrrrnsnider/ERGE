@@ -51,6 +51,7 @@ export function Button({
   icon: Icon,
   onMore,
   moreLabel,
+  renderMore,
   className,
   ...props
 }: React.ComponentProps<'button'> & {
@@ -63,8 +64,18 @@ export function Button({
   onMore?: () => void
   /** The overflow button's accessible name. Required whenever onMore is. */
   moreLabel?: string
+  /**
+   * For an overflow that opens a MENU rather than running a click: receives
+   * the "•••" button and returns what to render in its place — in practice
+   * `(button) => <Menu trigger={button}>…</Menu>`. Base UI merges its trigger
+   * props onto the button, so it keeps its look and its name.
+   */
+  renderMore?: (button: React.ReactElement) => React.ReactNode
 }) {
   const sizing = SIZE[size]
+  /* Split whenever there is an overflow half, whether it runs a click or
+   * opens a menu. */
+  const split = onMore !== undefined || renderMore !== undefined
   const shared = cn(
     'inline-flex items-center justify-center text-body-md whitespace-nowrap',
     'disabled:pointer-events-none disabled:opacity-50',
@@ -82,8 +93,8 @@ export function Button({
         sizing.base,
         Icon ? sizing.withIcon : sizing.text,
         // Split: only the outer corners are round; the seam edge is square.
-        onMore ? 'min-w-0 flex-1 rounded-l-full' : 'rounded-full',
-        !onMore && className,
+        split ? 'min-w-0 flex-1 rounded-l-full' : 'rounded-full',
+        !split && className,
       )}
       {...props}
     >
@@ -92,7 +103,22 @@ export function Button({
     </button>
   )
 
-  if (!onMore) return main
+  if (!split) return main
+
+  const more = (
+    <button
+      type="button"
+      onClick={onMore}
+      aria-label={moreLabel ?? `More options for ${label}`}
+      className={cn(
+        shared,
+        size === 'Sm' ? 'size-8' : 'size-11',
+        'shrink-0 rounded-r-full pr-0.5',
+      )}
+    >
+      <MoreHoriz className="size-5" />
+    </button>
+  )
 
   /* Split is genuinely TWO buttons, so it is two <button> elements. Wrapping
    * one button around both would make the overflow unreachable, and nesting
@@ -100,18 +126,7 @@ export function Button({
   return (
     <div data-slot="button-split" className={cn('flex gap-0.5', className)}>
       {main}
-      <button
-        type="button"
-        onClick={onMore}
-        aria-label={moreLabel ?? `More options for ${label}`}
-        className={cn(
-          shared,
-          size === 'Sm' ? 'size-8' : 'size-11',
-          'shrink-0 rounded-r-full pr-0.5',
-        )}
-      >
-        <MoreHoriz className="size-5" />
-      </button>
+      {renderMore ? renderMore(more) : more}
     </div>
   )
 }
